@@ -1,0 +1,55 @@
+import { ApiProperty } from "@nestjs/swagger";
+import { IsNotEmpty, IsOptional, IsString, Length, IsNumber, IsBoolean, IsObject } from "class-validator";
+import { Type, Transform } from 'class-transformer';  
+
+export class CreateTransferDto {
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ description: '광고주 구매번호', required: false })
+  readonly purchaseAssetNo: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ description: '사용자 구매번호', required: false })
+  readonly purchaseNo: number;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 40)
+  @ApiProperty({ description: 'txId', required: false})
+  txId: string;
+
+  @IsString()
+  @Length(1, 80)
+  @ApiProperty({ description: '지갑주소 - from'})
+  readonly fromAddr: string;
+
+  @IsString()
+  @Length(1, 80)
+  @ApiProperty({ description: '지갑주소 - to'})
+  readonly toAddr: string;
+
+  // @IsOptional()
+  // @IsString()
+  // @Length(1, 256)
+  // @ApiProperty({ description: '토큰 Index', required: false})
+  // tokenIdx: string;
+
+  // @IsOptional()
+  // @IsString()
+  // @ApiProperty({ description: '콜백 URL', required: false})
+  // callbackUrl: string;
+
+  // @IsOptional()
+  // @IsString()
+  // @Length(1)
+  // @ApiProperty({ description: '결과', required: false})
+  // result: string;
+
+  // @IsOptional()
+  // @IsObject()
+  // @ApiProperty({ description: '콜백 데이터', required: false})
+  // resData: Object;
+}
