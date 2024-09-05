@@ -603,7 +603,7 @@ export class ProductService {
         const endDttm = new Date(getProductDto['endDttm']);
         const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
         options += ` and product.start_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
-        options += ` and product.end_dttm <= TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+        options += ` and product.end_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
       }else{
         options += ` and product.start_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
       }
@@ -611,7 +611,7 @@ export class ProductService {
       if(endDttm){
         const endDttm = new Date(getProductDto['endDttm']);
         const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
-        options += ` and product.end_dttm <= TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+        options += ` and product.end_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
       }
     }
 
@@ -704,7 +704,7 @@ export class ProductService {
           const endDttm = new Date(getProductDto['endDttm']);
           const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
           options += ` and product.start_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
-          options += ` and product.end_dttm <= TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+          options += ` and product.end_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
         }else{
           options += ` and product.start_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
         }
@@ -712,7 +712,7 @@ export class ProductService {
         if(endDttm){
           const endDttm = new Date(getProductDto['endDttm']);
           const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
-          options += ` and product.end_dttm <= TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+          options += ` and product.end_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
         }
       }
   

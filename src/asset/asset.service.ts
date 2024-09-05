@@ -634,7 +634,7 @@ export class AssetService {
         const endDttm = new Date(getAssetDto['endDttm']);
         const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
         options += ` and asset.start_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
-        options += ` and asset.end_dttm <= TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+        options += ` and asset.end_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
       }else{
         options += ` and asset.start_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
       }
@@ -642,7 +642,7 @@ export class AssetService {
       if(endDttm){
         const endDttm = new Date(getAssetDto['endDttm']);
         const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
-        options += ` and asset.end_dttm <= TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+        options += ` and asset.end_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
       }
     }
 
@@ -740,7 +740,7 @@ export class AssetService {
           const endDttm = new Date(getAssetDto['endDttm']);
           const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
           options += ` and asset.start_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
-          options += ` and asset.end_dttm <= TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+          options += ` and asset.end_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
         }else{
           options += ` and asset.start_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
         }
@@ -748,7 +748,7 @@ export class AssetService {
         if(endDttm){
           const endDttm = new Date(getAssetDto['endDttm']);
           const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
-          options += ` and asset.end_dttm <= TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+          options += ` and asset.end_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
         }
       }
   

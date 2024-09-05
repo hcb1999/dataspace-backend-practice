@@ -38,7 +38,7 @@ export function setupSwagger(app: INestApplication): void {
       { name: '에셋타입 API', description: '메타버스 업체별 에셋타입 정보에 관련된 API' },
       { name: '메타버스 API', description: '메타버스 업체 정보에 관련된 API' },
       { name: '상태 API', description: '상태에 관련된 API' },
-      { name: 'NFT API', description: 'NFT에 관련된 API' },
+      // { name: 'NFT API', description: 'NFT에 관련된 API' },
     ];
 
     SwaggerModule.setup('api-docs/', app, document, swaggerCustomOptions);

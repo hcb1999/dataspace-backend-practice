@@ -26,7 +26,7 @@ export class NftController {
     private responseMetadata: ResponseMetadata,
     private nftService: NftService
   ) {}
-  
+ /* 
   @Post("/mint")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
@@ -70,7 +70,7 @@ export class NftController {
     const mintList = await this.nftService.getMintList(user, getMintDto);
     return this.responseMessage.response(mintList);
   }
-
+*/
   // @Get('/mint/:tokenidx')
   // @UseGuards(JwtAuthGuard)
   // @ApiBearerAuth('access-token')
@@ -81,7 +81,7 @@ export class NftController {
   //   const mintInfo = await this.nftService.gettoken(user, tokenidx);
   //   return this.responseMessage.response(mintInfo);
   // }
-
+/*
   @Get('/mint/tokenidx/:count')
   @ApiOperation({ summary: '발행될 NFT token index 조회', description: '발행될 NFT token index를 조회한다.' })
   @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
@@ -140,7 +140,7 @@ export class NftController {
     const tokenIdxes = await this.nftService.tokenidx(user, asseteNo, productNo, count);
     return this.responseMessage.response(tokenIdxes);
   }
-
+*/
 /*
   @Get('/mint/tokenidx/:asseteNo/:productNo/:count')
   @UseGuards(JwtAuthGuard)
@@ -173,6 +173,7 @@ export class NftController {
   }
   */
 
+  /*
   @Get('/tokenMetadata/:tokenIdx')
   @ApiOperation({ summary: '발행한 NFT token index의 Metadata 조회', description: '발행한 NFT token index의 Metadata를 조회한다.' })
   @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
@@ -187,7 +188,8 @@ export class NftController {
     const tokenMetadata = await this.nftService.gettokenMetadata(user, tokenIdx);
     return this.responseMetadata.response(tokenMetadata);
   }
-
+*/
+/*
   @Post("/transfer")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
@@ -198,7 +200,8 @@ export class NftController {
     const result = await this.nftService.createTransfer(user, createTransferDto);
     return this.responseMessage.response(null);
   }
-
+*/
+/*
   @Get('/transfer')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
@@ -227,7 +230,8 @@ export class NftController {
     const transferList = await this.nftService.getTransferList(user, getTransferDto);
     return this.responseMessage.response(transferList);
   }
-
+*/
+/*
   @Post("/burn")
   @ApiOperation({ summary: 'NFT Burn', description: 'NFT Burn' })
   @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
@@ -236,7 +240,8 @@ export class NftController {
     const result = await this.nftService.createBurn(user, createBurnDto);
     return this.responseMessage.response(null);
   }
-
+*/
+/*
   @Get('/burn/tokenidx/:asseteNo')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
@@ -259,7 +264,7 @@ export class NftController {
     const tokenIdx = await this.nftService.getBurntokenIdxes(user, asseteNo);
     return this.responseMessage.response(tokenIdx);
   }
-
+*/
 /*
   @Get('/burn/tokenidx/:asseteNo')
   @UseGuards(JwtAuthGuard)
@@ -291,7 +296,7 @@ export class NftController {
     return this.responseMessage.response(tokenIdx);
   }
 */
-
+/*
   @Post("/mint/token/callback")
   @ApiOperation({ summary: 'NFT Mint 콜백 ', description: 'NFT Mint 콜백' })
   @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
@@ -318,4 +323,5 @@ export class NftController {
     const result = await this.nftService.createBurnCallBack(createBurnCallBackDto);
     return this.responseMessage.response(result);
   }
+*/
 }

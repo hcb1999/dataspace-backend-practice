@@ -212,7 +212,8 @@ export class PurchaseService {
       const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
       const skip = getPurchaseDto.getOffset();
       const take = getPurchaseDto.getLimit();
-      const payDttm = getPurchaseDto.payDttm;
+      const startDttm = getPurchaseDto.startDttm;
+      const endDttm = getPurchaseDto.endDttm;
       const word = getPurchaseDto.word;
       const purchaseAddr = user.nftWalletAddr;
 
@@ -220,9 +221,23 @@ export class PurchaseService {
       if (word) {
           options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
       }
-      // if (payDttm) {
-      //   options += ` and (purchase.pay_dttm') ) `;
-      // }
+      
+      if (startDttm) {
+        if(endDttm){
+          const endDttm = new Date(getPurchaseDto['endDttm']);
+          const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
+          options += ` and purchase.pay_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
+          options += ` and purchase.pay_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+        }else{
+          options += ` and purchase.pay_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
+        }
+      }else{
+        if(endDttm){
+          const endDttm = new Date(getPurchaseDto['endDttm']);
+          const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
+          options += ` and purchase.pay_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+        }
+      }
     
       console.log("options : "+options);
 

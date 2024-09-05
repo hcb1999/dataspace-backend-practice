@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, Length, IsOptional, IsDate } from "class-validator";
+import { IsString, Length, IsOptional, IsDate, IsNumber } from "class-validator";
 import { PageRequest } from "../common/page.request";
+import { Type, Transform } from 'class-transformer';
 
 export class GetPurchaseDto extends PageRequest { 
     // @IsOptional()
@@ -9,11 +10,23 @@ export class GetPurchaseDto extends PageRequest {
     // @ApiProperty({ description: '광고주명 (엔터사명)' , required: false})
     // advertiser?: string;
     
+    // @IsOptional()
+    // @IsDate()
+    // @IsOptional()
+    // @ApiProperty({ description: '결제일시(YYYY-MM-DD 형식)' , required: false})
+    // payDttm?: Date;
+
     @IsOptional()
     @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: '결제일시-시작일자(YYYY-MM-DD 형식)' , required: false})
+    startDttm?: Date;
+  
     @IsOptional()
-    @ApiProperty({ description: '결제일시(YYYY-MM-DD 형식)' , required: false})
-    payDttm?: Date;
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: '결제일시-종료일자(YYYY-MM-DD 형식)' , required: false})
+    endDttm?: Date;
 
     @IsOptional()
     @IsString()
