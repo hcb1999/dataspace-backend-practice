@@ -64,21 +64,21 @@ export class PurchaseAssetController {
    * @param modifyPurchaseAssetDto 
    * @returns 
    */
-  @Put('/:purchaseAssetNo')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: '엔터사 구매 상태 정보 수정', description: '엔터사 구매 상태 정보를 수정한다.' })
-  @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
-  @ApiResponse({status:HttpStatus.BAD_REQUEST, description:'입력값 오류'})
-  @ApiOkResponse({ description: '성공', schema: {example: {resultCode: 200,resultMessage: 'SUCCESS'}}})
-  async modifytState(@Param('purchaseAssetNo') purchaseAssetNo: number,
-    @Body(ValidationPipe) modifyPurchaseAssetDto: ModifyPurchaseAssetDto): Promise<void> {
-    fileLogger.info('purchaseAsset-update state');
-    fileLogger.info(`purchaseNo: ${purchaseAssetNo}`);
-    fileLogger.info(modifyPurchaseAssetDto);
-    await this.purchaseAssetService.updateState(purchaseAssetNo, modifyPurchaseAssetDto);
-    return this.responseMessage.response(null);
-  }
+  // @Put('/:purchaseAssetNo')
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth('access-token')
+  // @ApiOperation({ summary: '엔터사 구매 상태 정보 수정', description: '엔터사 구매 상태 정보를 수정한다.' })
+  // @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
+  // @ApiResponse({status:HttpStatus.BAD_REQUEST, description:'입력값 오류'})
+  // @ApiOkResponse({ description: '성공', schema: {example: {resultCode: 200,resultMessage: 'SUCCESS'}}})
+  // async modifytState(@Param('purchaseAssetNo') purchaseAssetNo: number,
+  //   @Body(ValidationPipe) modifyPurchaseAssetDto: ModifyPurchaseAssetDto): Promise<void> {
+  //   fileLogger.info('purchaseAsset-update state');
+  //   fileLogger.info(`purchaseNo: ${purchaseAssetNo}`);
+  //   fileLogger.info(modifyPurchaseAssetDto);
+  //   await this.purchaseAssetService.updateState(purchaseAssetNo, modifyPurchaseAssetDto);
+  //   return this.responseMessage.response(null);
+  // }
 
   /**
    * 엔터사 구매 목록 조회

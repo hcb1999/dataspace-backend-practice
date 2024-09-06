@@ -190,8 +190,8 @@ export class AssetController {
    * @returns 
    */
   @Get('/')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('access-token')
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '에셋 목록 조회', description: '에셋 목록을 조회한다.' })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })

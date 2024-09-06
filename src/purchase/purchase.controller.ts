@@ -65,21 +65,21 @@ export class PurchaseController {
    * @param modifyPurchaseDto 
    * @returns 
    */
-  @Put('/:purchaseNo')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: '사용자 구매 상태 정보 수정', description: '사용자 구매 상태 정보를 수정한다.' })
-  @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
-  @ApiResponse({status:HttpStatus.BAD_REQUEST, description:'입력값 오류'})
-  @ApiOkResponse({ description: '성공', schema: {example: {resultCode: 200,resultMessage: 'SUCCESS'}}})
-  async modifyState(@Param('purchaseNo') purchaseNo: number,
-    @Body(ValidationPipe) modifyPurchaseDto: ModifyPurchaseDto): Promise<void> {
-    fileLogger.info('purchase-update state');
-    fileLogger.info(`purchaseNo: ${purchaseNo}`);
-    fileLogger.info(ModifyPurchaseDto);
-    await this.purchaseService.updateState(purchaseNo, modifyPurchaseDto);
-    return this.responseMessage.response(null);
-  }
+  // @Put('/:purchaseNo')
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth('access-token')
+  // @ApiOperation({ summary: '사용자 구매 상태 정보 수정', description: '사용자 구매 상태 정보를 수정한다.' })
+  // @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
+  // @ApiResponse({status:HttpStatus.BAD_REQUEST, description:'입력값 오류'})
+  // @ApiOkResponse({ description: '성공', schema: {example: {resultCode: 200,resultMessage: 'SUCCESS'}}})
+  // async modifyState(@Param('purchaseNo') purchaseNo: number,
+  //   @Body(ValidationPipe) modifyPurchaseDto: ModifyPurchaseDto): Promise<void> {
+  //   fileLogger.info('purchase-update state');
+  //   fileLogger.info(`purchaseNo: ${purchaseNo}`);
+  //   fileLogger.info(ModifyPurchaseDto);
+  //   await this.purchaseService.updateState(purchaseNo, modifyPurchaseDto);
+  //   return this.responseMessage.response(null);
+  // }
 
   /**
    * 사용자 구매 목록 조회

@@ -76,6 +76,11 @@ export class PurchaseService {
 
       await queryRunner.commitTransaction();
       
+      // 이건 임시 DB용. 블록체인이 되면 그거 처리 후 수정하기
+      const purchaseNo = result.purchaseNo;
+      const modifyPurchaseDto:ModifyPurchaseDto = {state: 'P3', failDesc:undefined};
+      this.updateState(purchaseNo, modifyPurchaseDto);
+
       return { purchaseNo: result.purchaseNo };
   
     } catch (e) {
