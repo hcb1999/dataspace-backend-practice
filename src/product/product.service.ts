@@ -421,7 +421,7 @@ export class ProductService {
                       )
                       .leftJoin(AssetType, 
                         'assetTypeThird',
-                        'assetTypeThird.metaverse_no = product.ad_target_third AND (product.ad_types_third IS NULL OR assetTypeThird.metaverse_asset_type_no = ANY(product.ad_types_first))'
+                        'assetTypeThird.metaverse_no = product.ad_target_third AND (product.ad_types_third IS NULL OR assetTypeThird.metaverse_asset_type_no = ANY(product.ad_types_third))'
                       )
                       .leftJoin(File, 'file', 'product.file_no = file.file_no')
                       .select('product.product_no', 'productNo')
@@ -434,15 +434,12 @@ export class ProductService {
                       .addSelect("metaverseFirst.metaverse_name", 'adTargetFirstName')
                       .addSelect("metaverseSecond.metaverse_name", 'adTargetSecondName')
                       .addSelect("metaverseThird.metaverse_name", 'adTargetThirdName')
-                      .addSelect("array_to_string(product.ad_types_first, ', ') AS adTypesFirst")
-                      .addSelect("array_to_string(product.ad_types_second, ', ') AS adTypesSecond")
-                      .addSelect("array_to_string(product.ad_types_third, ', ') AS adTypesThird")
-                      // .addSelect("product.ad_types_first", 'adTypesFirst')
-                      // .addSelect("product.ad_types_second", 'adTypesSecond')
-                      // .addSelect("product.ad_types_third", 'adTypesThird')
-                      .addSelect("string_agg(DISTINCT assetTypeFirst.type_def, ', ') as adTypesFirstName")
-                      .addSelect("string_agg(DISTINCT assetTypeSecond.type_def, ', ') as adTypesSecondName")
-                      .addSelect("string_agg(DISTINCT assetTypeThird.type_def, ', ') as adTypesThirdName")
+                      .addSelect("array_to_string(product.ad_types_first, ', ')", "adTypesFirst")
+                      .addSelect("array_to_string(product.ad_types_second, ', ')", "adTypesSecond")
+                      .addSelect("array_to_string(product.ad_types_third, ', ')", "adTypesThird")
+                      .addSelect("string_agg(DISTINCT assetTypeFirst.type_def, ', ')", "adTypesFirstName")
+                      .addSelect("string_agg(DISTINCT assetTypeSecond.type_def, ', ')", "adTypesSecondName")
+                      .addSelect("string_agg(DISTINCT assetTypeThird.type_def, ', ')", "adTypesThirdName")
                       .addSelect("product.product_desc", 'productDesc')
                       .addSelect('product.start_dttm', 'startDttm')
                       .addSelect('product.end_dttm', 'endDttm')
@@ -502,8 +499,9 @@ export class ProductService {
                       )
                       .leftJoin(AssetType, 
                         'assetTypeThird',
-                        'assetTypeThird.metaverse_no = product.ad_target_third AND (product.ad_types_third IS NULL OR assetTypeThird.metaverse_asset_type_no = ANY(product.ad_types_first))'
+                        'assetTypeThird.metaverse_no = product.ad_target_third AND (product.ad_types_third IS NULL OR assetTypeThird.metaverse_asset_type_no = ANY(product.ad_types_third))'
                       )
+                      .leftJoin(State, 'state', 'state.state = product.state')
                       .leftJoin(File, 'file', 'product.file_no = file.file_no')
                       .select('product.product_no', 'productNo')
                       .addSelect("product.reg_name", 'regName')
@@ -515,19 +513,17 @@ export class ProductService {
                       .addSelect("metaverseFirst.metaverse_name", 'adTargetFirstName')
                       .addSelect("metaverseSecond.metaverse_name", 'adTargetSecondName')
                       .addSelect("metaverseThird.metaverse_name", 'adTargetThirdName')
-                      .addSelect("array_to_string(product.ad_types_first, ', ') AS adTypesFirst")
-                      .addSelect("array_to_string(product.ad_types_second, ', ') AS adTypesSecond")
-                      .addSelect("array_to_string(product.ad_types_third, ', ') AS adTypesThird")
-                      // .addSelect("product.ad_types_first", 'adTypesFirst')
-                      // .addSelect("product.ad_types_second", 'adTypesSecond')
-                      // .addSelect("product.ad_types_third", 'adTypesThird')
-                      .addSelect("string_agg(DISTINCT assetTypeFirst.type_def, ', ') as adTypesFirstName")
-                      .addSelect("string_agg(DISTINCT assetTypeSecond.type_def, ', ') as adTypesSecondName")
-                      .addSelect("string_agg(DISTINCT assetTypeThird.type_def, ', ') as adTypesThirdName")                                        
+                      .addSelect("array_to_string(product.ad_types_first, ', ')", "adTypesFirst")
+                      .addSelect("array_to_string(product.ad_types_second, ', ')", "adTypesSecond")
+                      .addSelect("array_to_string(product.ad_types_third, ', ')", "adTypesThird")
+                      .addSelect("string_agg(DISTINCT assetTypeFirst.type_def, ', ')", "adTypesFirstName")
+                      .addSelect("string_agg(DISTINCT assetTypeSecond.type_def, ', ')", "adTypesSecondName")
+                      .addSelect("string_agg(DISTINCT assetTypeThird.type_def, ', ')", "adTypesThirdName")                                        
                       .addSelect("product.product_desc", 'productDesc')
                       .addSelect('product.start_dttm', 'startDttm')
                       .addSelect('product.end_dttm', 'endDttm')
                       .addSelect('product.state', 'state')
+                      .addSelect("state.state_desc", 'stateDesc')
                       .addSelect('product.reg_dttm', 'regDttm')
                       .addSelect("file.file_name_first", 'fileNameFirst')
                       .addSelect("concat('"  + serverDomain  + "/', file.file_path_first)", 'fileUrlFirst')
@@ -535,7 +531,7 @@ export class ProductService {
                       .where("product.product_no = :productNo", { productNo });
 
           productInfo = await sql.groupBy(`product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name,
-            metaverseThird.metaverse_name, file.file_name_first, file.file_path_first, file.thumbnail_first`)
+            metaverseThird.metaverse_name, state.state_desc, file.file_name_first, file.file_path_first, file.thumbnail_first`)
                                  .getRawOne();
 
         // console.log("============ productInfo : "+JSON.stringify(productInfo));
@@ -549,9 +545,12 @@ export class ProductService {
                     .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
                     .addSelect("asset.reg_name", 'regName')
                     .addSelect("asset.asset_name", 'assetName')
-                    .addSelect("fileAsset.file_name_first", 'FileNameFirst')
-                    .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'FileUrlFirst')
+                    .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+                    .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                     .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
+                    .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+                    .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
+                    .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
                     .where("purchaseAsset.product_no = :productNo", { productNo });
 
           assetList = await sql1.orderBy('purchaseAsset.purchase_asset_no', 'DESC')
@@ -730,6 +729,7 @@ export class ProductService {
                         .leftJoin(Metaverse, 'metaverseFirst', 'product.ad_target_first = metaverseFirst.metaverse_no')
                         .leftJoin(Metaverse, 'metaverseSecond', 'product.ad_target_second = metaverseSecond.metaverse_no')
                         .leftJoin(Metaverse, 'metaverseThird', 'product.ad_target_third = metaverseThird.metaverse_no')
+                        .leftJoin(State, 'state', 'state.state = product.state')
                         .leftJoin(File, 'file', 'product.file_no = file.file_no')
                         .select('product.product_no', 'productNo')
                         .addSelect("product.product_name", 'productName')
@@ -742,6 +742,7 @@ export class ProductService {
                         .addSelect("metaverseSecond.metaverse_name", 'adTargetSecondName')
                         .addSelect("metaverseThird.metaverse_name", 'adTargetThirdName')
                         .addSelect("product.state", 'state')
+                        .addSelect("state.state_desc", 'stateDesc')
                         .addSelect('product.start_dttm', 'startDttm')
                         .addSelect('product.end_dttm', 'endDttm')
                         .addSelect("file.file_name_first", 'fileNameFirst')
@@ -754,7 +755,8 @@ export class ProductService {
           const list = await sql.orderBy('product.product_no', getProductDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
                                 .skip(skip)
                                 .take(take)
-                                .groupBy(`product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name, metaverseThird.metaverse_name, file.file_no`)
+                                .groupBy(`product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name,
+                                   metaverseThird.metaverse_name, state.state_desc, file.file_no`)
                                 .getRawMany();
   
           const totalCount = await sql.getCount(); 

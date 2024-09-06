@@ -12,7 +12,7 @@ export class ModifyAssetTypeDto {
   @IsOptional()
   @IsString()
   @Length(1, 256)
-  @ApiProperty({ description: '매타버스 업체별 에셋 타입 정의 : 셔츠' })
+  @ApiProperty({ required: false, description: '매타버스 업체별 에셋 타입 정의 : 셔츠' })
   readonly typeDef: string;
   
   @IsOptional()

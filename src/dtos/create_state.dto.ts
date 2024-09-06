@@ -4,7 +4,7 @@ import { IsString, Length, IsOptional } from "class-validator";
 export class CreateStateDto {
   @IsString()
   @Length(1, 10)
-  @ApiProperty({ description: '상태 분류 : 굿즈/에셋-굿즈상품/결재' })
+  @ApiProperty({ description: '상태 분류 : 굿즈/에셋-굿즈상품/결제' })
   readonly category: string;
   
   @IsString()

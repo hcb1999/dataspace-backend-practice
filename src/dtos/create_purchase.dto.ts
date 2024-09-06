@@ -25,7 +25,7 @@ export class CreatePurchaseDto {
 
   @IsNumber()
   @Type(() => Number)
-  @ApiProperty({ description: '구매한 광고주 구매 번호' })
+  @ApiProperty({ description: '엔터사 구매 번호' })
   readonly purchaseAssetNo: number;
  
   // @IsOptional()

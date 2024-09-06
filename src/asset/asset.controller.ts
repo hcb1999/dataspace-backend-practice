@@ -131,28 +131,12 @@ export class AssetController {
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
-  @ApiOkResponse({
-    description: '성공',
-    schema: {
-      example: {
-        "resultCode": 200,
-        "resultMessage": "SUCESS",
-        "data": {
-          "tokenIdAry": [
-            "20",
-            "21",
-            "22"
-          ]
-        }
-      }
-    }
-  })
   async remove(@GetUser() user: User, @Param('assetNo') assetNo: number): Promise<any> {
     fileLogger.info('asset-delete');
     fileLogger.info(user);
     fileLogger.info(`assetNo: ${assetNo}`);
-    const burn = await this.assetService.delete(user, assetNo);
-    return this.responseMessage.response(burn);
+    await this.assetService.delete(user, assetNo);
+    return this.responseMessage.response(null);
   }
 
   /**
@@ -208,21 +192,39 @@ export class AssetController {
           "totalPage": 1,
           "list": [
             {
+              "price": 8000,
+              "assetNo": 16,
+              "assetRegName": "크리에이터 2",
+              "assetName": "블링원 테스트 굿즈4",
+              "adTarget": 3,
+              "metaverseName": "K-POP 월드",
+              "adType": 8,
+              "typeDef": "K-허리",
+              "productRegName": "엔터사 1",
+              "productName": "블링원 테스트 굿즈4",
+              "fileNameFirst": "blingone_3.png",
+              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240904/1725455024810.png",
+              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240904/1725455024810.png",
+              "fileNameSecond": "",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/",
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/"
+            },
+            {
               "price": 7000,
               "assetNo": 5,
               "assetRegName": "크리에이터 1",
               "assetName": "블링원 테스트 굿즈4",
               "adTarget": 3,
               "metaverseName": "K-POP 월드",
-              "adType": 7,
-              "typeDef": "K-등",
-              "productRegName": "테스트유저0",
+              "adType": 1,
+              "typeDef": "K-셔츠",
+              "productRegName": "엔터사 1",
               "productName": "블링원 테스트 굿즈4",
-              "FileNameFirst": "blingone_4.png",
-              "FileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
+              "fileNameFirst": "blingone_4.png",
+              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
               "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
-              "FileNameSecond": "blingone_3.png",
-              "FileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+              "fileNameSecond": "blingone_3.png",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
               "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
             },
             {
@@ -234,33 +236,16 @@ export class AssetController {
               "metaverseName": "K-POP 월드",
               "adType": 6,
               "typeDef": "K-가슴",
-              "productRegName": "테스트유저0",
+              "productRegName": "엔터사 1",
               "productName": "블링원 테스트 굿즈4",
-              "FileNameFirst": "blingone_4.png",
-              "FileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
+              "fileNameFirst": "blingone_4.png",
+              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
               "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
-              "FileNameSecond": "blingone_3.png",
-              "FileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
+              "fileNameSecond": "blingone_3.png",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
               "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
-            },
-            {
-              "price": 5000,
-              "assetNo": 3,
-              "assetRegName": "크리에이터 1",
-              "assetName": "블링원 테스트 굿즈4",
-              "adTarget": 3,
-              "metaverseName": "K-POP 월드",
-              "adType": 5,
-              "typeDef": "K-어깨",
-              "productRegName": "테스트유저0",
-              "productName": "블링원 테스트 굿즈4",
-              "FileNameFirst": "blingone_4.png",
-              "FileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205892.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205892.png",
-              "FileNameSecond": "blingone_3.png",
-              "FileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205917.png",
-              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205917.png"
-            }          ]
+            }
+          ]
         }
       }
     }
@@ -303,15 +288,16 @@ export class AssetController {
                 "assetName": "블링원 테스트 굿즈4",
                 "adTarget": 3,
                 "metaverseName": "K-POP 월드",
-                "adType": 7,
-                "typeDef": "K-등",
-                "productRegName": "테스트유저0",
+                "adType": 1,
+                "typeDef": "K-셔츠",
+                "productRegName": "엔터사 1",
                 "productName": "블링원 테스트 굿즈4",
-                "FileNameFirst": "blingone_4.png",
-                "FileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
+                "stateDsec": "판매중",
+                "fileNameFirst": "blingone_4.png",
+                "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
                 "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
-                "FileNameSecond": "blingone_3.png",
-                "FileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+                "fileNameSecond": "blingone_3.png",
+                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
                 "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
               },
               {
@@ -324,32 +310,34 @@ export class AssetController {
                 "metaverseName": "K-POP 월드",
                 "adType": 6,
                 "typeDef": "K-가슴",
-                "productRegName": "테스트유저0",
+                "productRegName": "엔터사 1",
                 "productName": "블링원 테스트 굿즈4",
-                "FileNameFirst": "blingone_4.png",
-                "FileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
+                "stateDsec": "판매중",
+                "fileNameFirst": "blingone_4.png",
+                "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
                 "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
-                "FileNameSecond": "blingone_3.png",
-                "FileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
+                "fileNameSecond": "blingone_3.png",
+                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
                 "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
               },
               {
                 "price": 5000,
-                "state": "S2",
+                "state": "S1",
                 "assetNo": 3,
                 "assetRegName": "크리에이터 1",
                 "assetName": "블링원 테스트 굿즈4",
                 "adTarget": 3,
                 "metaverseName": "K-POP 월드",
                 "adType": 5,
-                "typeDef": "K-어깨",
-                "productRegName": "테스트유저0",
+                "typeDef": "K-어꺠",
+                "productRegName": "엔터사 1",
                 "productName": "블링원 테스트 굿즈4",
-                "FileNameFirst": "blingone_4.png",
-                "FileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205892.png",
+                "stateDsec": "판매전",
+                "fileNameFirst": "blingone_4.png",
+                "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205892.png",
                 "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205892.png",
-                "FileNameSecond": "blingone_3.png",
-                "FileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205917.png",
+                "fileNameSecond": "blingone_3.png",
+                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205917.png",
                 "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205917.png"
               }
             ]
@@ -382,31 +370,31 @@ export class AssetController {
         "resultCode": 200,
         "resultMessage": "SUCESS",
         "data": {
-          "price": 5000,
+          "price": 7000,
           "state": "S2",
-          "assetNo": 3,
+          "assetNo": 5,
           "assetRegAddr": "0x12345678901",
           "assetRegName": "크리에이터 1",
           "assetName": "블링원 테스트 굿즈4",
           "adTarget": 3,
           "metaverseName": "K-POP 월드",
-          "adType": 5,
-          "typeDef": "K-어깨",
+          "adType": 1,
+          "typeDef": "K-셔츠",
           "productRegAddr": "0x12345678900",
-          "productRegName": "테스트유저0",
+          "productRegName": "엔터사 1",
           "productName": "블링원 테스트 굿즈4",
           "stateDesc": "판매중",
           "assetDesc": "굿즈 26번에 대한 에셋입니다.",
-          "startDttm": "2024-08-02 09:00:00",
-          "endDttm": "2024-11-02 09:00:00",
-          "regDttm": "2024-09-02 16:13:25",
+          "startDttm": "2024-09-05 09:00:00",
+          "endDttm": "2024-12-02 09:00:00",
+          "regDttm": "2024-09-02 16:14:59",
           "assetFileNameFirst": "blingone_4.png",
-          "assetFileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205892.png",
-          "assetthumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205892.png",
-          "FileNameSecond": "blingone_3.png",
-          "assetFileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205917.png",
-          "assetThumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205917.png",
-          "productNameFirst": "blingone_4.png",
+          "assetFileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
+          "assetThumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
+          "assetFileNameSecond": "blingone_3.png",
+          "assetFileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+          "assetThumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+          "productFileNameFirst": "blingone_4.png",
           "productFileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725025423591.png",
           "productThumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725025423591.png"
         }
@@ -444,28 +432,28 @@ export class AssetController {
           "resultCode": 200,
           "resultMessage": "SUCESS",
           "data": {
-            "price": 5000,
-            "assetNo": 3,
+            "price": 7000,
+            "assetNo": 5,
             "assetRegAddr": "0x12345678901",
             "assetRegName": "크리에이터 1",
             "assetName": "블링원 테스트 굿즈4",
             "adTarget": 3,
             "metaverseName": "K-POP 월드",
-            "adType": 5,
-            "typeDef": "K-어깨",
+            "adType": 1,
+            "typeDef": "K-셔츠",
             "productRegAddr": "0x12345678900",
-            "productRegName": "테스트유저0",
+            "productRegName": "엔터사 1",
             "productName": "블링원 테스트 굿즈4",
             "assetDesc": "굿즈 26번에 대한 에셋입니다.",
-            "startDttm": "2024-08-02 09:00:00",
-            "endDttm": "2024-11-02 09:00:00",
-            "regDttm": "2024-09-02 16:13:25",
-            "FileNameFirst": "blingone_4.png",
-            "FileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205892.png",
-            "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205892.png",
-            "FileNameSecond": "blingone_3.png",
-            "FileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205917.png",
-            "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205917.png"
+            "startDttm": "2024-09-05 09:00:00",
+            "endDttm": "2024-12-02 09:00:00",
+            "regDttm": "2024-09-02 16:14:59",
+            "fileNameFirst": "blingone_4.png",
+            "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
+            "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
+            "fileNameSecond": "blingone_3.png",
+            "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+            "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
           }
         }
       }

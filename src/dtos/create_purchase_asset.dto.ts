@@ -5,7 +5,7 @@ import { Type } from 'class-transformer';
 export class CreatePurchaseAssetDto {
   @IsString()
   @Length(1, 80)
-  @ApiProperty({ description: '구매 지갑주소' })
+  @ApiProperty({ description: '구매자 지갑주소' })
   readonly purchaseAddr: string;
 
   @IsString()

@@ -36,7 +36,7 @@ export class GetProductDto extends PageRequest {
   
     @IsOptional()
     @IsString()
-    @Length(1, 100)
+    @Length(1, 256)
     @ApiProperty({ description: '검색어' , required: false})
     word?: string;
 }

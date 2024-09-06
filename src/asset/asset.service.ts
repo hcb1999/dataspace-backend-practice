@@ -452,11 +452,11 @@ export class AssetService {
                       .addSelect('asset.reg_dttm', 'regDttm')
                       .addSelect("fileAsset.file_name_first", 'assetFileNameFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'assetFileUrlFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'assetthumbnailFirst')
-                      .addSelect("fileAsset.file_name_second", 'FileNameSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'assetThumbnailFirst')
+                      .addSelect("fileAsset.file_name_second", 'assetFileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'assetFileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'assetThumbnailSecond')
-                      .addSelect("file.file_name_first", 'productNameFirst')
+                      .addSelect("file.file_name_first", 'productFileNameFirst')
                       .addSelect("concat('"  + serverDomain  + "/', file.file_path_first)", 'productFileUrlFirst')
                       .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_first)", 'productThumbnailFirst')
                       .where("asset.asset_no = :assetNo", { assetNo });
@@ -529,11 +529,11 @@ export class AssetService {
                       .addSelect('asset.start_dttm', 'startDttm')
                       .addSelect('asset.end_dttm', 'endDttm')
                       .addSelect('asset.reg_dttm', 'regDttm')
-                      .addSelect("fileAsset.file_name_first", 'FileNameFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'FileUrlFirst')
+                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
-                      .addSelect("fileAsset.file_name_second", 'FileNameSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'FileUrlSecond')
+                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
                       .where("asset.asset_no = :assetNo", { assetNo });
                       // .andWhere("nftMint.use_yn = 'N'")
@@ -675,11 +675,11 @@ export class AssetService {
                       .addSelect('product.reg_name', 'productRegName')
                       .addSelect('product.product_name', 'productName')
                       .addSelect('asset.price', 'price')
-                      .addSelect("fileAsset.file_name_first", 'FileNameFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'FileUrlFirst')
+                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
-                      .addSelect("fileAsset.file_name_second", 'FileNameSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'FileUrlSecond')
+                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
                       .where(options);
                       
@@ -763,7 +763,7 @@ export class AssetService {
   
       try {
           const sql = this.assetRepository.createQueryBuilder('asset')
-                          // .leftJoin(State, 'state', 'asset.state = state.state')
+                          .leftJoin(State, 'state', 'asset.state = state.state')
                           .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
                           .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
                           // .innerJoin(NftMint, 'nftMint', 'asset.asset_no = nftMint.asset_no')
@@ -779,11 +779,12 @@ export class AssetService {
                           .addSelect('product.product_name', 'productName')
                           .addSelect('asset.price', 'price')
                           .addSelect('asset.state', 'state')
-                          .addSelect("fileAsset.file_name_first", 'FileNameFirst')
-                          .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'FileUrlFirst')
+                          .addSelect('state.state_desc', 'stateDsec')
+                          .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+                          .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                           .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
-                          .addSelect("fileAsset.file_name_second", 'FileNameSecond')
-                          .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'FileUrlSecond')
+                          .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+                          .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                           .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
                           .where(options);
 
@@ -792,7 +793,7 @@ export class AssetService {
         const list = await sql.orderBy('asset.asset_no', getAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
                                 .skip(skip)
                                 .take(take)
-                                .groupBy(`asset.asset_no, product.reg_name, product.product_name, fileAsset.file_no`)
+                                .groupBy(`state.state_desc, asset.asset_no, product.reg_name, product.product_name, fileAsset.file_no`)
                                 .getRawMany();
   
         const totalCount = await sql.getCount(); 
