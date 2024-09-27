@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { DataSource, Repository, UpdateResult, Like, Between } from 'typeorm';
+import { DataSource, Repository, UpdateResult, Like, Between, In } from 'typeorm';
 import { Purchase } from '../entities/purchase.entity';
 import { PurchaseAsset } from '../entities/purchase_asset.entity';
 import { Asset } from '../entities/asset.entity';
@@ -50,11 +50,12 @@ export class PurchaseService {
 
       // 이미 구매한 정보 결제중(P2), 결제완료(P3) 이면 구매 못함.
       const purchaseAssetNo = createPurchaseDto.purchaseAssetNo;
-      const purchaseInfo = await this.purchaseRepository.findOne({ where:{purchaseAssetNo} });
+      const purchaseInfo = await this.purchaseRepository.findOne({ where:{purchaseAssetNo, state: In(['P2', 'P3'])}  });
+     
       if (purchaseInfo) {
-        if(purchaseInfo.state === 'P2' || purchaseInfo.state === 'P3'){
+        // if(purchaseInfo.state === 'P2' || purchaseInfo.state === 'P3'){
           throw new ConflictException("Data already existed. : 이미 구매한 에셋");
-        }
+        // }
       }
 
       // 메타마스크 결제
@@ -80,6 +81,9 @@ export class PurchaseService {
       const purchaseNo = result.purchaseNo;
       const modifyPurchaseDto:ModifyPurchaseDto = {state: 'P3', failDesc:undefined};
       this.updateState(purchaseNo, modifyPurchaseDto);
+
+      // const modifyPurchaseAssetDto:ModifyPurchaseAssetDto = {state: 'P3', soldYn: 'Y', failDesc:undefined};
+      // this.updateState(purchaseAssetNo, modifyPurchaseAssetDto);
 
       return { purchaseNo: result.purchaseNo };
   
@@ -222,7 +226,7 @@ export class PurchaseService {
       const word = getPurchaseDto.word;
       const purchaseAddr = user.nftWalletAddr;
 
-      let options = `purchase.purchase_addr = '${purchaseAddr}'`;
+      let options = `purchase.purchase_addr = '${purchaseAddr}' and purchase.state = 'P3'`;
       if (word) {
           options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
       }
