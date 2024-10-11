@@ -185,7 +185,8 @@ export class UserService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
-      const walletAddress = createUserDto.addr;
+      // const walletAddress = createUserDto.addr;
+      const walletAddress = createUserDto.addr.toLowerCase();
       const wallet = await this.nftWalletRepository.findOne({ where:{addr: walletAddress} });
       if (wallet) {
         throw new ConflictException('Aready registered Address.');
@@ -205,10 +206,11 @@ export class UserService {
       const newUser = queryRunner.manager.create(User, createUserDto);
       const regUser = await queryRunner.manager.save<User>(newUser);
       const userNo = regUser.userNo;
-      const addr = createUserDto.addr;
+      // const addr = createUserDto.addr;
 
       // NftWallet 저장
-      let nftWalletInfo = {userNo, addr};
+      let nftWalletInfo = {userNo, addr: walletAddress};
+      // console.log("nftWalletInfo : "+JSON.stringify(nftWalletInfo));
       const newNftWallet = queryRunner.manager.create(NftWallet, nftWalletInfo);
       await queryRunner.manager.save<NftWallet>(newNftWallet);
 

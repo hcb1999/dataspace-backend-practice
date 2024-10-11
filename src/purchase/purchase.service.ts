@@ -11,8 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import { CreatePurchaseDto } from '../dtos/create_purchase.dto';
 import { ModifyPurchaseDto } from '../dtos/modify_purchase.dto';
 import { GetPurchaseDto } from '../dtos/get_purchase.dto';
-import { NftMint } from "../entities/nft_mint.entity";
 import { CreateTransferDto } from '../dtos/create_transfer.dto';
+import { NftMint } from "../entities/nft_mint.entity";
 import { NftTransfer } from "../entities/nft_transfer.entity";
 import { PageResponse } from 'src/common/page.response';
 
@@ -29,6 +29,9 @@ export class PurchaseService {
 
     @Inject('PURCHASE_ASSET_REPOSITORY')
     private purchaseAssetRepository: Repository<PurchaseAsset>,
+
+    @Inject('NFT_MINT_REPOSITORY')
+    private nftMintRepository: Repository<NftMint>,
 
     @Inject('DATA_SOURCE')
     private dataSource: DataSource,
@@ -128,18 +131,31 @@ export class PurchaseService {
 
       // state가 결제완료(P3)
         if(state=== 'P3'){
+          const purchaseAssetNo = purchaseInfo.purchaseAssetNo;
+          const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
+          if (!purchaseAssetInfo) {
+            throw new NotFoundException("Data Not found. : 엔터사 구매 정보");
+          }
+          const productNo = purchaseAssetInfo.productNo;
+          const assetNo = purchaseAssetInfo.assetNo;
+          const nftMintInfo = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
+          if (!nftMintInfo) {
+            throw new NotFoundException("Data Not found. : NFT 민트 정보");
+          }
+
           // NftTransfer 저장
           const nftTransferInfo: CreateTransferDto = {purchaseNo: purchaseInfo.purchaseNo, fromAddr: purchaseInfo.saleAddr,
-            toAddr: purchaseInfo.purchaseAddr, purchaseAssetNo: undefined, txId: undefined};
+            toAddr: purchaseInfo.purchaseAddr, purchaseAssetNo, assetNo, productNo, tokenId: nftMintInfo.tokenId, state: 'B5'};
 
           // console.log("===== nftTransferInfo : "+ JSON.stringify(nftTransferInfo));
           const newTransfer = queryRunner.manager.create(NftTransfer, nftTransferInfo);
           const result = await queryRunner.manager.save<NftTransfer>(newTransfer);
 
-          // 엔터사 구매 정보에 sold_yn='Y'로 저장
-          const purchaseAssetNo = purchaseInfo.purchaseAssetNo;
+          // 엔터사 구매 정보에 sold_yn='Y'로 저장         
           let data1 = {soldYn: 'Y'};
           await queryRunner.manager.update(PurchaseAsset, purchaseAssetNo, data1);
+
+          // NFT Transfer 하기   
         }
 
         await queryRunner.commitTransaction();

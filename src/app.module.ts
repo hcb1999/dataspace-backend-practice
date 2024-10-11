@@ -14,9 +14,17 @@ import { StateModule } from './state/state.module';
 import { UserModule } from './user/user.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+// import { BullModule } from '@nestjs/bull';
+
 
 @Module({
   imports: [
+    // BullModule.forRoot({
+    //   redis: {
+    //     host: 'localhost',
+    //     port: 6379,
+    //   },
+    // }),
     AssetModule,
     AssetTypeModule,
     AuthModule,

@@ -16,15 +16,26 @@ export class NftBurn extends BaseEntity {
   productNo: number;
   
   @Index()
-  @Column({ name:"asset_no", type:"int4", comment:"에셋 번호" })
+  @Column({ name:"asset_no", type:"int4", comment:"에셋 번호", nullable:true  })
   assetNo: number;
 
   @Index()
-  @Column({ name:"issued_to", type:"varchar", length:80, comment:"NFT 발행 지갑 주소" })
+  @Column({name:"tx_id", type:"varchar", length:66, comment:"TX ID", nullable:true})
+  txId: string;
+  
+  @Index()
+  @Column({ name:"issued_to", type:"varchar", length:80, comment:"NFT 발행 지갑 주소", nullable: true})
   issuedTo: string;
 
-  @Column({ name:"token_idx", type:"varchar", length:256, comment:"토큰IDX" })
-  tokenIdx: string;
+  @Index()
+  @Column({ name: "token_id", type: "varchar", length: 40, comment: "토큰ID"})
+  tokenId: string;
+
+  @Column({ name: "state", type: "varchar", length: 10, comment: "버닝 시작", default: 'B13' })
+  state: string;
+
+  @Column({ name: "use_yn", type: "varchar", length: 1, comment: "사용 여부", default: "N" })
+  useYn: string;
 
   @Column({ name:"res_data", type:"text", comment:"콜백 응답 데이터", nullable:true })
   resData: string;

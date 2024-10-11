@@ -15,6 +15,8 @@ import { CreateAssetDto } from '../dtos/create_asset.dto';
 import { ModifyAssetDto } from '../dtos/modify_asset.dto';
 import { GetAssetDto } from '../dtos/get_asset.dto';
 import { NftMint } from "../entities/nft_mint.entity";
+import { NftBurn } from "../entities/nft_burn.entity";
+import { CreateMintDto } from '../dtos/create_mint.dto';
 import { CreateBurnDto } from '../dtos/create_burn.dto';
 import { NftService } from '../nft/nft.service';
 import { PageResponse } from 'src/common/page.response';
@@ -66,7 +68,8 @@ export class AssetService {
     await queryRunner.startTransaction();
 
     try {
-
+    
+      const address = user.nftWalletAddr;
       const productNo = createAssetDto.productNo;
       const metaverseNo = createAssetDto.adTarget;
       const metaverseAssetTypeNo = createAssetDto.adType;
@@ -167,8 +170,16 @@ export class AssetService {
       // console.log("createAssetDto : "+JSON.stringify(createAssetDto));
       const newAsset = queryRunner.manager.create(Asset, createAssetDto);
       const result = await queryRunner.manager.save<Asset>(newAsset);
+      const assetNo = result.assetNo;
 
-      // mint 하기
+      // NftMint 저장
+      const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address, tokenId: undefined, state: 'B1'};
+
+      // console.log("===== nftMintInfo : "+ JSON.stringify(nftMintInfo));
+      const newMint = queryRunner.manager.create(NftMint, nftMintInfo);
+      const result1 = await queryRunner.manager.save<NftMint>(newMint);
+
+      // NFT Mint 하기        
       // if(file){
       //   // NFT Media생성
       //   const filePath = join(__dirname, `../../public/${file.filePath}`);
@@ -195,11 +206,10 @@ export class AssetService {
       //     await this.nftService.createMint(createMintDto);
       //   }
       // }
-     
 
       await queryRunner.commitTransaction();
 
-      return { assetNo: result.assetNo };
+      return { assetNo };
 
     } catch (e) {
       this.logger.error(e);
@@ -352,20 +362,45 @@ export class AssetService {
       const data = { useYn: 'N', state: 'S4'  }
       await queryRunner.manager.update(Asset, {assetNo}, data);
 
-      // Nft Mint 정보 삭제 수정 및 NftBurn 저장    
-      // await queryRunner.manager.update(NftMint, {assetNo, tokenIdx: tokenidx.tokenIdx}, dataBurn);    
-      // const nftBurnInfo: CreateBurnDto = {assetNo};
-      // const newNftTransfer = queryRunner.manager.create<NftTransfer>(NftTransfer, nftTransferInfo);
-      // await queryRunner.manager.save<NftTransfer>(newNftTransfer);
-      // await this.nftService.createBurn(user, nftBurnInfo);
+      // NftBurn 저장
+      const productNo = assetInfo.productNo;
+      const nftMintInfo = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
+      if (!nftMintInfo) {
+        throw new NotFoundException("Data Not found. : NFT 민트 정보");
+      }
+      const nftBurnInfo: CreateBurnDto = {assetNo, productNo, issuedTo: user.nftWalletAddr, 
+        tokenId: nftMintInfo.tokenId, state: 'B9'};
 
-      // NFT 소각 요청 - 자기것만
-      // if(metadataInfo){
-      //   const createBurnDto: CreateBurntDto = {
-      //     metadataId: metadataInfo.metadataId,
-      //     issuedTo: user.nftWalletAddr
+      // console.log("===== nftBurnInfo : "+ JSON.stringify(nftBurnInfo));
+      const newBurn = queryRunner.manager.create(NftBurn, nftBurnInfo);
+      const result = await queryRunner.manager.save<NftBurn>(newBurn);
+
+      // NFT Burn 하기        
+      // if(file){
+      //   // NFT Media생성
+      //   const filePath = join(__dirname, `../../public/${file.filePath}`);
+      //   const mediaInfo = await this.nftService.createMedia('item', newItem.itemNo, filePath);
+
+      //   // NFT 메타데이터 생성을 위한 파라메터 설정
+      //   const createMetaDataDto: CreateMetaDataDto = {
+      //     name: createAssetDto.itemName,
+      //     createdBy: user.userName,
+      //     image: mediaInfo.mediaId,
+      //     description: createAssetDto.desc,
+      //     maxMintLimit: 1
+      //   };
+
+      //   // NFT 메타데이터 생성
+      //   const metadataInfo = await this.nftService.createMetaData(createMetaDataDto);
+
+      //   // NFT 발급 요청
+      //   if(metadataInfo){
+      //     const createMintDto: CreateMintDto = {
+      //       metadataId: metadataInfo.metadataId,
+      //       issuedTo: user.nftWalletAddr
+      //     }
+      //     await this.nftService.createMint(createMintDto);
       //   }
-      //   await this.nftService.createBurn(createBurnDto);
       // }
 
       await queryRunner.commitTransaction();

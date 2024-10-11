@@ -8,6 +8,12 @@ export class ModifyPurchaseAssetDto {
   @ApiProperty({ required: false, description: '구매상태 : P4' })
   readonly state: string;
 
+  // @IsOptional()
+  // @IsString()
+  // @Length(1, 1)
+  // @ApiProperty({ required: false, description: '굿즈 팔린 여부 : Y' })
+  // readonly soldYn: string;
+
   @IsOptional()
   @IsString()
   @Length(1, 256)

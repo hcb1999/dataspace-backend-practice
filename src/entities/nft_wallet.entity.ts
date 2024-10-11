@@ -11,6 +11,9 @@ export class NftWallet extends BaseEntity {
   @Column({ name:"addr", type:"varchar", length:80, comment:"NFT 지갑주소" })
   addr: string;
 
+  @Column({ name:"pkey", type:"varchar", length:256, comment:"NFT 지갑주의 Private Key", nullable: true })
+  pkey: string;
+
   @CreateDateColumn({ type: 'timestamptz', name:"reg_dttm", comment:"등록일시" })
   regDttm: Date;
 }

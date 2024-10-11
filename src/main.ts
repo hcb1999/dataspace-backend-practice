@@ -6,10 +6,23 @@ import * as cookieParser from 'cookie-parser';
 import { setupSwagger } from 'src/common/swagger';
 import * as express from 'express';
 import { join } from 'path';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { ClientsModule, Transport, MicroserviceOptions} from '@nestjs/microservices';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+  //   transport: Transport.RMQ,
+  //   options: {
+  //     urls: ['amqp://localhost:5672'],
+  //     queue: 'cats_queue',
+  //     queueOptions: {
+  //       durable: false
+  //     },
+  //   },
+  // });
 
+  app.useWebSocketAdapter(new IoAdapter(app));  // WebSocket 어댑터 사용
   // CORS 설정
   app.enableCors({
     origin: true,//여기에 url을 넣어도된다. 
@@ -36,6 +49,24 @@ async function bootstrap() {
 
   //추가 html 페이지 경로 설정
   app.use(express.static(join(__dirname, '..', 'public')));
+
+  // 마이크로서비스 생성
+  const microservice = app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: ['amqp://avataroad:avataroad@localhost:5672'],
+      queue: 'transaction_queue', // 큐 이름
+      queueOptions: {
+        durable: true,
+        // deadLetterExchange: '',
+        // deadLetterRoutingKey: 'dead_letter_queue',
+      },
+    },
+  });
+
+  await microservice.listen();  {// 마이크로서비스를 수신 대기 상태로 만듭니다.
+    console.log('Microservice is listening');
+  }
 
   await app.listen(process.env.SERVER_PORT);
 }

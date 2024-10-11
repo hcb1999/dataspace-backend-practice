@@ -14,7 +14,7 @@ export class NftTransfer extends BaseEntity {
   purchaseNo: number;
 
   @Index()
-  @Column({name:"tx_id", type:"varchar", length:40, comment:"TX ID", nullable:true})
+  @Column({name:"tx_id", type:"varchar", length:66, comment:"TX ID", nullable:true})
   txId: string;
 
   @Column({ name:"from_addr", type:"varchar", length:80, comment:"From 지갑주소" })
@@ -23,8 +23,20 @@ export class NftTransfer extends BaseEntity {
   @Column({ name:"to_addr", type:"varchar", length:80, comment:"to 지갑주소" })
   toAddr: string;
 
-  @Column({ name:"token_idx", type:"varchar", length:256, comment:"토큰IDX", nullable:true })
-  tokenIdx: string;
+  @Index()
+  @Column({ name:"product_no", type:"int4", comment:"상품 번호", nullable:true })
+  productNo: number;
+  
+  @Index()
+  @Column({ name:"asset_no", type:"int4", comment:"에셋 번호", nullable:true })
+  assetNo: number;
+
+  @Index()
+  @Column({ name: "token_id", type: "varchar", length: 40, comment: "토큰ID"})
+  tokenId: string;
+
+  @Column({ name: "state", type: "varchar", length: 10, comment: "트랜스퍼 시작", default: 'B5' })
+  state: string;
 
   @Column({ name:"result", type:"varchar", length:1, comment:"성공여부", default: "S" })
   result: string;

@@ -11,6 +11,7 @@ import { CreatePurchaseAssetDto } from '../dtos/create_purchase_asset.dto';
 import { ModifyPurchaseAssetDto } from '../dtos/modify_purchase_asset.dto';
 import { GetPurchaseAssetDto } from '../dtos/get_purchase_asset.dto';
 import { CreateTransferDto } from '../dtos/create_transfer.dto';
+import { NftMint } from "../entities/nft_mint.entity";
 import { NftTransfer } from "../entities/nft_transfer.entity";
 import { PageResponse } from 'src/common/page.response';
 
@@ -27,6 +28,9 @@ export class PurchaseAssetService {
 
     @Inject('PRODUCT_REPOSITORY')
     private productRepository: Repository<Product>,
+
+    @Inject('NFT_MINT_REPOSITORY')
+    private nftMintRepository: Repository<NftMint>,
 
     @Inject('DATA_SOURCE')
     private dataSource: DataSource,
@@ -116,14 +120,21 @@ export class PurchaseAssetService {
 
       // state가 결제완료(P3)면 NftTransfer 저장
         if(state=== 'P3'){
-          const nftTransferInfo: CreateTransferDto = {purchaseAssetNo: purchaseAssetInfo.purchaseAssetNo, fromAddr: purchaseAssetInfo.saleAddr,
-            toAddr: purchaseAssetInfo.purchaseAddr, purchaseNo: undefined, txId: undefined};
+          // NftTransfer 저장
+          const productNo = purchaseAssetInfo.productNo;
+          const assetNo = purchaseAssetInfo.assetNo;
+          const nftMintInfo = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
+          if (!nftMintInfo) {
+            throw new NotFoundException("Data Not found. : NFT 민트 정보");
+          }
+          const nftTransferInfo: CreateTransferDto = {purchaseAssetNo: purchaseAssetInfo.purchaseAssetNo, 
+            purchaseNo: undefined, fromAddr: purchaseAssetInfo.saleAddr, toAddr: purchaseAssetInfo.purchaseAddr, 
+            assetNo, productNo, tokenId: nftMintInfo.tokenId, state: 'B5'};
 
           console.log("===== nftTransferInfo : "+ nftTransferInfo);
           const newTransfer = queryRunner.manager.create(NftTransfer, nftTransferInfo);
           const result = await queryRunner.manager.save<NftTransfer>(newTransfer);
         }
-
         await queryRunner.commitTransaction();
 
     } catch (e) {

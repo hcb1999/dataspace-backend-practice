@@ -49,7 +49,9 @@ export class AuthService {
   async getAccessToken(getUserDto: GetUserDto): Promise<any> {
 
     try {
-      const userWalletInfo = await this.nftService.getOneByAddress(getUserDto.addr);
+      const addr = getUserDto.addr.toLowerCase();
+      // console.log("addr : "+addr);
+      const userWalletInfo = await this.nftService.getOneByAddress(addr);
       if (!userWalletInfo) {
         throw new NotFoundException("Address not found.");
       }
@@ -81,7 +83,9 @@ export class AuthService {
   async register(createUserDto: CreateUserDto): Promise<any> {
 
     try {
-      const addr = createUserDto.addr;
+      // const addr = createUserDto.addr;
+      const addr = createUserDto.addr.toLowerCase();
+      // console.log("original addr : "+createUserDto.addr+", addr : "+addr);
       const nickName = createUserDto.nickName;
       const wallet = await this.userService.getOneByAddress(addr);
       if (wallet) {

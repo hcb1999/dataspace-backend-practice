@@ -20,11 +20,18 @@ export class NftMint extends BaseEntity {
   assetNo: number;
 
   @Index()
+  @Column({name:"tx_id", type:"varchar", length:66, comment:"TX ID", nullable:true})
+  txId: string;
+
+  @Index()
   @Column({ name:"issued_to", type:"varchar", length:80, comment:"NFT 발행 지갑 주소" })
   issuedTo: string;
 
-  @Column({ name:"token_idx", type:"varchar", length:256, comment:"토큰IDX", nullable:true  })
-  tokenIdx: string;
+  @Column({ name: "token_id", type: "varchar", length: 40, comment: "토큰 ID", nullable: true})
+  tokenId: string;
+
+  @Column({ name: "state", type: "varchar", length: 10, comment: "민팅 시작", default: 'B1' })
+  state: string;
 
   @Column({ name: "use_yn", type: "varchar", length: 1, comment: "사용 여부", default: "N" })
   useYn: string;
