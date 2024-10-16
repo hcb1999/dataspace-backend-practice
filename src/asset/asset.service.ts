@@ -20,6 +20,7 @@ import { CreateMintDto } from '../dtos/create_mint.dto';
 import { CreateBurnDto } from '../dtos/create_burn.dto';
 import { NftService } from '../nft/nft.service';
 import { PageResponse } from 'src/common/page.response';
+import { PurchaseAsset } from 'src/entities/purchase_asset.entity';
 
 @Injectable()
 export class AssetService {
@@ -167,47 +168,18 @@ export class AssetService {
       createAssetDto['metaverseName'] =  metaverseInfo.metaverseName;
       createAssetDto['typeDef'] =  assetTypeInfo.typeDef;
       
-      // console.log("createAssetDto : "+JSON.stringify(createAssetDto));
+      console.log("createAssetDto : "+JSON.stringify(createAssetDto));
       const newAsset = queryRunner.manager.create(Asset, createAssetDto);
       const result = await queryRunner.manager.save<Asset>(newAsset);
       const assetNo = result.assetNo;
-
-      // NftMint 저장
-      const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address, tokenId: undefined, state: 'B1'};
-
-      // console.log("===== nftMintInfo : "+ JSON.stringify(nftMintInfo));
-      const newMint = queryRunner.manager.create(NftMint, nftMintInfo);
-      const result1 = await queryRunner.manager.save<NftMint>(newMint);
-
-      // NFT Mint 하기        
-      // if(file){
-      //   // NFT Media생성
-      //   const filePath = join(__dirname, `../../public/${file.filePath}`);
-      //   const mediaInfo = await this.nftService.createMedia('item', newItem.itemNo, filePath);
-
-      //   // NFT 메타데이터 생성을 위한 파라메터 설정
-      //   const createMetaDataDto: CreateMetaDataDto = {
-      //     name: createAssetDto.itemName,
-      //     createdBy: user.userName,
-      //     image: mediaInfo.mediaId,
-      //     description: createAssetDto.desc,
-      //     maxMintLimit: 1
-      //   };
-
-      //   // NFT 메타데이터 생성
-      //   const metadataInfo = await this.nftService.createMetaData(createMetaDataDto);
-
-      //   // NFT 발급 요청
-      //   if(metadataInfo){
-      //     const createMintDto: CreateMintDto = {
-      //       metadataId: metadataInfo.metadataId,
-      //       issuedTo: user.nftWalletAddr
-      //     }
-      //     await this.nftService.createMint(createMintDto);
-      //   }
-      // }
-
+      
       await queryRunner.commitTransaction();
+
+      // nftService.createMint 호출
+      const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address, tokenId: null, state: 'B1'};
+      this.nftService.createMint(user, nftMintInfo);
+      
+      // console.log("===== nftMintInfo : "+ JSON.stringify(nftMintInfo));
 
       return { assetNo };
 
@@ -337,11 +309,7 @@ export class AssetService {
    * @param assetNo 
    */
   async delete(user: User, assetNo: number): Promise<any> {
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
+    
     try {
 
       const userNo = user.userNo;
@@ -351,65 +319,36 @@ export class AssetService {
         throw new NotFoundException("Data Not found. : 에셋");
       }
 
-      if (assetInfo.state === "S4") {
+      if (assetInfo.state === "S4" || assetInfo.state === "S5") {
         const statetInfo = await this.stateRepository.findOne({ where:{state : assetInfo.state} });
         if (statetInfo) {
           throw new NotFoundException("Already on "+statetInfo.stateDesc+".");
         }
       }
 
-      // 에셋 정보 삭제 수정
-      const data = { useYn: 'N', state: 'S4'  }
-      await queryRunner.manager.update(Asset, {assetNo}, data);
-
-      // NftBurn 저장
       const productNo = assetInfo.productNo;
       const nftMintInfo = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
       if (!nftMintInfo) {
         throw new NotFoundException("Data Not found. : NFT 민트 정보");
       }
-      const nftBurnInfo: CreateBurnDto = {assetNo, productNo, issuedTo: user.nftWalletAddr, 
-        tokenId: nftMintInfo.tokenId, state: 'B9'};
 
-      // console.log("===== nftBurnInfo : "+ JSON.stringify(nftBurnInfo));
-      const newBurn = queryRunner.manager.create(NftBurn, nftBurnInfo);
-      const result = await queryRunner.manager.save<NftBurn>(newBurn);
+      const tokenId = assetInfo.tokenId;
+      if(tokenId){
 
-      // NFT Burn 하기        
-      // if(file){
-      //   // NFT Media생성
-      //   const filePath = join(__dirname, `../../public/${file.filePath}`);
-      //   const mediaInfo = await this.nftService.createMedia('item', newItem.itemNo, filePath);
-
-      //   // NFT 메타데이터 생성을 위한 파라메터 설정
-      //   const createMetaDataDto: CreateMetaDataDto = {
-      //     name: createAssetDto.itemName,
-      //     createdBy: user.userName,
-      //     image: mediaInfo.mediaId,
-      //     description: createAssetDto.desc,
-      //     maxMintLimit: 1
-      //   };
-
-      //   // NFT 메타데이터 생성
-      //   const metadataInfo = await this.nftService.createMetaData(createMetaDataDto);
-
-      //   // NFT 발급 요청
-      //   if(metadataInfo){
-      //     const createMintDto: CreateMintDto = {
-      //       metadataId: metadataInfo.metadataId,
-      //       issuedTo: user.nftWalletAddr
-      //     }
-      //     await this.nftService.createMint(createMintDto);
-      //   }
-      // }
-
-      await queryRunner.commitTransaction();
+        // nftService.createBurn 호출
+        const nftBurnInfo: CreateBurnDto = {assetNo, productNo, issuedTo: '', tokenId, state: ''};
+        this.nftService.createBurn(user, nftBurnInfo);
+        
+        // console.log("===== nftBurnInfo : "+ JSON.stringify(nftBurnInfo));
+      }else{
+      // 에셋 상태 정보 수정(민트 안된 에셋). 
+      const data = { useYn: 'N' };
+      await this.assetRepository.update(assetNo, data);
+      }
 
     } catch (e) {
       this.logger.error(e);
       throw e;
-    }finally {
-      await queryRunner.release();
     }
   }
 
@@ -475,6 +414,7 @@ export class AssetService {
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.ad_type", 'adType')
                       .addSelect("asset.type_def", 'typeDef')
+                      .addSelect("product.product_no", 'productNo')
                       .addSelect("product.reg_addr", 'productRegAddr')
                       .addSelect('product.reg_name', 'productRegName')
                       .addSelect('product.product_name', 'productName')
@@ -509,7 +449,7 @@ export class AssetService {
       //   assetInfo = await sql.groupBy(`asset.asset_no, assetState.state_no, file.file_no, user.user_no, nftMint.contract_id`)
       //                        .getRawOne();
       // }else{
-        assetInfo = await sql.groupBy(`asset.asset_no, product.reg_addr, product.reg_name, 
+        assetInfo = await sql.groupBy(`asset.asset_no, product.product_no, product.reg_addr, product.reg_name, 
           product.product_name, state.state_desc, file.file_name_first,
           file.file_path_first, file.thumbnail_first, fileAsset.file_no`)
                            .getRawOne();
@@ -556,6 +496,7 @@ export class AssetService {
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.ad_type", 'adType')
                       .addSelect("asset.type_def", 'typeDef')
+                      .addSelect("product.product_no", 'productNo')
                       .addSelect("product.reg_addr", 'productRegAddr')
                       .addSelect('product.reg_name', 'productRegName')
                       .addSelect('product.product_name', 'productName')
@@ -585,7 +526,7 @@ export class AssetService {
       //   assetInfo = await sql.groupBy(`asset.asset_no, assetState.state_no, file.file_no, user.user_no, nftMint.contract_id`)
       //                        .getRawOne();
       // }else{
-        assetInfo = await sql.groupBy(`asset.asset_no, product.reg_addr, product.reg_name,
+        assetInfo = await sql.groupBy(`asset.asset_no, product.product_no, product.reg_addr, product.reg_name,
            product.product_name, fileAsset.file_no`)
                            .getRawOne();
 
@@ -649,7 +590,8 @@ export class AssetService {
     const endDttm = getAssetDto.endDttm;
     const word = getAssetDto.word;
 
-    let options = `asset.use_yn='Y'`;
+    // let options = `asset.use_yn='Y'`;
+    let options = `asset.use_yn='Y' AND asset.token_id IS NOT NULL AND asset.token_id != '' AND asset.sold_yn='N'`;
     if (advertiser) {
       options += ` and product.reg_name like '%${advertiser}%'`;
     }
@@ -710,6 +652,7 @@ export class AssetService {
                       .addSelect('product.reg_name', 'productRegName')
                       .addSelect('product.product_name', 'productName')
                       .addSelect('asset.price', 'price')
+                      .addSelect('asset.token_id', 'tokenId')
                       .addSelect("fileAsset.file_name_first", 'fileNameFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
@@ -813,6 +756,7 @@ export class AssetService {
                           .addSelect('product.reg_name', 'productRegName')
                           .addSelect('product.product_name', 'productName')
                           .addSelect('asset.price', 'price')
+                          .addSelect('asset.token_id', 'tokenId')
                           .addSelect('asset.state', 'state')
                           .addSelect('state.state_desc', 'stateDsec')
                           .addSelect("fileAsset.file_name_first", 'fileNameFirst')

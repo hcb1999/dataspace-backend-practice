@@ -30,6 +30,9 @@ export class PurchaseService {
     @Inject('PURCHASE_ASSET_REPOSITORY')
     private purchaseAssetRepository: Repository<PurchaseAsset>,
 
+    @Inject('ASSET_REPOSITORY')
+    private assetRepository: Repository<Asset>,
+
     @Inject('NFT_MINT_REPOSITORY')
     private nftMintRepository: Repository<NftMint>,
 
@@ -53,6 +56,9 @@ export class PurchaseService {
 
       // 이미 구매한 정보 결제중(P2), 결제완료(P3) 이면 구매 못함.
       const purchaseAssetNo = createPurchaseDto.purchaseAssetNo;
+      const fromAddr = createPurchaseDto.saleAddr.toLowerCase();
+      const toAddr = createPurchaseDto.purchaseAddr.toLowerCase();
+
       const purchaseInfo = await this.purchaseRepository.findOne({ where:{purchaseAssetNo, state: In(['P2', 'P3'])}  });
      
       if (purchaseInfo) {
@@ -60,35 +66,44 @@ export class PurchaseService {
           throw new ConflictException("Data already existed. : 이미 구매한 에셋");
         // }
       }
-
-      // 메타마스크 결제
-      // 처음엔 P2(결제중) 
-      // ---> 후에 결재결과를 따로 메타마스크 결제모드에서 처리하고 상태변경을 한다.
-      // 상태는 개인키오류(P1), 결제완료(P3), 결제실패(P4)으로 한다. 실패 사유도 같이 넣어준다.
-
       
       const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
       if (!purchaseAssetInfo) {
         throw new NotFoundException("Data Not found. : 엔터사 구매 정보");
       }
+      const productNo = purchaseAssetInfo.productNo;
+      const assetNo = purchaseAssetInfo.assetNo;
+      const assetInfo = await this.assetRepository.findOne({ where:{assetNo} });
+      if (!assetInfo) {
+        throw new NotFoundException("Data Not found.: 에셋");
+      }
+      if (!assetInfo.tokenId) {
+        throw new NotFoundException("Data Not Minted.: 에셋");
+      }
 
-      console.log("===== createPurchaseDto : "+createPurchaseDto);
+      // console.log("===== createPurchaseDto : "+createPurchaseDto);
 
       // Purchase 저장
-      const newPurchase = queryRunner.manager.create(Purchase, createPurchaseDto);
+      const createPurchase: CreatePurchaseDto  = {...createPurchaseDto, 
+        saleAddr: fromAddr,
+        purchaseAddr: toAddr
+      }
+      // console.log("===== createPurchase : "+ JSON.stringify(createPurchase));
+      const newPurchase = queryRunner.manager.create(Purchase, createPurchase);
       const result = await queryRunner.manager.save<Purchase>(newPurchase);
+      const purchaseNo = result.purchaseNo;
 
       await queryRunner.commitTransaction();
+    
+      // nftService.  // nftService.createTransfer 호출 호출
+      const tokenId = assetInfo.tokenId;
+      const nftTransferInfo: CreateTransferDto = {purchaseAssetNo, purchaseNo, fromAddr, toAddr, 
+        assetNo, productNo, tokenId, state: ''};
+      this.nftService.createTransfer(user, nftTransferInfo);
       
-      // 이건 임시 DB용. 블록체인이 되면 그거 처리 후 수정하기
-      const purchaseNo = result.purchaseNo;
-      const modifyPurchaseDto:ModifyPurchaseDto = {state: 'P3', failDesc:undefined};
-      this.updateState(purchaseNo, modifyPurchaseDto);
+    // console.log("===== nftTransferInfo : "+ JSON.stringify(nftTransferInfo));
 
-      // const modifyPurchaseAssetDto:ModifyPurchaseAssetDto = {state: 'P3', soldYn: 'Y', failDesc:undefined};
-      // this.updateState(purchaseAssetNo, modifyPurchaseAssetDto);
-
-      return { purchaseNo: result.purchaseNo };
+      return { purchaseNo };
   
     } catch (e) {
       this.logger.error(e);
@@ -265,8 +280,7 @@ export class PurchaseService {
       }
     
       console.log("options : "+options);
-
-      // console.log("=========== options : "+options);     
+  
       const sql = this.purchaseRepository.createQueryBuilder('purchase')
                       .innerJoin(PurchaseAsset, 'purchaseAsset', 'purchaseAsset.purchase_asset_no = purchase.purchase_asset_no')
                       .innerJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')

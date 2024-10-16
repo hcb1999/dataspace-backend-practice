@@ -3,6 +3,7 @@ import { DataSource, Repository, UpdateResult, Like, Between } from 'typeorm';
 import { PurchaseAsset } from '../entities/purchase_asset.entity';
 import { Product } from "../entities/product.entity";
 import { Asset } from '../entities/asset.entity';
+import { State } from '../entities/state.entity';
 import { FileAsset } from '../entities/file_asset.entity';
 import { User } from '../entities/user.entity';
 import { NftService } from '../nft/nft.service';
@@ -28,6 +29,9 @@ export class PurchaseAssetService {
 
     @Inject('PRODUCT_REPOSITORY')
     private productRepository: Repository<Product>,
+    
+    @Inject('ASSET_REPOSITORY')
+    private assetRepository: Repository<Asset>,
 
     @Inject('NFT_MINT_REPOSITORY')
     private nftMintRepository: Repository<NftMint>,
@@ -50,37 +54,53 @@ export class PurchaseAssetService {
 
     try {
 
-      // 메타마스크 결제
-      // 처음엔 P2(결제중) 
-      // ---> 후에 결재결과를 따로 메타마스크 결제모드에서 처리하고 상태변경을 한다.
-      // 상태는 개인키오류(P1), 결제완료(P3), 결제실패(P4)으로 한다. 실패 사유도 같이 넣어준다.
-
-      
       const productNo = createPurchaseAssetDto.productNo;
+      const fromAddr = createPurchaseAssetDto.saleAddr.toLowerCase();
+      const toAddr = createPurchaseAssetDto.purchaseAddr.toLowerCase();
+      const assetNo = createPurchaseAssetDto.assetNo;
+    
       const productInfo = await this.productRepository.findOne({ where:{productNo} });
       if (!productInfo) {
         throw new NotFoundException("Data Not found.: 굿즈");
       }
 
+      const assetInfo = await this.assetRepository.findOne({ where:{assetNo} });
+      if (!assetInfo) {
+        throw new NotFoundException("Data Not found.: 에셋");
+      }
+      if (!assetInfo.tokenId) {
+        throw new NotFoundException("Data Not Minted.: 에셋");
+      }
+
       createPurchaseAssetDto['startDttm'] = productInfo.startDttm;
       createPurchaseAssetDto['endDttm'] = productInfo.endDttm;
-      createPurchaseAssetDto['saleState'] = productInfo.state.replace('N', 'S');
 
-      // console.log("===== createPurchaseAssetDto : "+createPurchaseAssetDto);
-
+      // console.log("===== createPurchaseAssetDto : "+JSON.stringify(createPurchaseAssetDto));
+      // console.log("===== fromAddr : "+fromAddr);
+     
       // PurchaseAsset 저장
-      const newPurchaseAsset = queryRunner.manager.create(PurchaseAsset, createPurchaseAssetDto);
+      const createPurchaseAsset: CreatePurchaseAssetDto  = {...createPurchaseAssetDto, 
+        saleAddr: fromAddr,
+        purchaseAddr: toAddr
+      }
+      // console.log("===== createPurchaseAsset : "+ JSON.stringify(createPurchaseAsset));
+      
+      const newPurchaseAsset = queryRunner.manager.create(PurchaseAsset, createPurchaseAsset);
       const result = await queryRunner.manager.save<PurchaseAsset>(newPurchaseAsset);
+      const purchaseAssetNo = result.purchaseAssetNo;
 
       await queryRunner.commitTransaction();
+
+      // nftService.createTransfer 호출
+      const tokenId = assetInfo.tokenId;
+      const nftTransferInfo: CreateTransferDto = {purchaseAssetNo, purchaseNo: null, fromAddr, toAddr, 
+        assetNo, productNo, tokenId, state: ''};
+      this.nftService.createTransfer(user, nftTransferInfo);
       
-      // 이건 임시 DB용. 블록체인이 되면 그거 처리 후 수정하기
-      const purchaseAssetNo = result.purchaseAssetNo;
-      const modifyPurchaseAssetDto:ModifyPurchaseAssetDto = {state: 'P3', failDesc:undefined};
-      this.updateState(purchaseAssetNo, modifyPurchaseAssetDto);
+    // console.log("===== nftTransferInfo : "+ JSON.stringify(nftTransferInfo));
 
       return { purchaseAssetNo };
-  
+
     } catch (e) {
       this.logger.error(e);
       throw e;
@@ -128,7 +148,7 @@ export class PurchaseAssetService {
             throw new NotFoundException("Data Not found. : NFT 민트 정보");
           }
           const nftTransferInfo: CreateTransferDto = {purchaseAssetNo: purchaseAssetInfo.purchaseAssetNo, 
-            purchaseNo: undefined, fromAddr: purchaseAssetInfo.saleAddr, toAddr: purchaseAssetInfo.purchaseAddr, 
+            purchaseNo: null, fromAddr: purchaseAssetInfo.saleAddr, toAddr: purchaseAssetInfo.purchaseAddr, 
             assetNo, productNo, tokenId: nftMintInfo.tokenId, state: 'B5'};
 
           console.log("===== nftTransferInfo : "+ nftTransferInfo);
@@ -217,7 +237,132 @@ export class PurchaseAssetService {
         options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
     }
   
-    // console.log("options : "+options);
+    console.log("options : "+options);
+
+    try {
+        const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
+                      .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
+                      .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                      .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
+                      .addSelect('purchaseAsset.purchase_addr', 'purchaseAddr')
+                      .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
+                      .addSelect('purchaseAsset.sale_addr', 'saleAddr')
+                      .addSelect('purchaseAsset.sale_user_name', 'saleUserName')
+                      .addSelect("asset.asset_name", 'assetName')
+                      .addSelect("asset.asset_desc", 'assetDesc')
+                      .addSelect("asset.price", 'price')
+                      .addSelect("asset.metaverse_name", 'metaverseName')
+                      .addSelect("asset.type_def", 'typeDef')
+                      .addSelect('purchaseAsset.start_dttm', 'startDttm')
+                      .addSelect('purchaseAsset.end_dttm', 'endDttm')
+                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
+                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .where(options);
+
+
+        const list = await sql.orderBy('purchaseAsset.purchase_asset_no', getPurchaseAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
+                              .skip(skip)
+                              .take(take)
+                              .groupBy(`purchaseAsset.purchase_asset_no, asset.price, asset.asset_name,
+                                asset.asset_desc, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
+                                fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
+                                fileAsset.file_path_second, fileAsset.thumbnail_second`)
+                              .getRawMany();
+
+        const totalCount = await sql.getCount(); 
+
+        return new PageResponse(totalCount, getPurchaseAssetDto.pageSize, list);
+0
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    }
+  }
+
+    /**
+   * 구매 정보 조회 (마이페이지)
+   * @param user
+   * @param purchaseAssetNo 
+   * @returns 
+   */
+    async getMyInfo(user: User, purchaseAssetNo: number): Promise<any> {
+
+      const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
+  
+      try {
+        const userNo = user.userNo;
+        const purchaseAsset = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
+        if (!purchaseAsset) {                         
+          throw new NotFoundException("Data Not found. : 엔터사 구매 정보");
+        }
+  
+        const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
+                        .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
+                        .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                        .leftJoin(State, 'state', 'state.state = purchaseAsset.sale_state')
+                        .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
+                        .addSelect('purchaseAsset.product_no', 'productNo')
+                        .addSelect('purchaseAsset.asset_no', 'assetNo')
+                        .addSelect('purchaseAsset.purchase_addr', 'purchaseAddr')
+                        .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
+                        .addSelect('purchaseAsset.sale_addr', 'saleAddr')
+                        .addSelect('purchaseAsset.sale_user_name', 'saleUserName')
+                        .addSelect('purchaseAsset.sold_yn', 'soldYn')
+                        .addSelect("asset.asset_name", 'assetName')
+                        .addSelect("asset.asset_desc", 'assetDesc')
+                        .addSelect("asset.price", 'price')
+                        .addSelect("asset.metaverse_name", 'metaverseName')
+                        .addSelect("asset.type_def", 'typeDef')
+                        .addSelect('purchaseAsset.start_dttm', 'startDttm')
+                        .addSelect('purchaseAsset.end_dttm', 'endDttm')
+                        .addSelect('purchaseAsset.use_yn', 'useYn')
+                        .addSelect('purchaseAsset.sale_state', 'saleState')
+                        .addSelect('state.state_desc', 'saleStateDesc')
+                        .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
+                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
+                        .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
+                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                        .where("purchaseAsset.purchase_asset_no = :purchaseAssetNo", { purchaseAssetNo })
+                      // .andWhere("nftMint.use_yn = 'N'")
+                      // .andWhere("nftMint.burn_yn = 'N'");
+  
+        const purchaseAssetInfo = await sql.groupBy(``)
+                                        .getRawOne();
+  
+        return purchaseAssetInfo;
+  
+      } catch (e) {
+        this.logger.error(e);
+        throw e;
+      }
+    } 
+  
+  /**
+   * 구매 목록 조회 (마이페이지)
+   * @param user 
+   * @param getPurchaseAssetDto 
+   */
+  async getPurchaseMyList(user: User, getPurchaseAssetDto: GetPurchaseAssetDto): Promise<any> {
+
+    const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
+    const skip = getPurchaseAssetDto.getOffset();
+    const take = getPurchaseAssetDto.getLimit();
+    const word = getPurchaseAssetDto.word;
+    const purchaseAddr = user.nftWalletAddr;
+
+    
+    let options = `purchaseAsset.purchase_addr = '${purchaseAddr}' and purchaseAsset.state='P3'`;
+    if (word) {
+        options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
+    }
+  
+    console.log("options : "+options);
 
     try {
         const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')

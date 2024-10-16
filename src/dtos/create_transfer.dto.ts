@@ -3,10 +3,9 @@ import { IsNotEmpty, IsOptional, IsString, Length, IsNumber, IsBoolean, IsObject
 import { Type, Transform } from 'class-transformer';  
 
 export class CreateTransferDto {
-  @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  @ApiProperty({ description: '광고주 구매번호', required: false })
+  @ApiProperty({ description: '광고주 구매번호' })
   readonly purchaseAssetNo: number;
 
   @IsOptional()
@@ -21,15 +20,14 @@ export class CreateTransferDto {
   // @ApiProperty({ description: 'txId', required: false})
   // txId: string;
 
-  @IsOptional()
   @IsString()
   @Length(1, 80)
-  @ApiProperty({ description: '지갑주소 - from', required: false})
+  @ApiProperty({ description: '지갑주소 - from' })
   readonly fromAddr: string;
 
   @IsString()
   @Length(1, 80)
-  @ApiProperty({ description: '지갑주소 - to'})
+  @ApiProperty({ description: '지갑주소 - to' })
   readonly toAddr: string;
 
   @IsNumber()
@@ -44,7 +42,7 @@ export class CreateTransferDto {
 
   @IsString()
   @Length(1, 40)
-  @ApiProperty({ description: '토큰 ID'})
+  @ApiProperty({ description: '토큰 ID' })
   tokenId: string;
 
   @IsOptional()

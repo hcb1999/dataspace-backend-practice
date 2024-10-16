@@ -144,6 +144,7 @@ export class PurchaseAssetController {
         ]
       }
     }}})
+    
   async getPurchaseList(@Query() getPurchaseAssetDto: GetPurchaseAssetDto ): Promise<void> {
     const purchaseAssetList = await this.purchaseAssetService.getPurchaseList(getPurchaseAssetDto);
 
@@ -159,6 +160,87 @@ export class PurchaseAssetController {
     });
 
   }
+
+    /**
+   * 엔터사 구매 목록 조회 (마이페이지)
+   * @param user 
+   * @param getPurchaseAssetDto 
+   * @returns 
+   */
+    @Get('/mypage')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('access-token')
+    @ApiOperation({ summary: '엔터사 구매 목록 조회', description: '엔터사 구매 목록을 조회한다.' })
+    @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
+    @ApiResponse({status:HttpStatus.BAD_REQUEST, description:'필수입력 오류'})
+    @ApiOkResponse({ description: '성공',
+      schema: {example: { 
+        "resultCode": 200,
+        "resultMessage": "SUCESS",
+        "data": {
+          "pageSize": 10,
+          "totalCount": 2,
+          "totalPage": 1,
+          "list": [
+            {
+              "price": 7000,
+              "purchaseAssetNo": 3,
+              "purchaseAddr": "0x12345678900",
+              "purchaseUserName": "엔터사 1",
+              "saleAddr": "0x12345678901",
+              "saleUserName": "크리에이터 1",
+              "assetName": "블링원 테스트 굿즈4",
+              "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+              "metaverseName": "K-POP 월드",
+              "typeDef": "K-셔츠",
+              "startDttm": "2024-09-01 09:00:00",
+              "endDttm": "2024-11-01 09:00:00",
+              "fileNameFirst": "blingone_4.png",
+              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
+              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
+              "fileNameSecond": "blingone_3.png",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+            },
+            {
+              "price": 6000,
+              "purchaseAssetNo": 2,
+              "purchaseAddr": "0x12345678900",
+              "purchaseUserName": "엔터사 1",
+              "saleAddr": "0x12345678901",
+              "saleUserName": "크리에이터 1",
+              "assetName": "블링원 테스트 굿즈4",
+              "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+              "metaverseName": "K-POP 월드",
+              "typeDef": "K-가슴",
+              "startDttm": "2024-09-01 09:00:00",
+              "endDttm": "2024-11-01 09:00:00",
+              "fileNameFirst": "blingone_4.png",
+              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
+              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
+              "fileNameSecond": "blingone_3.png",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
+            }
+          ]
+        }
+      }}})
+      
+    async getPurchaseMyList(@GetUser() user: User, @Query() getPurchaseAssetDto: GetPurchaseAssetDto ): Promise<void> {
+      const purchaseAssetList = await this.purchaseAssetService.getPurchaseMyList(user, getPurchaseAssetDto);
+  
+      const updatedList = purchaseAssetList.list.map((item: any) => ({
+        ...item,
+        startDttm: moment(item.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        endDttm: moment(item.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+      }));
+    
+      return this.responseMessage.response({
+        ...purchaseAssetList,
+        list: updatedList
+      });
+  
+    }
 
     /**
    * 엔터사 구매 상세 정보 조회
@@ -210,6 +292,64 @@ export class PurchaseAssetController {
     })
     async getInfo(@Param('purchaseAssetNo') purchaseAssetNo: number): Promise<any> {
       const purchaseAsset = await this.purchaseAssetService.getInfo(purchaseAssetNo);
+      return this.responseMessage.response({
+        ...purchaseAsset,
+        startDttm: moment(purchaseAsset.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        endDttm: moment(purchaseAsset.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+      });  
+
+    }
+
+  /**
+   * 엔터사 구매 상세 정보 조회 (마이페이지)
+   * 
+   * @param user 
+   * @param purchaseAssetNo 
+   * @returns 
+   */
+    @Get('/mypage/:purchaseAssetNo')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('access-token')
+    @ApiOperation({ summary: '엔터사 구매 정보 조회', description: '엔터사 구매 정보를 조회한다.' })
+    @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+    @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+    @ApiOkResponse({
+      description: '성공',
+      schema: {
+        example: {
+          resultCode: 200,
+          resultMessage: 'SUCCESS',
+          data: {
+            "resultCode": 200,
+            "resultMessage": "SUCESS",
+            "data": {
+              "price": 7000,
+              "purchaseAssetNo": 3,
+              "productNo": 26,
+              "assetNo": 5,
+              "purchaseAddr": "0x12345678900",
+              "purchaseUserName": "엔터사 1",
+              "saleAddr": "0x12345678901",
+              "saleUserName": "크리에이터 1",
+              "assetName": "블링원 테스트 굿즈4",
+              "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+              "metaverseName": "K-POP 월드",
+              "typeDef": "K-셔츠",
+              "startDttm": "2024-09-01 09:00:00",
+              "endDttm": "2024-11-01 09:00:00",
+              "fileNameFirst": "blingone_4.png",
+              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
+              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
+              "fileNameSecond": "blingone_3.png",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+            }
+          }
+        }
+      }
+    })
+    async getMyInfo(@GetUser() user: User, @Param('purchaseAssetNo') purchaseAssetNo: number): Promise<any> {
+      const purchaseAsset = await this.purchaseAssetService.getMyInfo(user, purchaseAssetNo);
       return this.responseMessage.response({
         ...purchaseAsset,
         startDttm: moment(purchaseAsset.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),

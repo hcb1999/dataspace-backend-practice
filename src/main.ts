@@ -56,17 +56,18 @@ async function bootstrap() {
     options: {
       urls: ['amqp://avataroad:avataroad@localhost:5672'],
       queue: 'transaction_queue', // 큐 이름
+      noAck: false,
       queueOptions: {
         durable: true,
-        // deadLetterExchange: '',
-        // deadLetterRoutingKey: 'dead_letter_queue',
+        // deadLetterExchange: 'dlx_exchange',
+        // deadLetterRoutingKey: 'dlx_routing_key',
+        'x-dead-letter-exchange': 'dlx_exchange1',
+        'x-dead-letter-routing-key': 'dlx_routing_key1',
       },
     },
   });
 
-  await microservice.listen();  {// 마이크로서비스를 수신 대기 상태로 만듭니다.
-    console.log('Microservice is listening');
-  }
+  await app.startAllMicroservices();
 
   await app.listen(process.env.SERVER_PORT);
 }

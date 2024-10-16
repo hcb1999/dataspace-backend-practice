@@ -9,6 +9,7 @@ import { NftProviders } from './nft.provider';
 import { NftProcessor } from './nft.processor';
 import { NftGateway } from './nft.gateway';
 import { ClientsModule, Transport} from '@nestjs/microservices';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -22,15 +23,18 @@ import { ClientsModule, Transport} from '@nestjs/microservices';
         options: {
           urls: ['amqp://avataroad:avataroad@localhost:5672'], // RabbitMQ 서버 URL 확인
           queue: 'transaction_queue', // 큐 이름 확인
+          // noAck: false,
           queueOptions: {
             durable: true,
-            // deadLetterExchange: '',
-            // deadLetterRoutingKey: 'dead_letter_queue',
+            'x-dead-letter-exchange': 'dlx_exchange1',
+            'x-dead-letter-routing-key': 'dlx_routing_key1',
+            'x-message-ttl': 10000,
           },
         },
       },
     ]),
     DatabaseModule,
+    HttpModule, 
     // JwtModule,
     ],
   controllers: [NftController, NftProcessor], 

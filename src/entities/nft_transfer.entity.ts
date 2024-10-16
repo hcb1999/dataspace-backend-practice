@@ -14,7 +14,7 @@ export class NftTransfer extends BaseEntity {
   purchaseNo: number;
 
   @Index()
-  @Column({name:"tx_id", type:"varchar", length:66, comment:"TX ID", nullable:true})
+  @Column({name:"tx_id", type:"varchar", length:100, comment:"TX ID", nullable:true})
   txId: string;
 
   @Column({ name:"from_addr", type:"varchar", length:80, comment:"From 지갑주소" })

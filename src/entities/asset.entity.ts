@@ -62,6 +62,9 @@ export class Asset extends BaseEntity {
   @Column({ name: "token_id", type: "varchar", length: 40, comment: "토큰ID", nullable: true})
   tokenId: string;
 
+  @Column({ name: "sold_yn", type: "varchar", length: 1, comment: "굿즈 팔린 여부", default: "N" })
+  soldYn: string;
+
   @CreateDateColumn({ type: 'timestamptz', name: "reg_dttm", comment: "등록일시" })
   regDttm: Date;
 

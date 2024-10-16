@@ -15,10 +15,9 @@ export class CreateBurnDto {
   // @ApiProperty({ description: '메타데이터ID' , required: false})
   // readonly metadataId: string;
 
-  @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  @ApiProperty({ description: '상품 번호' , required: false})
+  @ApiProperty({ description: '상품 번호' })
   readonly productNo: number;
 
   @IsNumber()

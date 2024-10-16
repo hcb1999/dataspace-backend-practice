@@ -16,7 +16,9 @@ import { CreateBurnDto } from '../dtos/create_burn.dto';
 import { PageResponse } from 'src/common/page.response';
 // import { InjectQueue } from '@nestjs/bull';
 // import { Queue } from 'bull';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices'
+import { HttpService } from '@nestjs/axios'; 
+
 
 @Injectable()
 export class NftService {
@@ -24,6 +26,9 @@ export class NftService {
 
   constructor(
     private configService: ConfigService,
+    private readonly httpService: HttpService,
+    // private readonly amqpConnection: AmqpConnection
+
     
     @Inject('ASSET_REPOSITORY')
     private assetRepository: Repository<Asset>,
@@ -47,9 +52,25 @@ export class NftService {
     // private readonly transactionQueue: Queue,
 
     @Inject('RABBITMQ_SERVICE') 
-    private client: ClientProxy
+    private client: ClientProxy,
+
+  ){
+    // // ClientProxy 초기화
+    // this.client = ClientProxyFactory.create({
+    //   transport: Transport.RMQ,
+    //     options: {
+    //       urls: ['amqp://avataroad:avataroad@localhost:5672'], // RabbitMQ 서버 URL 확인
+    //       queue: 'transaction_test5_queue', // 큐 이름 확인
+    //       noAck: true,
+    //       queueOptions: {
+    //         durable: true,
+    //         deadLetterExchange: 'dlx_exchange',
+    //         deadLetterRoutingKey: 'dlx_routing_key',
+    //       },
+    //     },
+    // });
     
-  ){}
+  }
 
 
  /**
@@ -75,7 +96,7 @@ export class NftService {
         const mint = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
         let nftMintNo = 0;
         if (!mint) {
-          const mintInfo = {productNo, assetNo, issuedTo: ownerAddress, tokenId:undefined, state: 'B1'};
+          const mintInfo = {productNo, assetNo, issuedTo: ownerAddress, tokenId: null, state: 'B1'};
           // console.log("===== mintInfo : "+JSON.stringify(mintInfo));
           const newMint = queryRunner.manager.create(NftMint, mintInfo);
           const result = await queryRunner.manager.save<NftMint>(newMint);
@@ -93,23 +114,15 @@ export class NftService {
           ownerPKey = wallet.pkey;
         } 
 
-        // await this.queueMintTransaction(nftMintNo, assetNo, productNo, ownerAddress, ownerPKey);
-        // console.log("===  this.client.send(mint)");
         const data = { nftMintNo, assetNo, productNo, ownerAddress, ownerPKey };
-        try {
-          await this.client.send({ cmd: 'mint' }, data).toPromise();
-        } catch (error) {
-            console.error('Error sending mint message:', error);
-        }
-
-    // return null;
+        console.log('Sending data:', data);
+        this.client.emit('mint', data);        
 
     } catch (e) {
       this.logger.error(e);
       throw e;
-    }finally {
-    
-    await queryRunner.release();
+    } finally {    
+      await queryRunner.release();
     }
 }
 
@@ -169,16 +182,16 @@ export class NftService {
 
         // MQ로 Transfer 전송 트랜잭션 처리 요청
         // await this.queueTransferTransaction(nftTransferNo, parseInt(tokenId), price, ownerAddress, ownerPKey, sellerAddress, sellerPKey);
-        const data = { nftTransferNo, tokenId: parseInt(tokenId), price, ownerAddress, ownerPKey, sellerAddress, sellerPKey};
-        try {
-          await this.client.send({ cmd: 'transfer' }, data).toPromise();
-        } catch (error) {
-            console.error('Error sending transfer message:', error);
-        }
+        const data = { nftTransferNo, tokenId: parseInt(tokenId), price, ownerAddress, ownerPKey,
+           sellerAddress, sellerPKey, purchaseAssetNo, purchaseNo };
+        console.log('Sending data:', data);
+        this.client.emit('transfer', data);    
 
     } catch (e) {
       this.logger.error(e);
       throw e;
+    } finally {    
+      await queryRunner.release();
     }
   }  
 
@@ -226,17 +239,16 @@ export class NftService {
         if (wallet) {
           ownerPKey = wallet.pkey;
         }
-        // await this.queueBurnTransaction(nftBurnNo, nftMintNo, assetNo, productNo, parseInt(tokenId), ownerAddress, ownerPKey);
+
         const data = { nftBurnNo, nftMintNo, assetNo, productNo, tokenId: parseInt(tokenId), ownerAddress, ownerPKey };
-        try {
-          await this.client.send({ cmd: 'burn' }, data).toPromise();
-        } catch (error) {
-            console.error('Error sending burn message:', error);
-        }
+        console.log('Sending data:', data);
+        this.client.emit('burn', data); 
 
     } catch (e) {
       this.logger.error(e);
       throw e;
+    } finally {    
+      await queryRunner.release();
     }
   } 
 
@@ -615,6 +627,61 @@ export class NftService {
       this.logger.error(e);
       throw e;
     }
+  }
+
+  // DLQ1에서 메시지를 가져옵니다 (최대 10개씩)
+  async fetchDlqMessage(count: number) {
+    // RabbitMQ HTTP API를 사용하여 DLQ에서 메시지를 가져옵니다.
+    const url = process.env.MQ_URL+'/api/queues/%2F/dlq1/get';
+    const auth = { username: process.env.MQ_USERNAME, password: process.env.MQ_PASSWORD };
+
+    const data = {
+      count: count,                // 가져올 메시지 수
+      requeue: false,          // 가져온 메시지를 다시 큐에 넣지 않음
+      encoding: 'auto',
+      ackmode: 'ack_requeue_false',
+    };
+
+    const response = await this.httpService.post(url, data, { auth }).toPromise();
+    return response.data.length ? response.data : [];
+  }
+
+  // 메시지를 다시 transaction_queue로 보냅니다
+  async retryDlqMessage(message: any) {
+    if (!message) {
+      throw new Error('DLQ에서 가져온 메시지가 없습니다.');
+    }
+
+    // 메시지를 transaction_test_queue 다시 보냄
+    const url = process.env.MQ_URL+'/api/exchanges/%2F/amq.default/publish';
+    const auth = { username: process.env.MQ_USERNAME, password: process.env.MQ_PASSWORD };
+
+    const data = {
+      properties: message.properties,
+      routing_key: 'transaction_queue',  // 다시 보낼 큐
+      payload: message.payload,          // 가져온 메시지 payload 그대로
+      payload_encoding: 'string',
+    };
+
+    await this.httpService.post(url, data, { auth }).toPromise();
+    console.log('메시지를 재발송했습니다.');
+
+    // 재발송 후 ACK 전송
+    // await this.ackDlqMessage(message);
+  }
+
+  // 메시지를 다시 transaction_queue로 보냅니다
+  async ackDlqMessage(message: any) {
+    const url = process.env.MQ_URL+'/api/queues/%2F/dlq1/ack';
+    const auth = { username: process.env.MQ_USERNAME, password: process.env.MQ_PASSWORD };
+
+    const data = {
+      delivery_tag: message.delivery_tag,  // 가져온 메시지의 delivery tag
+      multiple: false,
+    };
+
+    await this.httpService.post(url, data, { auth }).toPromise();
+    console.log('메시지에 대해 ACK를 보냈습니다.');
   }
 
 }

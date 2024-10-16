@@ -20,7 +20,7 @@ export class NftBurn extends BaseEntity {
   assetNo: number;
 
   @Index()
-  @Column({name:"tx_id", type:"varchar", length:66, comment:"TX ID", nullable:true})
+  @Column({name:"tx_id", type:"varchar", length:100, comment:"TX ID", nullable:true})
   txId: string;
   
   @Index()

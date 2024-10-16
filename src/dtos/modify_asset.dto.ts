@@ -43,7 +43,7 @@ export class ModifyAssetDto {
   @IsOptional()
   @IsString()
   @Length(1, 10)
-  @ApiProperty({ required: false, description: '판매상태(S1:판매등록, S2: 판매시작, S3:판매중지, S4:판매종료)' })
+  @ApiProperty({ required: false, description: '판매상태(S1:판매등록, S2: 판매시작, S3:판매중지, S4:판매종료, S5:판매완료)' })
   readonly state: string;
 
   @IsOptional()

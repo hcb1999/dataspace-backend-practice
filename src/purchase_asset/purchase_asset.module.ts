@@ -10,7 +10,7 @@ import { ResponseMessage } from '../common/response';
 @Module({
   imports: [
     DatabaseModule,
-    AssetModule,
+    // AssetModule,
     NftModule,
   //   JwtModule,
   ],
