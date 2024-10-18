@@ -319,6 +319,8 @@ export class PurchaseAssetService {
                         .addSelect("asset.type_def", 'typeDef')
                         .addSelect('purchaseAsset.start_dttm', 'startDttm')
                         .addSelect('purchaseAsset.end_dttm', 'endDttm')
+                        .addSelect('purchaseAsset.reg_dttm', 'regDttm')
+                        .addSelect('purchaseAsset.pay_dttm', 'payDttm')
                         .addSelect('purchaseAsset.use_yn', 'useYn')
                         .addSelect('purchaseAsset.sale_state', 'saleState')
                         .addSelect('state.state_desc', 'saleStateDesc')
@@ -355,19 +357,39 @@ export class PurchaseAssetService {
     const take = getPurchaseAssetDto.getLimit();
     const word = getPurchaseAssetDto.word;
     const purchaseAddr = user.nftWalletAddr;
+    const startDttm = getPurchaseAssetDto.startDttm;
+    const endDttm = getPurchaseAssetDto.endDttm;
+    const saleState = getPurchaseAssetDto.state;
 
-    
     let options = `purchaseAsset.purchase_addr = '${purchaseAddr}' and purchaseAsset.state='P3'`;
     if (word) {
         options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
     }
-  
+    if (saleState) {
+      options += ` and purchaseAsset.sale_state = '${saleState}'`;
+    }
+    if (startDttm) {
+      if(endDttm){
+        const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
+        options += ` and purchaseAsset.pay_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
+        options += ` and purchaseAsset.pay_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+      }else{
+        options += ` and purchaseAsset.pay_dttm  >= TO_TIMESTAMP('${startDttm.toISOString().slice(0, 10)}', 'YYYY-MM-DD') `;
+      }
+    }else{
+      if(endDttm){
+        const endTime = new Date(endDttm.getTime() + 24 * 60 * 60 * 1000);
+        options += ` and purchaseAsset.pay_dttm < TO_TIMESTAMP('${endTime.toISOString().slice(0, 10)}', 'YYYY-MM-DD')`;
+      }
+    }
+
     console.log("options : "+options);
 
     try {
         const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
                       .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
                       .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                      .leftJoin(State, 'state', 'state.state = purchaseAsset.sale_state')
                       .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
                       .addSelect('purchaseAsset.purchase_addr', 'purchaseAddr')
                       .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
@@ -380,6 +402,9 @@ export class PurchaseAssetService {
                       .addSelect("asset.type_def", 'typeDef')
                       .addSelect('purchaseAsset.start_dttm', 'startDttm')
                       .addSelect('purchaseAsset.end_dttm', 'endDttm')
+                      .addSelect('purchaseAsset.pay_dttm', 'payDttm')
+                      .addSelect('purchaseAsset.sale_state', 'saleState')
+                      .addSelect('state.state_desc', 'saleStateDesc')
                       .addSelect("fileAsset.file_name_first", 'fileNameFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')

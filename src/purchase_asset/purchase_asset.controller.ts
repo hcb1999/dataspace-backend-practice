@@ -150,8 +150,9 @@ export class PurchaseAssetController {
 
     const updatedList = purchaseAssetList.list.map((item: any) => ({
       ...item,
-      startDttm: moment(item.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
-      endDttm: moment(item.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        // startDttm: moment(item.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        // endDttm: moment(item.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        payDttm: moment(item.payDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
     }));
   
     return this.responseMessage.response({
@@ -233,6 +234,8 @@ export class PurchaseAssetController {
         ...item,
         startDttm: moment(item.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
         endDttm: moment(item.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        regDttm: moment(item.regDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        payDttm: moment(item.payDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
       }));
     
       return this.responseMessage.response({
@@ -294,8 +297,9 @@ export class PurchaseAssetController {
       const purchaseAsset = await this.purchaseAssetService.getInfo(purchaseAssetNo);
       return this.responseMessage.response({
         ...purchaseAsset,
-        startDttm: moment(purchaseAsset.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
-        endDttm: moment(purchaseAsset.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        // startDttm: moment(purchaseAsset.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        // endDttm: moment(purchaseAsset.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        payDttm: moment(purchaseAsset.payDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
       });  
 
     }
@@ -354,6 +358,8 @@ export class PurchaseAssetController {
         ...purchaseAsset,
         startDttm: moment(purchaseAsset.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
         endDttm: moment(purchaseAsset.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        regDttm: moment(purchaseAsset.regDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+        payDttm: moment(purchaseAsset.payDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
       });  
 
     }
