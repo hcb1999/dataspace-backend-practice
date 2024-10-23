@@ -35,7 +35,7 @@ export class NftTransfer extends BaseEntity {
   @Column({ name: "token_id", type: "varchar", length: 40, comment: "토큰ID"})
   tokenId: string;
 
-  @Column({ name: "state", type: "varchar", length: 10, comment: "트랜스퍼 시작", default: 'B5' })
+  @Column({ name: "state", type: "varchar", length: 10, comment: "트랜스퍼 상태", default: 'B5' })
   state: string;
 
   @Column({ name:"result", type:"varchar", length:1, comment:"성공여부", default: "S" })

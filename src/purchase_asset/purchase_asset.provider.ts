@@ -2,6 +2,7 @@ import { DataSource } from "typeorm";
 import { PurchaseAsset } from "../entities/purchase_asset.entity";
 import { Product } from "../entities/product.entity";
 import { NftMint } from "../entities/nft_mint.entity";
+import { NftTransfer } from "../entities/nft_transfer.entity";
 import { Asset } from "../entities/asset.entity";
 
 export const PurchaseAssetProviders = [
@@ -16,6 +17,11 @@ export const PurchaseAssetProviders = [
     },{
         provide: 'NFT_MINT_REPOSITORY',
         useFactory: (dataSource: DataSource) => dataSource.getRepository(NftMint),
+        inject: ['DATA_SOURCE'],
+    },{
+                
+        provide: 'NFT_TRANSFER_REPOSITORY',
+        useFactory: (dataSource: DataSource) => dataSource.getRepository(NftTransfer),
         inject: ['DATA_SOURCE'],
     },{
         provide: 'ASSET_REPOSITORY',

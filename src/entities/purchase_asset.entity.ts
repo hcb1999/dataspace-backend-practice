@@ -48,6 +48,9 @@ export class PurchaseAsset extends BaseEntity {
   @Column({ name: "fail_desc", type: "varchar", length: 256, comment: "결제실패 사유", nullable: true })
   failDesc: string;
 
+  @Column({ name: "token_id", type: "varchar", length: 40, comment: "토큰 ID", nullable: true})
+  tokenId: string;
+  
   @Column({ name:"tx_id", type:"varchar", length:40, comment:"NFT 이전 TX ID", nullable: true})
   txId: string;
 

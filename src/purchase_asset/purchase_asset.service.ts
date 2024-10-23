@@ -3,6 +3,7 @@ import { DataSource, Repository, UpdateResult, Like, Between } from 'typeorm';
 import { PurchaseAsset } from '../entities/purchase_asset.entity';
 import { Product } from "../entities/product.entity";
 import { Asset } from '../entities/asset.entity';
+import { Purchase } from '../entities/purchase.entity';
 import { State } from '../entities/state.entity';
 import { FileAsset } from '../entities/file_asset.entity';
 import { User } from '../entities/user.entity';
@@ -35,6 +36,9 @@ export class PurchaseAssetService {
 
     @Inject('NFT_MINT_REPOSITORY')
     private nftMintRepository: Repository<NftMint>,
+
+    @Inject('NFT_TRANSFER_REPOSITORY')
+    private nftTransferRepository: Repository<NftTransfer>,
 
     @Inject('DATA_SOURCE')
     private dataSource: DataSource,
@@ -72,6 +76,7 @@ export class PurchaseAssetService {
         throw new NotFoundException("Data Not Minted.: 에셋");
       }
 
+      createPurchaseAssetDto['tokenId'] = assetInfo.tokenId;
       createPurchaseAssetDto['startDttm'] = productInfo.startDttm;
       createPurchaseAssetDto['endDttm'] = productInfo.endDttm;
 
@@ -184,6 +189,7 @@ export class PurchaseAssetService {
       const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
                       .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
                       .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                      .leftJoin(NftTransfer, 'transfer', 'purchaseAsset.token_id = transfer.token_id')
                       .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
                       .addSelect('purchaseAsset.product_no', 'productNo')
                       .addSelect('purchaseAsset.asset_no', 'assetNo')
@@ -191,7 +197,6 @@ export class PurchaseAssetService {
                       .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
                       .addSelect('purchaseAsset.sale_addr', 'saleAddr')
                       .addSelect('purchaseAsset.sale_user_name', 'saleUserName')
-                      .addSelect('purchaseAsset.sold_yn', 'soldYn')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
                       .addSelect("asset.price", 'price')
@@ -205,6 +210,11 @@ export class PurchaseAssetService {
                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
+                      .addSelect('transfer.tx_id', 'nftTxId')
+                      .addSelect('transfer.token_id', 'nftTokenId')
+                      .addSelect("purchaseAsset.sale_addr", 'nftSellerAddr')
+                      .addSelect("purchaseAsset.purchase_addr", 'nftBuyerAddr')
                       .where("purchaseAsset.purchase_asset_no = :purchaseAssetNo", { purchaseAssetNo })
                     // .andWhere("nftMint.use_yn = 'N'")
                     // .andWhere("nftMint.burn_yn = 'N'");
@@ -232,7 +242,7 @@ export class PurchaseAssetService {
     const word = getPurchaseAssetDto.word;
 
     let options = `purchaseAsset.use_yn='Y' and purchaseAsset.state='P3'
-     and purchaseAsset.sale_state='S2' and purchaseAsset.sold_yn='N'`;
+     and purchaseAsset.sale_state='S2'`;
     if (word) {
         options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
     }
@@ -265,8 +275,8 @@ export class PurchaseAssetService {
 
 
         const list = await sql.orderBy('purchaseAsset.purchase_asset_no', getPurchaseAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                              .skip(skip)
-                              .take(take)
+                              .offset(skip)
+                              .limit(take)
                               .groupBy(`purchaseAsset.purchase_asset_no, asset.price, asset.asset_name,
                                 asset.asset_desc, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
@@ -304,6 +314,8 @@ export class PurchaseAssetService {
                         .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
                         .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
                         .leftJoin(State, 'state', 'state.state = purchaseAsset.sale_state')
+                        .leftJoin(NftTransfer, 'transfer', 'purchaseAsset.token_id = transfer.token_id')
+                        .leftJoin(Purchase, 'purchase', 'purchase.purchase_asset_no = ANY(purchaseAsset.purchase_asset_no)')
                         .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
                         .addSelect('purchaseAsset.product_no', 'productNo')
                         .addSelect('purchaseAsset.asset_no', 'assetNo')
@@ -311,7 +323,6 @@ export class PurchaseAssetService {
                         .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
                         .addSelect('purchaseAsset.sale_addr', 'saleAddr')
                         .addSelect('purchaseAsset.sale_user_name', 'saleUserName')
-                        .addSelect('purchaseAsset.sold_yn', 'soldYn')
                         .addSelect("asset.asset_name", 'assetName')
                         .addSelect("asset.asset_desc", 'assetDesc')
                         .addSelect("asset.price", 'price')
@@ -330,6 +341,12 @@ export class PurchaseAssetService {
                         .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                         .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                         .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                        .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
+                        .addSelect('transfer.tx_id', 'nftTxId')
+                        .addSelect('transfer.token_id', 'nftTokenId')
+                        .addSelect("ARRAY_AGG(purchase.token_id)", 'nftTokenIdAry')
+                        .addSelect("purchaseAsset.sale_addr", 'nftSellerAddr')
+                        .addSelect("purchaseAsset.purchase_addr", 'nftBuyerAddr')
                         .where("purchaseAsset.purchase_asset_no = :purchaseAssetNo", { purchaseAssetNo })
                       // .andWhere("nftMint.use_yn = 'N'")
                       // .andWhere("nftMint.burn_yn = 'N'");
@@ -415,12 +432,12 @@ export class PurchaseAssetService {
 
 
         const list = await sql.orderBy('purchaseAsset.purchase_asset_no', getPurchaseAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                              .skip(skip)
-                              .take(take)
+                              .offset(skip)
+                              .limit(take)
                               .groupBy(`purchaseAsset.purchase_asset_no, asset.price, asset.asset_name,
                                 asset.asset_desc, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
-                                fileAsset.file_path_second, fileAsset.thumbnail_second`)
+                                fileAsset.file_path_second, fileAsset.thumbnail_second, state.state_desc`)
                               .getRawMany();
 
         const totalCount = await sql.getCount(); 

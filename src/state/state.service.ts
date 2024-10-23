@@ -149,8 +149,8 @@ export class StateService {
                             .where(options)
 
       const list = await sql.orderBy('state_no', getStateDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                            .skip(skip)
-                            .take(take)
+                            .offset(skip)
+                            .limit(take)
                             .getRawMany();
 
       const totalCount = await sql.getCount(); 

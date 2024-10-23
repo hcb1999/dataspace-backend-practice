@@ -15,7 +15,7 @@ import { CreateAssetDto } from '../dtos/create_asset.dto';
 import { ModifyAssetDto } from '../dtos/modify_asset.dto';
 import { GetAssetDto } from '../dtos/get_asset.dto';
 import { NftMint } from "../entities/nft_mint.entity";
-import { NftBurn } from "../entities/nft_burn.entity";
+import { NftTransfer } from "../entities/nft_transfer.entity";
 import { CreateMintDto } from '../dtos/create_mint.dto';
 import { CreateBurnDto } from '../dtos/create_burn.dto';
 import { NftService } from '../nft/nft.service';
@@ -38,6 +38,9 @@ export class AssetService {
 
     @Inject('NFT_MINT_REPOSITORY')
     private nftMintRepository: Repository<NftMint>,
+
+    @Inject('NFT_TRANSFER_REPOSITORY')
+    private nftTransferRepository: Repository<NftTransfer>,
 
     @Inject('PRODUCT_REPOSITORY')
     private productRepository: Repository<Product>,
@@ -153,6 +156,7 @@ export class AssetService {
         let fileInfo = {fileNameFirst, filePathFirst, fileSizeFirst, fileTypeFirst, fileHashFirst, thumbnailFirst,
           fileNameSecond, filePathSecond, fileSizeSecond, fileTypeSecond, fileHashSecond, thumbnailSecond};
 
+        // console.log("=== fileInfo : "+JSON.stringify(fileInfo));
         const newFile = queryRunner.manager.create(FileAsset, fileInfo);
         await queryRunner.manager.save<FileAsset>(newFile);
         createAssetDto['fileNo'] = newFile.fileNo;
@@ -405,7 +409,8 @@ export class AssetService {
                       .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
                       .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
                       .leftJoin(File, 'file', 'product.file_no = file.file_no')
-                      // .innerJoin(NftMint, 'nftMint', 'asset.asset_no = nftMint.asset_no')
+                      .leftJoin(NftMint, 'mint', 'asset.token_id = mint.token_id')
+                      .leftJoin(NftTransfer, 'transfer', 'asset.token_id = transfer.token_id')
                       .select('asset.asset_no', 'assetNo')
                       .addSelect("asset.reg_addr", 'assetRegAddr')
                       .addSelect("asset.reg_name", 'assetRegName')
@@ -434,6 +439,11 @@ export class AssetService {
                       .addSelect("file.file_name_first", 'productFileNameFirst')
                       .addSelect("concat('"  + serverDomain  + "/', file.file_path_first)", 'productFileUrlFirst')
                       .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_first)", 'productThumbnailFirst')
+                      .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
+                      .addSelect('mint.tx_id', 'nftTxId')
+                      .addSelect('mint.token_id', 'nftTokenId')
+                      .addSelect("transfer.from_addr", 'nftSellerAddr')
+                      .addSelect("transfer.to_addr", 'nftBuyerAddr')
                       .where("asset.asset_no = :assetNo", { assetNo });
                       // .andWhere("nftMint.use_yn = 'N'")
                       // .andWhere("nftMint.burn_yn = 'N'");
@@ -451,7 +461,8 @@ export class AssetService {
       // }else{
         assetInfo = await sql.groupBy(`asset.asset_no, product.product_no, product.reg_addr, product.reg_name, 
           product.product_name, state.state_desc, file.file_name_first,
-          file.file_path_first, file.thumbnail_first, fileAsset.file_no`)
+          file.file_path_first, file.thumbnail_first, fileAsset.file_no, mint.tx_id, mint.token_id,
+          transfer.from_addr, transfer.to_addr`)
                            .getRawOne();
 
       // }
@@ -487,7 +498,8 @@ export class AssetService {
                       // .leftJoin(State, 'state', 'asset.state = state.state')
                       .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
                       .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
-                      // .innerJoin(NftMint, 'nftMint', 'asset.asset_no = nftMint.asset_no')
+                      .leftJoin(NftMint, 'mint', 'asset.token_id = mint.token_id')
+                      .leftJoin(NftTransfer, 'transfer', 'asset.token_id = transfer.token_id')
                       .select('asset.asset_no', 'assetNo')
                       .addSelect("asset.reg_addr", 'assetRegAddr')
                       .addSelect("asset.reg_name", 'assetRegName')
@@ -511,6 +523,11 @@ export class AssetService {
                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
+                      .addSelect('mint.tx_id', 'nftTxId')
+                      .addSelect('mint.token_id', 'nftTokenId')
+                      .addSelect("transfer.from_addr", 'nftSellerAddr')
+                      .addSelect("transfer.to_addr", 'nftBuyerAddr')
                       .where("asset.asset_no = :assetNo", { assetNo });
                       // .andWhere("nftMint.use_yn = 'N'")
                       // .andWhere("nftMint.burn_yn = 'N'");
@@ -527,7 +544,7 @@ export class AssetService {
       //                        .getRawOne();
       // }else{
         assetInfo = await sql.groupBy(`asset.asset_no, product.product_no, product.reg_addr, product.reg_name,
-           product.product_name, fileAsset.file_no`)
+           product.product_name, fileAsset.file_no, mint.token_id, mint.tx_id, transfer.from_addr, transfer.to_addr`)
                            .getRawOne();
 
       // }
@@ -633,14 +650,16 @@ export class AssetService {
         options += ` and asset.asset_desc like '%${word}%'`;
     }
   
-    // console.log("options : "+options);
+    console.log("options : "+options);
+    console.log("skip : "+skip);
+    console.log("take : "+take);
 
     try {
       const sql = this.assetRepository.createQueryBuilder('asset')
-                      // .leftJoin(State, 'state', 'asset.state = state.state')
+                            // .leftJoin(State, 'state', 'asset.state = state.state')
                       .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
                       .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
-                      // .innerJoin(NftMint, 'nftMint', 'asset.asset_no = nftMint.asset_no')
+                            // .innerJoin(NftMint, 'nftMint', 'asset.asset_no = nftMint.asset_no')
                       .select('asset.asset_no', 'assetNo')
                       // .addSelect("asset.reg_addr", 'regAddr')
                       .addSelect("asset.reg_name", 'assetRegName')
@@ -649,8 +668,8 @@ export class AssetService {
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.ad_type", 'adType')
                       .addSelect("asset.type_def", 'typeDef')
-                      .addSelect('product.reg_name', 'productRegName')
-                      .addSelect('product.product_name', 'productName')
+                      // .addSelect('product.reg_name', 'productRegName')
+                      // .addSelect('product.product_name', 'productName')
                       .addSelect('asset.price', 'price')
                       .addSelect('asset.token_id', 'tokenId')
                       .addSelect("fileAsset.file_name_first", 'fileNameFirst')
@@ -662,12 +681,14 @@ export class AssetService {
                       .where(options);
                       
       const list = await sql.orderBy('asset.asset_no', getAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                            .skip(skip)
-                            .take(take)
                             .groupBy(`asset.asset_no, product.reg_name, product.product_name, fileAsset.file_no`)
+                            .offset(skip)
+                            .limit(take)
                             .getRawMany();
 
       const totalCount = await sql.getCount(); 
+      // console.log("totalCount : "+totalCount);
+      // console.log("list : "+list.length);
 
       return new PageResponse(totalCount, getAssetDto.pageSize, list);
 
@@ -698,7 +719,7 @@ export class AssetService {
       const word = getAssetDto.word;
       const userNo = user.userNo;
   
-      let options = `1 =1`;
+      let options = `1 =1 `;
       if (advertiser) {
         options += ` and product.reg_name like '%${advertiser}%'`;
       }
@@ -738,6 +759,9 @@ export class AssetService {
       }
     
       // console.log("options : "+options);
+      // console.log("skip : "+skip);
+      // console.log("take : "+take);
+
   
       try {
           const sql = this.assetRepository.createQueryBuilder('asset')
@@ -770,8 +794,8 @@ export class AssetService {
         sql.andWhere("asset.user_no = :userNo", { userNo });
                          
         const list = await sql.orderBy('asset.asset_no', getAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                                .skip(skip)
-                                .take(take)
+                                .offset(skip)
+                                .limit(take)
                                 .groupBy(`state.state_desc, asset.asset_no, product.reg_name, product.product_name, fileAsset.file_no`)
                                 .getRawMany();
   

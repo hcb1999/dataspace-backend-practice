@@ -52,8 +52,8 @@ export class NftController {
     // @Inject('NFT_MINT_REPOSITORY')
     // private nftMintRepository: Repository<NftMint>,
 
-    // @Inject('NFT_TRANSFER_REPOSITORY')
-    // private nftTransferRepository: Repository<NftTransfer>,
+    @Inject('NFT_TRANSFER_REPOSITORY')
+    private nftTransferRepository: Repository<NftTransfer>,
 
     // @Inject('NFT_BURN_REPOSITORY')
     // private nftBurnRepository: Repository<NftBurn>,
@@ -94,6 +94,21 @@ export class NftController {
   async createTransfer(@GetUser() user: User, @Body(ValidationPipe) createTransferDto: CreateTransferDto): Promise<any> {
     await this.nftService.createTransfer(user, createTransferDto);
     const result = {message: 'Transfer process started'};
+    return this.responseMessage.response(result);
+  }
+
+  @Post("/transferNmint")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'NFT Transfer and Mint', description: 'NFT Transfer and Mint' })
+  @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
+  @ApiCreatedResponse({description: '성공', schema: {example: {resultCode: 200,resultMessage: 'SUCCESS'}}})
+  async createTransferNMint(@GetUser() user: User, @Body(ValidationPipe) createTransferDto: CreateTransferDto): Promise<any> {
+    fileLogger.info('transferNmint-create');
+    fileLogger.info(user);
+    fileLogger.info(createTransferDto);
+    await this.nftService.createTransferNMint(user,createTransferDto);
+    const result = {message: 'TransferNMinting process started'};
     return this.responseMessage.response(result);
   }
 
@@ -394,6 +409,7 @@ export class NftController {
           throw new Error('Token ID not received'); // 이벤트에서 tokenId가 설정되지 않았을 경우 예외 처리
         }
   
+        this.logger.log(`processMintTransaction started... After mintTx`);
         const todayKST = new Date();
         const year = todayKST.getFullYear();
         const month = String(todayKST.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1
@@ -557,12 +573,11 @@ export class NftController {
           errorMsg = 'Transaction failed due to invalid input Or data';
           // nftTransferInfo = { state: 'B8' };
         }
-        if(purchaseNo){
-          await queryRunner.manager.delete(Purchase, purchaseNo);
-        }else{
-          await queryRunner.manager.delete(PurchaseAsset, purchaseAssetNo);
-        }
+        
+        await queryRunner.manager.delete(PurchaseAsset, purchaseAssetNo);
+        
         await queryRunner.manager.delete(NftTransfer, nftTransferNo);
+
         await queryRunner.commitTransaction();
         
         this.nftGateway.sendTransactionResult(ownerAddress, {
@@ -602,7 +617,7 @@ export class NftController {
       const fromWallet = new ethers.Wallet(sellerPKey).connect(this.provider);
       
       try {
-        console.log(`sellerPKey: ${sellerPKey}`);
+        // console.log(`sellerPKey: ${sellerPKey}`);
         // NFT 계약 인스턴스 생성
         contract = this.createContractInstance(fromWallet);
         // this.knftCollection = this.createContractInstance(fromWallet);
@@ -613,7 +628,7 @@ export class NftController {
         // 잔액을 Ether 단위로 변환 (기본 단위는 Wei)
         const balanceInEth = ethers.utils.formatEther(balance);
       
-        console.log(`지갑 ${sellerAddress}의 잔액: ${balance} Wei ${balanceInEth} ETH`);
+        // console.log(`지갑 ${sellerAddress}의 잔액: ${balance} Wei ${balanceInEth} ETH`);
   
       } catch (error) {
         this.logger.error(`Error creating contract instance: ${error.message}`);
@@ -640,20 +655,13 @@ export class NftController {
         const nftTransferInfo = {state: 'B12', txId: nftTransferTx.hash};
         await queryRunner.manager.update(NftTransfer, nftTransferNo, nftTransferInfo);
 
-        if(purchaseNo){
-          let data = {soldYn: 'Y'};
-          await queryRunner.manager.update(PurchaseAsset, purchaseAssetNo, data);
-          let data1 = {state: 'P3'};
-          await queryRunner.manager.update(Purchase, purchaseNo, data1);
-
-        } else{ 
-          let data = {state: 'P3'};
-          await queryRunner.manager.update(PurchaseAsset, purchaseAssetNo, data);
-          const purchaseAsset = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
-          const assetNo = purchaseAsset.assetNo;
-          let data1 = {soldYn: 'Y', state: 'S5'};
-          await queryRunner.manager.update(Asset, assetNo, data1);
-        }
+        let data = {state: 'P3'};
+        await queryRunner.manager.update(PurchaseAsset, purchaseAssetNo, data);
+        const purchaseAsset = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
+        const assetNo = purchaseAsset.assetNo;
+        let data1 = {soldYn: 'Y', state: 'S5'};
+        await queryRunner.manager.update(Asset, assetNo, data1);
+        
         await queryRunner.commitTransaction();
         
         this.nftGateway.sendTransactionResult(ownerAddress, {
@@ -681,12 +689,11 @@ export class NftController {
           errorMsg = 'Transaction failed due to invalid input Or data';
           // nftTransferInfo = { state: 'B9' };
         }
-        if(purchaseNo){
-          await queryRunner.manager.delete(Purchase, purchaseNo);
-        }else{
-          await queryRunner.manager.delete(PurchaseAsset, purchaseAssetNo);
-        }        
+        
+        await queryRunner.manager.delete(PurchaseAsset, purchaseAssetNo);
+              
         await queryRunner.manager.delete(NftTransfer, nftTransferNo);
+        
         await queryRunner.commitTransaction();
 
         this.nftGateway.sendTransactionResult(ownerAddress, {
@@ -724,11 +731,8 @@ export class NftController {
             // this.logger.error(`Unexpected error in handleNFTTransfer: ${error.message}`);
             errorMsg = 'Transaction failed due to invalid input Or data';
           }
-          // if(purchaseNo){
-          //   await queryRunner.manager.delete(Purchase, purchaseNo);
-          // }else{
-          //   await queryRunner.manager.delete(PurchaseAsset, purchaseAssetNo);
-          // }
+
+          // await await queryRunner.manager.delete(PurchaseAsset, purchaseAssetNo);
           // await queryRunner.manager.delete(NftTransfer, nftTransferNo);
           // await queryRunner.commitTransaction();
   
@@ -747,7 +751,329 @@ export class NftController {
         await queryRunner.release();
       }
     }
+    
+    @MessagePattern('transferNmint')
+    async handleTransferNMint(@Payload() 
+      data: { nftMintNo: number, tokenId: number, price: number, ownerAddress: string, 
+        ownerPKey: string, sellerAddress: string, sellerPKey: string,
+        purchaseAssetNo: number, purchaseNo: number, assetNo: number, productNo: number }
+      ,
+      @Ctx() context: RmqContext
+    ) {
   
+      console.log(`handleTransferNMint started...`);
+  
+      const channel: Channel = context.getChannelRef();
+      const originalMsg = context.getMessage();
+      const message = originalMsg as Message; 
+      
+      const nftMintNo = data.nftMintNo;
+      const tokenId = data.tokenId;
+      const price = data.price;
+      const ownerAddress = data.ownerAddress;
+      const ownerPKey = data.ownerPKey;
+      const sellerPKey = data.sellerPKey;
+      const sellerAddress = data.sellerAddress;
+      const purchaseAssetNo = data.purchaseAssetNo;
+      const purchaseNo = data.purchaseNo;
+      const assetNo = data.assetNo;
+      const productNo = data.productNo;
+  
+      // console.log(`nftMintNo: ${nftMintNo}`);
+      // console.log(`price: ${price}`);
+      // console.log(`ownerAddress: ${ownerAddress}`);
+      // console.log(`ownerPKey: ${ownerPKey}`);
+      // console.log(`sellerAddress: ${sellerAddress}`);
+      // console.log(`purchaseAssetNo: ${purchaseAssetNo}`);
+      // console.log(`purchaseNo: ${purchaseNo}`);
+      // console.log(`assetNo: ${assetNo}`);
+      // console.log(`productNo: ${productNo}`);
+  
+      let contract: any;
+      const fromWallet = new ethers.Wallet(ownerPKey).connect(this.provider);
+      
+      try {
+  
+        // NFT 계약 인스턴스 생성
+        contract = this.createContractInstance(fromWallet);
+        this.logger.log(`Contract instance created successfully: ${contract.address}`);
+      } catch (error) {
+        this.logger.error(`Error creating contract instance: ${error.message}`);
+      }
+     
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+    
+      const amountInWei = ethers.utils.parseEther(price.toString());
+      // console.log("=== 1 === Amount in Wei:", amountInWei.toString());
+      // // 이벤트 리스너 추가
+      contract.once('NewTransferEther', async(buyer: any, seller: any, price: any, event: any) => {
+        this.logger.log(`NewTransferEther Event: buyer: ${buyer}, seller: ${seller}, price: ${price}`);
+  
+        await this.handleNFTMint( nftMintNo, tokenId, price, ownerAddress, 
+          ownerPKey, sellerAddress, sellerPKey, purchaseAssetNo, purchaseNo, assetNo, productNo  );
+      });
+  
+      try {
+        // const amountInWei = ethers.utils.parseEther(price.toString());
+        // console.log("=== 1 === Amount in Wei:", amountInWei.toString());
+        const ethTransferTx = await contract.transferEther(tokenId, amountInWei, sellerAddress, {
+          value: amountInWei // 여기에서 value가 보내는 이더 값
+        });
+        // this.logger.log(`ETH Transfer sent: ${ethTransferTx.hash}`);
+  
+        await ethTransferTx.wait();
+  
+        channel.ack(message); // 성공적으로 처리되면 메시지를 확인
+  
+      } catch (error) {
+        // this.logger.error(`Error in handleEtherTransfer: ${error.message}`);
+        this.logger.error(`Error in handleEtherTransfer`);
+        // let nftTransferInfo = {};
+        let errorMsg = '';
+  
+        if (error.code === 'NETWORK_ERROR') {
+          // 블록체인에 문제가 발생한 경우
+          // this.logger.error(`Blockchain network error in handleTransfer: ${error.message}`);
+          errorMsg = 'Blockchain is unreachable';
+          // nftTransferInfo = { state: 'B99' };
+        }  else {
+          // 다른 일반적인 오류 처리
+          // this.logger.error(`Transaction Or Unexpected error in handleTransfer: ${error.message}`);
+          errorMsg = 'Transaction failed due to invalid input Or data';
+          // nftTransferInfo = { state: 'B8' };
+        }
+        
+        await queryRunner.manager.delete(Purchase, purchaseNo);
+                
+        await queryRunner.manager.delete(NftMint, nftMintNo);
+
+        await queryRunner.commitTransaction();
+        
+        this.nftGateway.sendTransactionResult(ownerAddress, {
+          status: 'failed',
+          type: 'Transfer-Ether',
+          assetNo,
+          productNo,
+          ownerAddress,
+          sellerAddress,
+          price,
+          error: errorMsg,
+        });
+  
+        channel.ack(message);
+  
+      }finally {
+        await queryRunner.release();
+      }
+    }
+
+    async handleNFTMint( nftMintNo: number, tokenId: number, price: number, ownerAddress: string, 
+      ownerPKey: string, sellerAddress: string, sellerPKey: string,
+      purchaseAssetNo: number, purchaseNo: number, assetNo: number, productNo: number ) {
+  
+      console.log(`handleNFTMint started...`);
+      // let result = true;
+  
+      // console.log(`nftMintNo: ${nftMintNo}`);
+      // console.log(`ownerAddress: ${ownerAddress}`);
+      // console.log(`ownerPKey: ${ownerPKey}`);
+      // console.log(`sellerAddress: ${sellerAddress}`);
+      // console.log(`purchaseAssetNo: ${purchaseAssetNo}`);
+      // console.log(`assetNo: ${assetNo}`);
+      // console.log(`productNo: ${productNo}`);
+      // console.log(`price: ${price}`);
+  
+      let contract: any;
+      const fromWallet = new ethers.Wallet(ownerPKey).connect(this.provider);
+      
+      try {
+        // console.log(`ownerPKey: ${ownerPKey}`);
+        // NFT 계약 인스턴스 생성
+        contract = this.createContractInstance(fromWallet);
+        // this.knftCollection = this.createContractInstance(fromWallet);
+        this.logger.log(`Contract instance created successfully: ${contract.address}`);
+  
+        // const balance = await this.provider.getBalance(ownerAddress);
+  
+        // // 잔액을 Ether 단위로 변환 (기본 단위는 Wei)
+        // const balanceInEth = ethers.utils.formatEther(balance);
+      
+        // console.log(`지갑 ${ownerAddress}의 잔액: ${balance} Wei ${balanceInEth} ETH`);
+  
+      } catch (error) {
+        this.logger.error(`Error creating contract instance: ${error.message}`);
+      }
+      
+      // 토큰 ID와 상태 업데이트를 위한 변수를 선언
+      let tokenId1: string;
+    
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+    
+      // 이벤트 리스너 추가 - NewMintNFT(owner, assetName, createdTime)
+      contract.on('NewMintNFT', (owner: any, assetName: any, createdTime: any, event: any) => {
+        this.logger.log(`NewMintNFT Event: Owner: ${owner}, AssetName: ${assetName}, CreatedTime: ${createdTime}`);
+  
+        tokenId1 = assetName.split('_').pop(); 
+        this.logger.log(`processMintTransaction tokenId1 : `+tokenId1);
+      });
+
+      contract.once('NewTransferEther', async(seller: any, buyer: any, price: any, event: any) => {
+        this.logger.log(`NewTransferRevEther Event: seller: ${seller}, buyer: ${buyer}, price: ${price}`); 
+      }); 
+  
+      try {
+        this.logger.log(`processTransferNMintTransaction started... Before mintTx`);
+        const mintTx = await contract.mintNFT(assetNo, productNo);
+        // this.logger.log(`Mint transaction sent: ${mintTx.hash}`);
+    
+        await mintTx.wait();
+    
+        // Mint 상태 업데이트를 위해 tokenId가 설정될 때까지 대기
+        await new Promise((resolve) => setTimeout(resolve, parseInt(process.env.TIME_INTERVAL))); // 예시로 5초 대기 (너무 길지 않게 조절)
+    
+        if (!tokenId1) {
+          throw new Error('Token ID not received'); // 이벤트에서 tokenId가 설정되지 않았을 경우 예외 처리
+        }
+  
+    
+        let data = {state: 'P3', tokenId: tokenId1};
+        await queryRunner.manager.update(Purchase, purchaseNo, data);
+   
+        const nftMintInfo = { state: 'B4', tokenId: tokenId1, txId: mintTx.hash }; // mint 상태 및 tokenId로 업데이트
+        await queryRunner.manager.update(NftMint, nftMintNo, nftMintInfo);
+ 
+        let nftTransferNo = 0;
+        const transfer = await this.nftTransferRepository.findOne({ where:{assetNo, productNo, tokenId: tokenId1, toAddr: ownerAddress} });
+        if (!transfer) {
+          const transferInfo = {productNo, assetNo, purchaseAssetNo, purchaseNo, 
+            fromAddr: sellerAddress, toAddr: ownerAddress, tokenId: tokenId1, state: 'B5'};
+          // console.log("===== transferInfo : "+JSON.stringify(transferInfo));
+          const newTransfer = queryRunner.manager.create(NftTransfer, transferInfo);
+          const result = await queryRunner.manager.save<NftTransfer>(newTransfer);
+          nftTransferNo = result.nftTransferNo;
+        } 
+
+        await queryRunner.commitTransaction();
+  
+        this.logger.log(`TransferNmint transaction 완료를 client에게 전송`);
+        this.nftGateway.sendTransactionResult(ownerAddress, {
+          status: 'success',
+          type: 'TransferNmint',
+          assetNo,
+          productNo,
+          ownerAddress,
+          sellerAddress,
+          tokenId1
+        });
+  
+      } catch (error) {
+        // this.logger.error(`Error in handleMintTransaction: ${error.message}`);
+        this.logger.error(`Error in handleMint`);
+        // let nftMintInfo = {};
+        let errorMsg = '';
+  
+        if (error.code === 'NETWORK_ERROR') {
+          // 블록체인에 문제가 발생한 경우
+          // this.logger.error(`Blockchain network error in handleMint: ${error.message}`);
+          errorMsg = 'Blockchain is unreachable';        
+          // nftMintInfo = { state: 'B99' };
+          // result = false;
+        } else {
+          // 다른 일반적인 오류 처리
+          // this.logger.error(`Transaction Or Unexpected error in handleMint: ${error.message}`);
+          errorMsg = 'Transaction failed due to invalid input Or data';
+          // nftMintInfo = { state: 'B3' };
+        }
+        await queryRunner.manager.delete(NftMint, nftMintNo);
+        await queryRunner.manager.delete(Purchase, purchaseNo);
+
+        await queryRunner.commitTransaction();
+  
+        this.nftGateway.sendTransactionResult(ownerAddress, {
+          status: 'failed',
+          type: 'Mint',
+          assetNo,
+          productNo,
+          ownerAddress,
+          sellerAddress,
+          error: errorMsg,
+        });
+
+        // seller에게서 buyer로 Ether 전송
+        let contract1: any;
+        const fromWallet1 = new ethers.Wallet(sellerPKey).connect(this.provider);
+        
+        try {
+          // console.log(`ownerPKey: ${ownerPKey}`);
+          // NFT 계약 인스턴스 생성
+          contract1 = this.createContractInstance(fromWallet1);
+          // this.knftCollection = this.createContractInstance(fromWallet);
+          this.logger.log(`Contract1 instance created successfully: ${contract1.address}`);
+    
+          // const balance = await this.provider.getBalance(sellerAddress);
+    
+          // 잔액을 Ether 단위로 변환 (기본 단위는 Wei)
+          // const balanceInEth = ethers.utils.formatEther(balance);
+        
+          // console.log(`지갑 ${sellerAddress}의 잔액: ${balance} Wei ${balanceInEth} ETH`);
+    
+        } catch (error) {
+          this.logger.error(`Error creating contract1 instance: ${error.message}`);
+        }
+
+        try {
+          const amountInWei = ethers.utils.parseEther(price.toString());
+          // console.log("=== 2 === Amount in Wei:", amountInWei.toString());
+          const ethTransferTx = await contract1.transferEther(tokenId, amountInWei, ownerAddress, {
+            value: amountInWei // 여기에서 value가 보내는 이더 값
+          });
+          this.logger.log(`ETH RecvTransfer sent: ${ethTransferTx.hash}`);
+    
+          await ethTransferTx.wait();
+    
+        } catch (error) {
+          // this.logger.error(`Error in handleEtherTransfer: ${error.message}`);
+          this.logger.error(`Error in handleEtherRecvTransfer`);
+          let errorMsg = '';
+
+          if (error.code === 'NETWORK_ERROR') {
+            // 블록체인에 문제가 발생한 경우
+            // this.logger.error(`Blockchain network error in handleNFTTransfer: ${error.message}`);
+            errorMsg = 'Blockchain is unreachable';
+          }  else {
+            // 다른 일반적인 오류 처리
+            // this.logger.error(`Unexpected error in handleNFTTransfer: ${error.message}`);
+            errorMsg = 'Transaction failed due to invalid input Or data';
+          }
+
+          // await await queryRunner.manager.delete(PurchaseAsset, purchaseAssetNo);
+          // await queryRunner.manager.delete(NftTransfer, nftTransferNo);
+          // await queryRunner.commitTransaction();
+  
+          this.nftGateway.sendTransactionResult(ownerAddress, {
+            status: 'failed',
+            type: 'RecvTransfer-Ether',
+            assetNo,
+            productNo,
+            ownerAddress,
+            sellerAddress,
+            price,
+            error: errorMsg,
+          });
+
+        }
+  
+      } finally {
+        await queryRunner.release();
+        // return result;
+      }
+        
+    }
+
     @MessagePattern('burn')
     async handleBurn(@Payload()
       data: { nftBurnNo: number, nftMintNo: number, assetNo: number, productNo: number, tokenId: number, ownerAddress: string, ownerPKey: string }

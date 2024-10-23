@@ -26,6 +26,9 @@ export class Purchase extends BaseEntity {
   @Column({ name: "state", type: "varchar", length: 10, comment: "구매 상태", default: 'P2' })
   state: string;
 
+  @Column({ name: "token_id", type: "varchar", length: 40, comment: "토큰 ID", nullable: true})
+  tokenId: string;
+
   @Column({ name: "fail_desc", type: "varchar", length: 256, comment: "결제실패 사유", nullable: true })
   failDesc: string;
 

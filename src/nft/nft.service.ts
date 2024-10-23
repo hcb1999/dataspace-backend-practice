@@ -86,10 +86,7 @@ export class NftService {
   await queryRunner.startTransaction();
 
   try {
-    
-        //  비즈니스 로직 처리 
-
-        // 원래는 asset에서 처리하는 부분인데, 여기서는 NFT Controller 때문에 사용.
+     
         const assetNo = createMintDto.assetNo;
         const productNo = createMintDto.productNo;
         const ownerAddress = user.nftWalletAddr;
@@ -127,7 +124,7 @@ export class NftService {
 }
 
   /**
-   * NFT 이전
+   * NFT Transfer
    * @param user
    * @param createTransferDto 
    * @returns 
@@ -140,7 +137,6 @@ export class NftService {
 
     try {
 
-        // 원래는 purchase나 purchase_asset에서 처리하는 부분인데, 여기서는 NFT Controller 때문에 사용.
         const purchaseAssetNo = createTransferDto.purchaseAssetNo;        
         const purchaseNo = createTransferDto.purchaseNo;
         const fromAddr = createTransferDto.fromAddr.toLowerCase();
@@ -194,6 +190,75 @@ export class NftService {
       await queryRunner.release();
     }
   }  
+
+
+  /**
+   * NFT Transfer와 Mint
+   * @param user
+   * @param createTransferDto 
+   * @returns 
+   */
+  async createTransferNMint(user: User, createTransferDto: CreateTransferDto): Promise<void> {
+  
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+
+        const purchaseAssetNo = createTransferDto.purchaseAssetNo;        
+        const purchaseNo = createTransferDto.purchaseNo;
+        const fromAddr = createTransferDto.fromAddr.toLowerCase();
+        const toAddr = createTransferDto.toAddr.toLowerCase();
+        const assetNo = createTransferDto.assetNo;
+        const productNo = createTransferDto.productNo;
+        const tokenId = createTransferDto.tokenId;
+        const ownerAddress = toAddr;  
+        const mint = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
+        let nftMintNo = 0;
+        if (!mint) {
+          const mintInfo = {productNo, assetNo, issuedTo: ownerAddress, tokenId: null, state: 'B1'};
+          // console.log("===== mintInfo : "+JSON.stringify(mintInfo));
+          const newMint = queryRunner.manager.create(NftMint, mintInfo);
+          const result = await queryRunner.manager.save<NftMint>(newMint);
+          nftMintNo = result.nftMintNo;
+        }else{
+          nftMintNo = mint.nftMintNo;
+        }
+
+        await queryRunner.commitTransaction();  
+
+        // MQ로 Transfer 트랜잭션 처리 요청
+        const sellerAddress = fromAddr;  // 팔 사람
+        const wallet1 = await this.nftWalletRepository.findOne({ where:{addr: ownerAddress} });
+        let ownerPKey: string;
+        if (wallet1) {
+          ownerPKey = wallet1.pkey;
+        }
+        const wallet2 = await this.nftWalletRepository.findOne({ where:{addr: sellerAddress} });
+        let sellerPKey: string;
+        if (wallet2) {
+          sellerPKey = wallet2.pkey;          
+        }
+        const asset = await this.assetRepository.findOne({ where:{assetNo} });
+        let price: number;
+        if (asset) {
+          price = asset.price;
+        }
+
+        // MQ로 Transfer 전송 트랜잭션 처리 요청
+        // await this.queueTransferTransaction(nftTransferNo, parseInt(tokenId), price, ownerAddress, ownerPKey, sellerAddress, sellerPKey);
+        const data = { nftMintNo, tokenId: parseInt(tokenId), price, ownerAddress, ownerPKey, sellerAddress, sellerPKey, purchaseAssetNo, purchaseNo, assetNo, productNo };
+        console.log('Sending data:', data);
+        this.client.emit('transferNmint', data);    
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    } finally {    
+      await queryRunner.release();
+    }
+  } 
 
   /**
    * NFT 소각(Nft Mint 정보 삭제 수정 및 NftBurn 저장)
@@ -416,8 +481,8 @@ export class NftService {
                         .where(options);
                         
         const list = await sql.orderBy('nftMint.nft_mint_no', getMintBurnDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                              .skip(skip)
-                              .take(take)
+                              .offset(skip)
+                              .limit(take)
                               .getRawMany();
   
         const totalCount = await sql.getCount(); 
@@ -539,8 +604,8 @@ export class NftService {
                       .where(options);
                       
       const list = await sql.orderBy('nftTransfer.nft_transfer_no', getTransferDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                            .skip(skip)
-                            .take(take)
+                            .offset(skip)
+                            .limit(take)
                             .getRawMany();
 
       const totalCount = await sql.getCount(); 
@@ -593,8 +658,8 @@ export class NftService {
                       .where(options);
                       
       const list = await sql.orderBy('nftBurn.nft_burn_no', getMintBurnDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                            .skip(skip)
-                            .take(take)
+                            .offset(skip)
+                            .limit(take)
                             .getRawMany();
 
       const totalCount = await sql.getCount(); 

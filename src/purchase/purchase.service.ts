@@ -36,6 +36,9 @@ export class PurchaseService {
     @Inject('NFT_MINT_REPOSITORY')
     private nftMintRepository: Repository<NftMint>,
 
+    @Inject('NFT_TRANSFER_REPOSITORY')
+    private nftTransferRepository: Repository<NftTransfer>,
+
     @Inject('DATA_SOURCE')
     private dataSource: DataSource,
   ) {}
@@ -99,7 +102,7 @@ export class PurchaseService {
       const tokenId = assetInfo.tokenId;
       const nftTransferInfo: CreateTransferDto = {purchaseAssetNo, purchaseNo, fromAddr, toAddr, 
         assetNo, productNo, tokenId, state: ''};
-      this.nftService.createTransfer(user, nftTransferInfo);
+      this.nftService.createTransferNMint(user, nftTransferInfo);
       
     // console.log("===== nftTransferInfo : "+ JSON.stringify(nftTransferInfo));
 
@@ -207,6 +210,7 @@ export class PurchaseService {
                       .innerJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
                       .innerJoin(State, 'state', 'state.state = purchase.state')
                       .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                      .leftJoin(NftMint, 'mint', 'purchase.token_id = mint.token_id')
                       .select('purchase.purchase_no', 'purchaseNo')
                       .addSelect('purchase.sale_addr', 'saleAddr')
                       .addSelect('purchase.sale_user_name', 'saleUserName')
@@ -225,6 +229,11 @@ export class PurchaseService {
                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
+                      .addSelect('mint.tx_id', 'nftTxId')
+                      .addSelect('mint.token_id', 'nftTokenId')
+                      .addSelect("purchase.sale_addr", 'nftSellerAddr')
+                      .addSelect("purchase.purchase_addr", 'nftBuyerAddr')
                       .where("purchase.purchase_no = :purchaseNo", { purchaseNo })
                     // .andWhere("nftMint.use_yn = 'N'")
                     // .andWhere("nftMint.burn_yn = 'N'");
@@ -306,8 +315,8 @@ export class PurchaseService {
                       // .andWhere("nftMint.burn_yn = 'N'");
 
       const list = await sql.orderBy('purchase.purchase_no', getPurchaseDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                            .skip(skip)
-                            .take(take)
+                            .offset(skip)
+                            .limit(take)
                             .groupBy(`purchase.purchase_no, asset.price, asset.asset_name, asset.asset_desc,
                               asset.metaverse_name, asset.type_def, state.state_desc, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,

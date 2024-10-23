@@ -828,8 +828,8 @@ export class ProductService {
           'product.product_no',
           getProductDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC',
         )
-        .skip(skip)
-        .take(take)
+        .offset(skip)
+        .limit(take)
         .groupBy(
           `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name, metaverseThird.metaverse_name, file.file_no`,
         )
@@ -956,8 +956,8 @@ export class ProductService {
           'product.product_no',
           getProductDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC',
         )
-        .skip(skip)
-        .take(take)
+        .offset(skip)
+        .limit(take)
         .groupBy(
           `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name,
                                    metaverseThird.metaverse_name, state.state_desc, file.file_no`,

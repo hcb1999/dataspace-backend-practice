@@ -138,8 +138,8 @@ export class MetaverseService {
                             .where(options)
 
       const list = await sql.orderBy('metaverse_no', getMetaverseDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                            .skip(skip)
-                            .take(take)
+                            .offset(skip)
+                            .limit(take)
                             .getRawMany();
 
       const totalCount = await sql.getCount(); 

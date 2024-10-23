@@ -149,8 +149,8 @@ export class AssetTypeService {
                             .where(options)
 
       const list = await sql.orderBy('type_no', getAssetTypeDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                            .skip(skip)
-                            .take(take)
+                            .offset(skip)
+                            .limit(take)
                             .getRawMany();
 
       const totalCount = await sql.getCount(); 

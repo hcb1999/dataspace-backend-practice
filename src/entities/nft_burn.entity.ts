@@ -31,7 +31,7 @@ export class NftBurn extends BaseEntity {
   @Column({ name: "token_id", type: "varchar", length: 40, comment: "토큰ID"})
   tokenId: string;
 
-  @Column({ name: "state", type: "varchar", length: 10, comment: "버닝 시작", default: 'B13' })
+  @Column({ name: "state", type: "varchar", length: 10, comment: "버닝 상태", default: 'B13' })
   state: string;
 
   @Column({ name: "use_yn", type: "varchar", length: 1, comment: "사용 여부", default: "N" })
