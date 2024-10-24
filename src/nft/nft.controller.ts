@@ -949,7 +949,7 @@ export class NftController {
         let nftTransferNo = 0;
         const transfer = await this.nftTransferRepository.findOne({ where:{assetNo, productNo, tokenId: tokenId1, toAddr: ownerAddress} });
         if (!transfer) {
-          const transferInfo = {productNo, assetNo, purchaseAssetNo, purchaseNo, 
+          const transferInfo = {productNo, assetNo, purchaseAssetNo, purchaseNo, txId: mintTx.hash, 
             fromAddr: sellerAddress, toAddr: ownerAddress, tokenId: tokenId1, state: 'B5'};
           // console.log("===== transferInfo : "+JSON.stringify(transferInfo));
           const newTransfer = queryRunner.manager.create(NftTransfer, transferInfo);
