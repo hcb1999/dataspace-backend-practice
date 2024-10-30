@@ -172,7 +172,7 @@ export class UserService {
     }
   }
 
-    /**
+   /**
    * 사용자 등록
    * 
    * @param createUserDto 
@@ -185,7 +185,6 @@ export class UserService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
-      // const walletAddress = createUserDto.addr;
       const walletAddress = createUserDto.addr.toLowerCase();
       const wallet = await this.nftWalletRepository.findOne({ where:{addr: walletAddress} });
       if (wallet) {

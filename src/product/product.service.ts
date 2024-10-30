@@ -10,7 +10,6 @@ import {
 import { DataSource, Repository, UpdateResult, Like, Between } from 'typeorm';
 import { Product } from '../entities/product.entity';
 import { PurchaseAsset } from '../entities/purchase_asset.entity';
-import { Purchase } from '../entities/purchase.entity';
 import { Asset } from '../entities/asset.entity';
 import { Advertiser } from '../entities/advertiser.entity';
 import { File } from '../entities/file.entity';
@@ -18,13 +17,11 @@ import { FileAsset } from '../entities/file_asset.entity';
 import { AssetType } from '../entities/asset_type.entity';
 import { State } from '../entities/state.entity';
 import { Metaverse } from '../entities/metaverse.entity';
-import { NftWallet } from '../entities/nft_wallet.entity';
 import { User } from '../entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { CreateProductDto } from '../dtos/create_product.dto';
 import { ModifyProductDto } from '../dtos/modify_product.dto';
 import { GetProductDto } from '../dtos/get_product.dto';
-import { NftMint } from '../entities/nft_mint.entity';
 import { PageResponse } from 'src/common/page.response';
 
 @Injectable()
@@ -33,7 +30,6 @@ export class ProductService {
 
   constructor(
     private configService: ConfigService,
-    // private nftService: NftService,
 
     @Inject('PRODUCT_REPOSITORY')
     private productRepository: Repository<Product>,
@@ -41,20 +37,11 @@ export class ProductService {
     @Inject('PURCHASE_ASSET_REPOSITORY')
     private purchaseAssetRepository: Repository<PurchaseAsset>,
 
-    @Inject('ASSET_REPOSITORY')
-    private assetRepository: Repository<Asset>,
-
     @Inject('ADVERTISER_REPOSITORY')
     private advertiserRepository: Repository<Advertiser>,
 
     @Inject('STATE_REPOSITORY')
     private stateRepository: Repository<State>,
-
-    @Inject('PURCHASE_REPOSITORY')
-    private purchaseRepository: Repository<Purchase>,
-
-    @Inject('NFT_MINT_REPOSITORY')
-    private nftMintRepository: Repository<NftMint>,
 
     @Inject('DATA_SOURCE')
     private dataSource: DataSource,
@@ -110,6 +97,12 @@ export class ProductService {
         let fileSizeSecond = 0;
         let fileHashSecond = '';
         let thumbnailSecond = '';
+        let fileNameThird = '';
+        let fileTypeThird = '';
+        let filePathThird = '';
+        let fileSizeThird = 0;
+        let fileHashThird = '';
+        let thumbnailThird = '';
         // 파일 정보 저장
         const promises = files.map(async (file: any, index: any) => {
           // console.log("=== index : "+index+", file : "+JSON.stringify(file));
@@ -123,7 +116,7 @@ export class ProductService {
             if (file.thumbnail) {
               thumbnailFirst = file.thumbnail;
             }
-          } else {
+          } else if (index == 1) {
             // console.log("=== index : "+index+", file : "+JSON.stringify(file));
             fileNameSecond = file.fileName;
             fileTypeSecond = file.fileType;
@@ -132,6 +125,16 @@ export class ProductService {
             fileHashSecond = file.fileHash;
             if (file.thumbnail) {
               thumbnailSecond = file.thumbnail;
+            }
+          } else {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameThird = file.fileName;
+            fileTypeThird = file.fileType;
+            filePathThird = file.filePath;
+            fileSizeThird = file.fileSize;
+            fileHashThird = file.fileHash;
+            if (file.thumbnail) {
+              thumbnailThird = file.thumbnail;
             }
           }
 
@@ -155,6 +158,12 @@ export class ProductService {
           fileTypeSecond,
           fileHashSecond,
           thumbnailSecond,
+          fileNameThird,
+          filePathThird,
+          fileSizeThird,
+          fileTypeThird,
+          fileHashThird,
+          thumbnailThird
         };
 
         const newFile = queryRunner.manager.create(File, fileInfo);
@@ -254,6 +263,12 @@ export class ProductService {
         let fileSizeSecond = 0;
         let fileHashSecond = '';
         let thumbnailSecond = '';
+        let fileNameThird = '';
+        let fileTypeThird = '';
+        let filePathThird = '';
+        let fileSizeThird = 0;
+        let fileHashThird = '';
+        let thumbnailThird = '';
         // 파일 정보 저장
         const promises = files.map(async (file: any, index: any) => {
           if (index == 0) {
@@ -265,7 +280,8 @@ export class ProductService {
             if (file.thumbnail) {
               thumbnailFirst = file.thumbnail;
             }
-          } else {
+          } else if (index == 1) {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
             fileNameSecond = file.fileName;
             fileTypeSecond = file.fileType;
             filePathSecond = file.filePath;
@@ -273,6 +289,16 @@ export class ProductService {
             fileHashSecond = file.fileHash;
             if (file.thumbnail) {
               thumbnailSecond = file.thumbnail;
+            }
+          } else {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameThird = file.fileName;
+            fileTypeThird = file.fileType;
+            filePathThird = file.filePath;
+            fileSizeThird = file.fileSize;
+            fileHashThird = file.fileHash;
+            if (file.thumbnail) {
+              thumbnailThird = file.thumbnail;
             }
           }
 
@@ -296,6 +322,12 @@ export class ProductService {
           fileTypeSecond,
           fileHashSecond,
           thumbnailSecond,
+          fileNameThird,
+          filePathThird,
+          fileSizeThird,
+          fileTypeThird,
+          fileHashThird,
+          thumbnailThird
         };
         const newFile = queryRunner.manager.create(File, fileInfo);
         await queryRunner.manager.save<File>(newFile);
@@ -364,18 +396,6 @@ export class ProductService {
           );
         }
 
-        // const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({ where:{productNo} });
-        // if (productInfo.state === "N2") {
-        //   if (purchaseAssetInfo.saleState != 'S1') {
-        //     if (statetInfo) {
-        //       throw new NotFoundException("Already on "+statetInfo.stateDesc+".");
-        //     }
-        //   }
-        // }else{
-        //   if (statetInfo) {
-        //     throw new NotFoundException("Already on "+statetInfo.stateDesc+".");
-        //   }
-        // }
       }
 
       // 굿즈 정보 삭제 수정
@@ -425,17 +445,8 @@ export class ProductService {
       let data = { state: 'N3' };
       await this.productRepository.update(productNo, data);
 
-      const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({
-        where: { productNo },
-      });
-      if (purchaseAssetInfo) {
-        const purchaseAssetNo = purchaseAssetInfo.purchaseAssetNo;
-        // 엔터사 에셋 구매 상태 정보 수정
-        let data1 = { saleState: 'S3' };
-        await this.purchaseAssetRepository.update(purchaseAssetNo, data1);
-      }
-
       await queryRunner.commitTransaction();
+
     } catch (e) {
       this.logger.error(e);
       throw e;
@@ -544,12 +555,32 @@ export class ProductService {
           "concat('" + serverDomain + "/', file.thumbnail_first)",
           'thumbnailFirst',
         )
+        .addSelect('file.file_name_second', 'fileNameSecond')
+        .addSelect(
+          "concat('" + serverDomain + "/', file.file_path_second)",
+          'fileUrlSecond',
+        )
+        .addSelect(
+          "concat('" + serverDomain + "/', file.thumbnail_second)",
+          'thumbnailSecond',
+        )
+        .addSelect('file.file_name_third', 'fileNameThird')
+        .addSelect(
+          "concat('" + serverDomain + "/', file.file_path_third)",
+          'fileUrlThird',
+        )
+        .addSelect(
+          "concat('" + serverDomain + "/', file.thumbnail_third)",
+          'thumbnailThird',
+        )
         .where('product.product_no = :productNo', { productNo });
 
       productInfo = await sql
         .groupBy(
           `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name,
-            metaverseThird.metaverse_name, file.file_name_first, file.file_path_first, file.thumbnail_first`,
+            metaverseThird.metaverse_name, file.file_name_first, file.file_path_first, file.thumbnail_first,
+            file.file_name_second, file.file_path_second, file.thumbnail_second,
+            file.file_name_third, file.file_path_third, file.thumbnail_third`,
         )
         .getRawOne();
 
@@ -668,12 +699,32 @@ export class ProductService {
           "concat('" + serverDomain + "/', file.thumbnail_first)",
           'thumbnailFirst',
         )
+        .addSelect('file.file_name_second', 'fileNameSecond')
+        .addSelect(
+          "concat('" + serverDomain + "/', file.file_path_second)",
+          'fileUrlSecond',
+        )
+        .addSelect(
+          "concat('" + serverDomain + "/', file.thumbnail_second)",
+          'thumbnailSecond',
+        )
+        .addSelect('file.file_name_third', 'fileNameThird')
+        .addSelect(
+          "concat('" + serverDomain + "/', file.file_path_third)",
+          'fileUrlThird',
+        )
+        .addSelect(
+          "concat('" + serverDomain + "/', file.thumbnail_third)",
+          'thumbnailThird',
+        )
         .where('product.product_no = :productNo', { productNo });
 
       productInfo = await sql
         .groupBy(
           `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name,
-            metaverseThird.metaverse_name, state.state_desc, file.file_name_first, file.file_path_first, file.thumbnail_first`,
+            metaverseThird.metaverse_name, state.state_desc, file.file_name_first, file.file_path_first, file.thumbnail_first,
+             file.file_name_second, file.file_path_second, file.thumbnail_second,
+             file.file_name_third, file.file_path_third, file.thumbnail_third`,
         )
         .getRawOne();
 
@@ -703,6 +754,15 @@ export class ProductService {
         .addSelect(
           "concat('" + serverDomain + "/', fileAsset.thumbnail_second)",
           'thumbnailSecond',
+        )
+        .addSelect('fileAsset.file_name_third', 'fileNameThird')
+        .addSelect(
+          "concat('" + serverDomain + "/', fileAsset.file_path_third)",
+          'fileUrlThird',
+        )
+        .addSelect(
+          "concat('" + serverDomain + "/', fileAsset.thumbnail_third)",
+          'thumbnailThird',
         )
         .where('purchaseAsset.product_no = :productNo', { productNo });
 
@@ -820,6 +880,24 @@ export class ProductService {
         .addSelect(
           "concat('" + serverDomain + "/', file.thumbnail_first)",
           'thumbnailFirst',
+        )
+        .addSelect('file.file_name_second', 'fileNameSecond')
+        .addSelect(
+          "concat('" + serverDomain + "/', file.file_path_second)",
+          'fileUrlSecond',
+        )
+        .addSelect(
+          "concat('" + serverDomain + "/', file.thumbnail_second)",
+          'thumbnailSecond',
+        )
+        .addSelect('file.file_name_third', 'fileNameThird')
+        .addSelect(
+          "concat('" + serverDomain + "/', file.file_path_third)",
+          'fileUrlThird',
+        )
+        .addSelect(
+          "concat('" + serverDomain + "/', file.thumbnail_third)",
+          'thumbnailThird',
         )
         .where(options);
 
@@ -946,6 +1024,24 @@ export class ProductService {
         .addSelect(
           "concat('" + serverDomain + "/', file.thumbnail_first)",
           'thumbnailFirst',
+        )
+        .addSelect('file.file_name_second', 'fileNameSecond')
+        .addSelect(
+          "concat('" + serverDomain + "/', file.file_path_second)",
+          'fileUrlSecond',
+        )
+        .addSelect(
+          "concat('" + serverDomain + "/', file.thumbnail_second)",
+          'thumbnailSecond',
+        )
+        .addSelect('file.file_name_third', 'fileNameThird')
+        .addSelect(
+          "concat('" + serverDomain + "/', file.file_path_third)",
+          'fileUrlThird',
+        )
+        .addSelect(
+          "concat('" + serverDomain + "/', file.thumbnail_third)",
+          'thumbnailThird',
         )
         .where(options);
 

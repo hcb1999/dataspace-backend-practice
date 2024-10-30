@@ -99,25 +99,42 @@ export class PurchaseController {
       "resultMessage": "SUCESS",
       "data": {
         "pageSize": 10,
-        "totalCount": 1,
+        "totalCount": 2,
         "totalPage": 1,
         "list": [
           {
-            "price": 6000,
-            "purchaseNo": 2,
+            "price": 0.1,
+            "purchaseNo": 50,
             "saleUserName": "엔터사 1",
-            "assetName": "블링원 테스트 굿즈4",
-            "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+            "assetName": "테스트 굿즈1용 에셋1",
+            "assetDesc": "테스트 굿즈1용 에셋1",
             "metaverseName": "K-POP 월드",
-            "typeDef": "K-가슴",
-            "stateDesc": "결재중",
-            "payDttm": "2024-09-04 21:05:59",
-            "fileNameFirst": "blingone_4.png",
-            "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
-            "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
-            "fileNameSecond": "blingone_3.png",
-            "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
-            "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
+            "typeDef": "K-셔츠",
+            "stateDesc": "결재완료",
+            "payDttm": "2024-10-29 16:59:48",
+            "fileNameFirst": "test1.glb",
+            "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
+            "thumbnailFirst": "https://kapi-dev.avataroad.com/",
+            "fileNameSecond": "test1.png",
+            "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
+            "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png"
+          },
+          {
+            "price": 0.1,
+            "purchaseNo": 49,
+            "saleUserName": "엔터사 1",
+            "assetName": "테스트 굿즈1용 에셋1",
+            "assetDesc": "테스트 굿즈1용 에셋1",
+            "metaverseName": "K-POP 월드",
+            "typeDef": "K-셔츠",
+            "stateDesc": "결재완료",
+            "payDttm": "2024-10-29 15:10:07",
+            "fileNameFirst": "test1.glb",
+            "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
+            "thumbnailFirst": "https://kapi-dev.avataroad.com/",
+            "fileNameSecond": "test1.png",
+            "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
+            "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png"
           }
         ]
       }
@@ -160,24 +177,51 @@ export class PurchaseController {
             "resultCode": 200,
             "resultMessage": "SUCESS",
             "data": {
-              "price": 6000,
-              "purchaseNo": 2,
-              "saleAddr": "0x12345678900",
+              "price": 0.1,
+              "purchaseNo": 50,
+              "purchaseAssetNo": 132,
+              "saleAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
               "saleUserName": "엔터사 1",
-              "purchaseAddr": "0x12345678912",
-              "purchaseUserName": "사용자 2",
-              "assetName": "블링원 테스트 굿즈4",
-              "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+              "purchaseAddr": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+              "purchaseUserName": "사용자 1",
+              "assetName": "테스트 굿즈1용 에셋1",
+              "assetDesc": "테스트 굿즈1용 에셋1",
               "metaverseName": "K-POP 월드",
-              "typeDef": "K-가슴",
-              "stateDesc": "결재중",
-              "payDttm": "2024-09-04 21:05:59",
-              "fileNameFirst": "blingone_4.png",
-              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
-              "fileNameSecond": "blingone_3.png",
-              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
-              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
+              "typeDef": "K-셔츠",
+              "stateDesc": "결재완료",
+              "payDttm": "2024-10-29 16:59:48",
+              "fromTokenId": "7",
+              "toTokenId": "11",
+              "fileNameFirst": "test1.glb",
+              "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
+              "thumbnailFirst": "https://kapi-dev.avataroad.com/",
+              "fileNameSecond": "test1.png",
+              "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
+              "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+              "nftContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+              "nftTxId": "0xf1de5162ecbdb7ab455014a1b448c3da1ef91bcdb2e6f7b1d3b995f55061838e",
+              "tokenInfo": [
+                {
+                  "tokenId": "7",
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                },
+                {
+                  "tokenId": "8",
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                },
+                {
+                  "tokenId": "9",
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                },
+                {
+                  "tokenId": "10",
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                },
+                {
+                  "tokenId": "11",
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                }
+              ] 
             }
           }
         }

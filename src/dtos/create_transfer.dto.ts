@@ -3,10 +3,17 @@ import { IsNotEmpty, IsOptional, IsString, Length, IsNumber, IsBoolean, IsObject
 import { Type, Transform } from 'class-transformer';  
 
 export class CreateTransferDto {
+  @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  @ApiProperty({ description: '광고주 구매번호' })
+  @ApiProperty({ description: '엔터사 구매 번호', required: false })
   readonly purchaseAssetNo: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ description: '마켓 판매 번호', required: false })
+  readonly marcketNo: number;
 
   @IsOptional()
   @IsNumber()
@@ -45,6 +52,11 @@ export class CreateTransferDto {
   @ApiProperty({ description: '토큰 ID' })
   tokenId: string;
 
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ required: false, description: '에디션 개수(NFT 구매 개수)' })
+  readonly purchaseCnt: number;
+  
   @IsOptional()
   @IsString()
   @Length(1, 10)

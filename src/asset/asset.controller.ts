@@ -34,7 +34,7 @@ export class AssetController {
    */
   @Post("/")
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 2 }], multerOptions))
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 3 }], multerOptions))
   @ApiConsumes('multipart/form-data')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '에셋 정보 등록', description: '에셋 정보를 등록한다.' })
@@ -73,7 +73,7 @@ export class AssetController {
    */
   @Put('/:assetNo')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 2 }], multerOptions))
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 3 }], multerOptions))
   @ApiConsumes('multipart/form-data')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '에셋 정보 수정', description: '에셋 정보를 수정한다.' })
@@ -207,7 +207,10 @@ export class AssetController {
               "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240904/1725455024810.png",
               "fileNameSecond": "",
               "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/",
-              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/"
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/",
+              "fileNameThird": "test1.png",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
             },
             {
               "price": 7000,
@@ -225,7 +228,10 @@ export class AssetController {
               "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
               "fileNameSecond": "blingone_3.png",
               "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
-              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+              "fileNameThird": "test1.png",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
             },
             {
               "price": 6000,
@@ -298,7 +304,10 @@ export class AssetController {
                 "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
                 "fileNameSecond": "blingone_3.png",
                 "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
-                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               },
               {
                 "price": 6000,
@@ -318,7 +327,10 @@ export class AssetController {
                 "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
                 "fileNameSecond": "blingone_3.png",
                 "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
-                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               },
               {
                 "price": 5000,
@@ -338,7 +350,10 @@ export class AssetController {
                 "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205892.png",
                 "fileNameSecond": "blingone_3.png",
                 "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261205917.png",
-                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205917.png"
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205917.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               }
             ]
           }
@@ -370,33 +385,39 @@ export class AssetController {
         "resultCode": 200,
         "resultMessage": "SUCESS",
         "data": {
-          "price": 7000,
-          "state": "S2",
-          "assetNo": 5,
-          "assetRegAddr": "0x12345678901",
+          "price": 0.3,
+          "state": "S5",
+          "assetNo": 80,
+          "assetRegAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
           "assetRegName": "크리에이터 1",
-          "assetName": "블링원 테스트 굿즈4",
+          "assetName": "테스트 굿즈1용 에셋1",
           "adTarget": 3,
           "metaverseName": "K-POP 월드",
           "adType": 1,
           "typeDef": "K-셔츠",
-          "productRegAddr": "0x12345678900",
+          "productNo": 56,
+          "productRegAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
           "productRegName": "엔터사 1",
-          "productName": "블링원 테스트 굿즈4",
-          "stateDesc": "판매중",
-          "assetDesc": "굿즈 26번에 대한 에셋입니다.",
-          "startDttm": "2024-09-05 09:00:00",
-          "endDttm": "2024-12-02 09:00:00",
-          "regDttm": "2024-09-02 16:14:59",
-          "assetFileNameFirst": "blingone_4.png",
-          "assetFileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
-          "assetThumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
-          "assetFileNameSecond": "blingone_3.png",
-          "assetFileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
-          "assetThumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
-          "productFileNameFirst": "blingone_4.png",
-          "productFileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725025423591.png",
-          "productThumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725025423591.png"
+          "productName": "테스트 굿즈1",
+          "stateDesc": "판매완료",
+          "assetDesc": "테스트 굿즈1용 에셋1",
+          "startDttm": "2024-10-29 09:00:00",
+          "endDttm": "2024-12-31 09:00:00",
+          "regDttm": "2024-10-29 14:57:57",
+          "fileNameFirst": "test1.glb",
+          "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
+          "thumbnailFirst": "https://kapi-dev.avataroad.com/",
+          "fileNameSecond": "test1.png",
+          "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
+          "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+          "fileNameThird": "test1-1.glb",
+          "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
+          "thumbnailThird": "https://kapi-dev.avataroad.com/",
+          "nftContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "nftTxId": "0xb8783b8f1158449e75488bcb14c228c27677143ac41258e3f752d7dd956fc941",
+          "nftTokenId": "1",
+          "nftSellerAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+          "nftBuyerAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
         }
       }
     }
@@ -432,28 +453,37 @@ export class AssetController {
           "resultCode": 200,
           "resultMessage": "SUCESS",
           "data": {
-            "price": 7000,
-            "assetNo": 5,
-            "assetRegAddr": "0x12345678901",
+            "price": 0.3,
+            "assetNo": 80,
+            "assetRegAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
             "assetRegName": "크리에이터 1",
-            "assetName": "블링원 테스트 굿즈4",
+            "assetName": "테스트 굿즈1용 에셋1",
             "adTarget": 3,
             "metaverseName": "K-POP 월드",
             "adType": 1,
             "typeDef": "K-셔츠",
-            "productRegAddr": "0x12345678900",
+            "productNo": 56,
+            "productRegAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
             "productRegName": "엔터사 1",
-            "productName": "블링원 테스트 굿즈4",
-            "assetDesc": "굿즈 26번에 대한 에셋입니다.",
-            "startDttm": "2024-09-05 09:00:00",
-            "endDttm": "2024-12-02 09:00:00",
-            "regDttm": "2024-09-02 16:14:59",
-            "fileNameFirst": "blingone_4.png",
-            "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
-            "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
-            "fileNameSecond": "blingone_3.png",
-            "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
-            "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+            "productName": "테스트 굿즈1",
+            "assetDesc": "테스트 굿즈1용 에셋1",
+            "startDttm": "2024-10-29 09:00:00",
+            "endDttm": "2024-12-31 09:00:00",
+            "regDttm": "2024-10-29 14:57:57",
+            "fileNameFirst": "test1.glb",
+            "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
+            "thumbnailFirst": "https://kapi-dev.avataroad.com/",
+            "fileNameSecond": "test1.png",
+            "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
+            "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+            "fileNameThird": "test1-1.glb",
+            "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
+            "thumbnailThird": "https://kapi-dev.avataroad.com/",
+            "nftContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "nftTxId": "0xb8783b8f1158449e75488bcb14c228c27677143ac41258e3f752d7dd956fc941",
+            "nftTokenId": "1",
+            "nftSellerAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+            "nftBuyerAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
           }
         }
       }

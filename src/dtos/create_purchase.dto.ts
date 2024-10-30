@@ -3,31 +3,36 @@ import { IsString, Length, IsOptional, IsNumber, IsArray } from "class-validator
 import { Type } from 'class-transformer';
 
 export class CreatePurchaseDto {
-  @IsString()
-  @Length(1, 80)
-  @ApiProperty({ description: '판매자 지갑주소' })
-  readonly saleAddr: string;
+  // @IsString()
+  // @Length(1, 80)
+  // @ApiProperty({ description: '판매자 지갑주소' })
+  // readonly saleAddr: string;
 
-  @IsString()
-  @Length(1, 40)
-  @ApiProperty({ description: '판매 광고주명' })
-  readonly saleUserName: string;
+  // @IsString()
+  // @Length(1, 40)
+  // @ApiProperty({ description: '판매 광고주명' })
+  // readonly saleUserName: string;
 
-  @IsString()
-  @Length(1, 80)
-  @ApiProperty({ description: '구매 지갑주소' })
-  readonly purchaseAddr: string;
+  // @IsString()
+  // @Length(1, 80)
+  // @ApiProperty({ description: '구매 지갑주소' })
+  // readonly purchaseAddr: string;
 
-  @IsString()
-  @Length(1, 40)
-  @ApiProperty({ description: '구매 사용자명' })
-  readonly purchaseUserName: string;
+  // @IsString()
+  // @Length(1, 40)
+  // @ApiProperty({ description: '구매 사용자명' })
+  // readonly purchaseUserName: string;
 
   @IsNumber()
   @Type(() => Number)
-  @ApiProperty({ description: '엔터사 구매 번호' })
-  readonly purchaseAssetNo: number;
+  @ApiProperty({ description: '마켓 판매 번호' })
+  readonly marcketNo: number;
  
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ required: false, description: '에디션 개수(NFT 구매 개수)' })
+  readonly purchaseCnt: number;
+
   // @IsOptional()
   // @IsString()
   // @Length(1, 10)

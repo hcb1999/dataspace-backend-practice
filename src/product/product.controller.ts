@@ -34,7 +34,7 @@ export class ProductController {
    */
   @Post("/")
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 2 }], multerOptions))
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 3 }], multerOptions))
   @ApiConsumes('multipart/form-data')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '굿즈 정보 등록', description: '굿즈 정보를 등록한다.' })
@@ -75,7 +75,7 @@ export class ProductController {
    */
   @Put('/:productNo')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 2 }], multerOptions))
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 3 }], multerOptions))
   @ApiConsumes('multipart/form-data')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '굿즈 정보 수정', description: '굿즈 정보를 수정한다.' })
@@ -180,7 +180,13 @@ export class ProductController {
               "endDttm": "2024-09-30 21:14:30",
               "fileNameFirst": "blingone_3.png",
               "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725023097074.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725023097074.png"
+              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725023097074.png",
+              "fileNameSecond": "blingone_3.png",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+              "fileNameThird": "test1.png",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
             },
             {
               "state": "N2",
@@ -198,7 +204,13 @@ export class ProductController {
               "endDttm": "2024-10-30 21:14:30",
               "fileNameFirst": "blingone_2.png",
               "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725023083032.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725023083032.png"
+              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725023083032.png",
+              "fileNameSecond": "blingone_3.png",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+              "fileNameThird": "test1.png",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
             }
           ]
         }
@@ -263,7 +275,13 @@ export class ProductController {
                 "endDttm": "2024-11-01 09:00:00",
                 "fileNameFirst": "blingone_4.png",
                 "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725025423591.png",
-                "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725025423591.png"
+                "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725025423591.png",
+                "fileNameSecond": "blingone_3.png",
+                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               },
               {
                 "state": "N2",
@@ -282,7 +300,13 @@ export class ProductController {
                 "endDttm": "2024-09-30 21:14:30",
                 "fileNameFirst": "blingone_3.png",
                 "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725023097074.png",
-                "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725023097074.png"
+                "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725023097074.png",
+                "fileNameSecond": "blingone_3.png",
+                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               },
               {
                 "state": "N2",
@@ -301,7 +325,13 @@ export class ProductController {
                 "endDttm": "2024-10-30 21:14:30",
                 "fileNameFirst": "blingone_2.png",
                 "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725023083032.png",
-                "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725023083032.png"
+                "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725023083032.png",
+                "fileNameSecond": "blingone_3.png",
+                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               },
               {
                 "state": "N1",
@@ -320,7 +350,13 @@ export class ProductController {
                 "endDttm": "2024-11-30 09:00:00",
                 "fileNameFirst": "blingone.png",
                 "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725002565657.png",
-                "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725002565657.png"
+                "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725002565657.png",
+                "fileNameSecond": "blingone_3.png",
+                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               }
             ]
           }
@@ -391,7 +427,13 @@ export class ProductController {
               "regDttm": "2024-08-30 22:43:43",
               "fileNameFirst": "blingone_4.png",
               "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725025423591.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725025423591.png"
+              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725025423591.png",
+              "fileNameSecond": "blingone_3.png",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+              "fileNameThird": "test1.png",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
             },
             "assetList": [
               {
@@ -401,9 +443,12 @@ export class ProductController {
                 "fileNameFirst": "blingone_3.png",
                 "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240904/1725455024810.png",
                 "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240904/1725455024810.png",
-                "fileNameSecond": "",
-                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/",
-                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/"
+                "fileNameSecond": "blingone_3.png",
+                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               },
               {
                 "purchaseAssetNo": 3,
@@ -414,7 +459,10 @@ export class ProductController {
                 "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
                 "fileNameSecond": "blingone_3.png",
                 "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
-                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               },
               {
                 "purchaseAssetNo": 2,
@@ -424,8 +472,11 @@ export class ProductController {
                 "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
                 "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
                 "fileNameSecond": "blingone_3.png",
-                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
-                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
+                "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+                "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+                "fileNameThird": "test1.png",
+                "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
               }
             ]
           }
@@ -490,7 +541,13 @@ export class ProductController {
               "regDttm": "2024-08-30 22:43:43",
               "fileNameFirst": "blingone_4.png",
               "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240830/1725025423591.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725025423591.png"
+              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240830/1725025423591.png",
+              "fileNameSecond": "blingone_3.png",
+              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
+              "fileNameThird": "test1.png",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
             }
           }
         }

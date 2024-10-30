@@ -57,14 +57,14 @@ export class Product extends BaseEntity {
   @Column({ name: "use_yn", type: "varchar", length: 1, comment: "사용 여부", default: "Y" })
   useYn: string;
 
-  @Column({ name: "minted_yn", type: "varchar", length: 1, comment: "민트 여부", default: "N" })
-  mintedYn: string;
+  // @Column({ name: "minted_yn", type: "varchar", length: 1, comment: "민트 여부", default: "N" })
+  // mintedYn: string;
 
-  @Column({ name: "adv_tot_amt", type: "int4", comment: "광고집행총액", default: 0 , nullable: true })
-  advTotAmt: number;
+  // @Column({ name: "adv_tot_amt", type: "int4", comment: "광고집행총액", default: 0 , nullable: true })
+  // advTotAmt: number;
 
-  @Column({ name: "adv_balance", type: "int4", comment: "광고집행잔액", default: 0, unsigned: false, nullable: true })
-  advBalance: number;
+  // @Column({ name: "adv_balance", type: "int4", comment: "광고집행잔액", default: 0, unsigned: false, nullable: true })
+  // advBalance: number;
 
   @CreateDateColumn({ type: 'timestamptz', name: "reg_dttm", comment: "등록일시" })
   regDttm: Date;

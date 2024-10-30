@@ -12,6 +12,7 @@ import { PurchaseModule } from './purchase/purchase.module';
 import { PurchaseAssetModule } from './purchase_asset/purchase_asset.module';
 import { StateModule } from './state/state.module';
 import { UserModule } from './user/user.module';
+import { MarcketModule } from './marcket/marcket.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 // import { BullModule } from '@nestjs/bull';
@@ -35,6 +36,7 @@ import { memoryStorage } from 'multer';
     PurchaseAssetModule,
     StateModule,
     UserModule,
+    MarcketModule,
     MulterModule.register({
       storage: memoryStorage()
     }),

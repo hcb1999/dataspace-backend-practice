@@ -121,6 +121,12 @@ export class AssetService {
         let fileSizeSecond = 0;
         let fileHashSecond = '';
         let thumbnailSecond = '';
+        let fileNameThird = '';
+        let fileTypeThird = '';
+        let filePathThird = '';
+        let fileSizeThird = 0;
+        let fileHashThird = '';
+        let thumbnailThird = '';
         // 에셋 파일 정보 저장
         const promises = files.map(async (file:any, index:any) => { 
           // console.log("=== index : "+index+", file : "+JSON.stringify(file));
@@ -134,15 +140,25 @@ export class AssetService {
             if(file.thumbnail) {
               thumbnailFirst = file.thumbnail;
             }
-          }else{
+          } else if (index == 1) {
             // console.log("=== index : "+index+", file : "+JSON.stringify(file));
             fileNameSecond = file.fileName;
             fileTypeSecond = file.fileType;
             filePathSecond = file.filePath;
             fileSizeSecond = file.fileSize;
             fileHashSecond = file.fileHash;
-            if(file.thumbnail) {
+            if (file.thumbnail) {
               thumbnailSecond = file.thumbnail;
+            }
+          } else {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameThird = file.fileName;
+            fileTypeThird = file.fileType;
+            filePathThird = file.filePath;
+            fileSizeThird = file.fileSize;
+            fileHashThird = file.fileHash;
+            if (file.thumbnail) {
+              thumbnailThird = file.thumbnail;
             }
           }
 
@@ -154,7 +170,8 @@ export class AssetService {
         })
 
         let fileInfo = {fileNameFirst, filePathFirst, fileSizeFirst, fileTypeFirst, fileHashFirst, thumbnailFirst,
-          fileNameSecond, filePathSecond, fileSizeSecond, fileTypeSecond, fileHashSecond, thumbnailSecond};
+          fileNameSecond, filePathSecond, fileSizeSecond, fileTypeSecond, fileHashSecond, thumbnailSecond,
+          fileNameThird, filePathThird, fileSizeThird, fileTypeThird, fileHashThird, thumbnailThird};
 
         // console.log("=== fileInfo : "+JSON.stringify(fileInfo));
         const newFile = queryRunner.manager.create(FileAsset, fileInfo);
@@ -180,7 +197,8 @@ export class AssetService {
       await queryRunner.commitTransaction();
 
       // nftService.createMint 호출
-      const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address, tokenId: null, state: 'B1'};
+      const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address, 
+        issueCnt: 1, tokenId: null, state: 'B1', marcketNo: null};
       this.nftService.createMint(user, nftMintInfo);
       
       // console.log("===== nftMintInfo : "+ JSON.stringify(nftMintInfo));
@@ -251,6 +269,12 @@ export class AssetService {
         let fileSizeSecond = 0;
         let fileHashSecond = '';
         let thumbnailSecond = '';
+        let fileNameThird = '';
+        let fileTypeThird = '';
+        let filePathThird = '';
+        let fileSizeThird = 0;
+        let fileHashThird = '';
+        let thumbnailThird = '';
         // 에셋 파일 정보 저장
         const promises = files.map(async (file:any, index:any) => { 
           // console.log("=== index : "+index+", file : "+JSON.stringify(file));
@@ -264,15 +288,25 @@ export class AssetService {
             if(file.thumbnail) {
               thumbnailFirst = file.thumbnail;
             }
-          }else{
+          } else if (index == 1) {
             // console.log("=== index : "+index+", file : "+JSON.stringify(file));
             fileNameSecond = file.fileName;
             fileTypeSecond = file.fileType;
             filePathSecond = file.filePath;
             fileSizeSecond = file.fileSize;
             fileHashSecond = file.fileHash;
-            if(file.thumbnail) {
+            if (file.thumbnail) {
               thumbnailSecond = file.thumbnail;
+            }
+          } else {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameThird = file.fileName;
+            fileTypeThird = file.fileType;
+            filePathThird = file.filePath;
+            fileSizeThird = file.fileSize;
+            fileHashThird = file.fileHash;
+            if (file.thumbnail) {
+              thumbnailThird = file.thumbnail;
             }
           }
 
@@ -284,7 +318,8 @@ export class AssetService {
         })
 
         let fileInfo = {fileNameFirst, filePathFirst, fileSizeFirst, fileTypeFirst, fileHashFirst, thumbnailFirst,
-          fileNameSecond, filePathSecond, fileSizeSecond, fileTypeSecond, fileHashSecond, thumbnailSecond};
+          fileNameSecond, filePathSecond, fileSizeSecond, fileTypeSecond, fileHashSecond, thumbnailSecond,
+          fileNameThird, filePathThird, fileSizeThird, fileTypeThird, fileHashThird, thumbnailThird};
 
         const newFile = queryRunner.manager.create(FileAsset, fileInfo);
         await queryRunner.manager.save<FileAsset>(newFile);
@@ -430,16 +465,16 @@ export class AssetService {
                       .addSelect('asset.start_dttm', 'startDttm')
                       .addSelect('asset.end_dttm', 'endDttm')
                       .addSelect('asset.reg_dttm', 'regDttm')
-                      .addSelect("fileAsset.file_name_first", 'assetFileNameFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'assetFileUrlFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'assetThumbnailFirst')
-                      .addSelect("fileAsset.file_name_second", 'assetFileNameSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'assetFileUrlSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'assetThumbnailSecond')
-                      .addSelect("file.file_name_first", 'productFileNameFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_first)", 'productFileUrlFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_first)", 'productThumbnailFirst')
-                      .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
+                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
+                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect("fileAsset.file_name_third", 'fileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
+                      .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
                       .addSelect('mint.tx_id', 'nftTxId')
                       .addSelect('mint.token_id', 'nftTokenId')
                       .addSelect("transfer.from_addr", 'nftSellerAddr')
@@ -523,7 +558,10 @@ export class AssetService {
                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
-                      .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
+                      .addSelect("fileAsset.file_name_third", 'fileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
+                      .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
                       .addSelect('mint.tx_id', 'nftTxId')
                       .addSelect('mint.token_id', 'nftTokenId')
                       .addSelect("transfer.from_addr", 'nftSellerAddr')
@@ -678,6 +716,9 @@ export class AssetService {
                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect("fileAsset.file_name_third", 'fileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
                       .where(options);
                       
       const list = await sql.orderBy('asset.asset_no', getAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
@@ -789,6 +830,9 @@ export class AssetService {
                           .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                           .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                           .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                          .addSelect("fileAsset.file_name_third", 'fileNameThird')
+                          .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
+                          .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
                           .where(options);
 
         sql.andWhere("asset.user_no = :userNo", { userNo });

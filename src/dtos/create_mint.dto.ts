@@ -43,6 +43,24 @@ export class CreateMintDto {
   @ApiProperty({ description: '민팅 상태', required: false})
   readonly state: string;
 
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ required: false, description: '에디션 개수(NFT 발행 개수 / NFT 재판매 개수)' })
+  readonly issueCnt: number;
+
+  // @IsOptional()
+  // @IsNumber()
+  // @Type(() => Number)
+  // @ApiProperty({ required: false, description: '엔터사 구매 번호' })
+  // readonly purchaseAssetNo: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ required: false, description: '마켓 에셋 판매 번호' })
+  readonly marcketNo: number;
+
   // @IsArray()
   // @Length(1, 512, { each: true })
   // @ApiProperty({ type:[String], description: '토큰ID:[에셋번호_상품번호_index]' })

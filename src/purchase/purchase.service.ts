@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { DataSource, Repository, UpdateResult, Like, Between, In } from 'typeorm';
 import { Purchase } from '../entities/purchase.entity';
-import { PurchaseAsset } from '../entities/purchase_asset.entity';
+import { Marcket } from '../entities/marcket.entity';
 import { Asset } from '../entities/asset.entity';
 import { State } from '../entities/state.entity';
 import { FileAsset } from '../entities/file_asset.entity';
@@ -27,8 +27,8 @@ export class PurchaseService {
     @Inject('PURCHASE_REPOSITORY')
     private purchaseRepository: Repository<Purchase>,
 
-    @Inject('PURCHASE_ASSET_REPOSITORY')
-    private purchaseAssetRepository: Repository<PurchaseAsset>,
+    @Inject('MARCKET_REPOSITORY')
+    private marcketRepository: Repository<Marcket>,
 
     @Inject('ASSET_REPOSITORY')
     private assetRepository: Repository<Asset>,
@@ -57,25 +57,19 @@ export class PurchaseService {
 
     try {
 
-      // 이미 구매한 정보 결제중(P2), 결제완료(P3) 이면 구매 못함.
-      const purchaseAssetNo = createPurchaseDto.purchaseAssetNo;
-      const fromAddr = createPurchaseDto.saleAddr.toLowerCase();
-      const toAddr = createPurchaseDto.purchaseAddr.toLowerCase();
-
-      const purchaseInfo = await this.purchaseRepository.findOne({ where:{purchaseAssetNo, state: In(['P2', 'P3'])}  });
-     
-      if (purchaseInfo) {
-        // if(purchaseInfo.state === 'P2' || purchaseInfo.state === 'P3'){
-          throw new ConflictException("Data already existed. : 이미 구매한 에셋");
-        // }
+      const marcketNo = createPurchaseDto.marcketNo;
+      const purchaseCnt = createPurchaseDto.purchaseCnt;
+      
+      const marcketInfo = await this.marcketRepository.findOne({ where:{marcketNo} });
+      if (!marcketInfo) {
+        throw new NotFoundException("Data Not found. : 마켓 판매 정보");
+      }
+      if(!((purchaseCnt > 0) && (purchaseCnt <= marcketInfo.inventoryCnt)) ){
+        throw new NotFoundException("Data Not found. : 마켓 판매 정보의 재고 수량 확인");
       }
       
-      const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
-      if (!purchaseAssetInfo) {
-        throw new NotFoundException("Data Not found. : 엔터사 구매 정보");
-      }
-      const productNo = purchaseAssetInfo.productNo;
-      const assetNo = purchaseAssetInfo.assetNo;
+      const productNo = marcketInfo.productNo;
+      const assetNo = marcketInfo.assetNo;
       const assetInfo = await this.assetRepository.findOne({ where:{assetNo} });
       if (!assetInfo) {
         throw new NotFoundException("Data Not found.: 에셋");
@@ -83,101 +77,47 @@ export class PurchaseService {
       if (!assetInfo.tokenId) {
         throw new NotFoundException("Data Not Minted.: 에셋");
       }
-
-      // console.log("===== createPurchaseDto : "+createPurchaseDto);
+      const fromAddr = marcketInfo.saleAddr;
+      const toAddr = user.nftWalletAddr;
 
       // Purchase 저장
-      const createPurchase: CreatePurchaseDto  = {...createPurchaseDto, 
-        saleAddr: fromAddr,
-        purchaseAddr: toAddr
-      }
-      // console.log("===== createPurchase : "+ JSON.stringify(createPurchase));
-      const newPurchase = queryRunner.manager.create(Purchase, createPurchase);
+      // const createPurchase: CreatePurchaseDto  = {...createPurchaseDto, 
+      //   saleAddr: fromAddr,
+      //   saleUserName: marcketInfo.saleUserName,
+      //   purchaseAddr: toAddr,
+      //   purchaseUserName: user.nickName
+      // }
+      const tokenId = (parseInt(marcketInfo.fromTokenId) + marcketInfo.saleCnt).toString();
+      // console.log("marcketInfo.fromTokenId : "+ marcketInfo.fromTokenId);
+      // console.log("marcketInfo.saleCnt : "+ marcketInfo.saleCnt);
+      // console.log("marcketInfo.fromTokenId + marcketInfo.saleCnt : "+ marcketInfo.fromTokenId + marcketInfo.saleCnt);
+      // console.log("tokenId : "+ tokenId);
+      const fromTokenId = tokenId;
+      const toTokenId = (parseInt(tokenId) + purchaseCnt -1).toString();
+      createPurchaseDto['saleAddr'] = fromAddr;
+      createPurchaseDto['saleUserName'] = marcketInfo.saleUserName;
+      createPurchaseDto['purchaseAddr'] = toAddr;
+      createPurchaseDto['purchaseUserName'] = user.nickName;
+      
+      createPurchaseDto['fromTokenId'] = fromTokenId;
+      createPurchaseDto['toTokenId'] = toTokenId;
+      createPurchaseDto['inventoryCnt'] = purchaseCnt;
+     
+      // console.log("===== createPurchaseDto : "+ JSON.stringify(createPurchaseDto));
+      const newPurchase = queryRunner.manager.create(Purchase, createPurchaseDto);
       const result = await queryRunner.manager.save<Purchase>(newPurchase);
       const purchaseNo = result.purchaseNo;
 
       await queryRunner.commitTransaction();
-    
-      // nftService.  // nftService.createTransfer 호출 호출
-      const tokenId = assetInfo.tokenId;
-      const nftTransferInfo: CreateTransferDto = {purchaseAssetNo, purchaseNo, fromAddr, toAddr, 
-        assetNo, productNo, tokenId, state: ''};
-      this.nftService.createTransferNMint(user, nftTransferInfo);
+      // nftService.createTransfer 호출 호출
+      const nftTransferInfo: CreateTransferDto = {purchaseAssetNo: null, marcketNo, purchaseNo, fromAddr, toAddr, 
+        assetNo, productNo, tokenId, purchaseCnt, state: ''};
+      this.nftService.createMarcketTransfer(user, nftTransferInfo);
       
     // console.log("===== nftTransferInfo : "+ JSON.stringify(nftTransferInfo));
 
       return { purchaseNo };
   
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }finally {
-      await queryRunner.release();
-    }
-
-  }
-
-  /**
-   * 구매 상태 정보 수정
-   * 
-   * @param purchaseNo 
-   * @param modifyPurchaseDto 
-   */
-  async updateState(purchaseNo: number, modifyPurchaseDto: ModifyPurchaseDto): Promise<void> {
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-
-        const purchaseInfo = await this.purchaseRepository.findOne({ where:{purchaseNo} });
-        if (!purchaseInfo) {
-          throw new NotFoundException("Data Not found. : 사용자 구매 정보");
-        }
-
-        const state = modifyPurchaseDto.state;
-        const failDesc = modifyPurchaseDto.failDesc;
-        let data = {};
-        if(failDesc){
-          data = { state, failDesc };
-        }else{
-          data = { state }
-        }
-    
-        await queryRunner.manager.update(Purchase, purchaseNo, data);
-
-      // state가 결제완료(P3)
-        if(state=== 'P3'){
-          const purchaseAssetNo = purchaseInfo.purchaseAssetNo;
-          const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
-          if (!purchaseAssetInfo) {
-            throw new NotFoundException("Data Not found. : 엔터사 구매 정보");
-          }
-          const productNo = purchaseAssetInfo.productNo;
-          const assetNo = purchaseAssetInfo.assetNo;
-          const nftMintInfo = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
-          if (!nftMintInfo) {
-            throw new NotFoundException("Data Not found. : NFT 민트 정보");
-          }
-
-          // NftTransfer 저장
-          const nftTransferInfo: CreateTransferDto = {purchaseNo: purchaseInfo.purchaseNo, fromAddr: purchaseInfo.saleAddr,
-            toAddr: purchaseInfo.purchaseAddr, purchaseAssetNo, assetNo, productNo, tokenId: nftMintInfo.tokenId, state: 'B5'};
-
-          // console.log("===== nftTransferInfo : "+ JSON.stringify(nftTransferInfo));
-          const newTransfer = queryRunner.manager.create(NftTransfer, nftTransferInfo);
-          const result = await queryRunner.manager.save<NftTransfer>(newTransfer);
-
-          // 엔터사 구매 정보에 sold_yn='Y'로 저장         
-          let data1 = {soldYn: 'Y'};
-          await queryRunner.manager.update(PurchaseAsset, purchaseAssetNo, data1);
-
-          // NFT Transfer 하기   
-        }
-
-        await queryRunner.commitTransaction();
-
     } catch (e) {
       this.logger.error(e);
       throw e;
@@ -206,40 +146,106 @@ export class PurchaseService {
       }
 
       const sql = this.purchaseRepository.createQueryBuilder('purchase')
-                      .innerJoin(PurchaseAsset, 'purchaseAsset', 'purchaseAsset.purchase_asset_no = purchase.purchase_asset_no')
-                      .innerJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
+                      .innerJoin(Marcket, 'marcket', 'marcket.marcket_no = purchase.marcket_no')
+                      .innerJoin(Asset, 'asset', 'asset.asset_no = marcket.asset_no')
                       .innerJoin(State, 'state', 'state.state = purchase.state')
                       .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
-                      .leftJoin(NftMint, 'mint', 'purchase.token_id = mint.token_id')
+                      .leftJoin(NftTransfer, 'transfer', 'purchase.from_token_id = transfer.token_id')
                       .select('purchase.purchase_no', 'purchaseNo')
+                      .addSelect('marcket.purchase_asset_no', 'purchaseAssetNo')
+                      .addSelect("marcket.marcket_no", 'marcketNo')    
                       .addSelect('purchase.sale_addr', 'saleAddr')
                       .addSelect('purchase.sale_user_name', 'saleUserName')
                       .addSelect('purchase.purchase_addr', 'purchaseAddr')
                       .addSelect('purchase.purchase_user_name', 'purchaseUserName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
-                      .addSelect("asset.price", 'price')
+                      .addSelect("marcket.price", 'price')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
                       .addSelect('state.state_desc', 'stateDesc')   
                       .addSelect('purchase.pay_dttm', 'payDttm')                      
+                      .addSelect('purchase.purchase_cnt', 'purchaseCnt')                      
+                      .addSelect('purchase.sale_cnt', 'saleCnt')                      
+                      .addSelect('purchase.inventory_cnt', 'inventoryCnt')                      
+                      .addSelect('purchase.from_token_id', 'fromTokenId')     
+                      .addSelect('purchase.to_token_id', 'toTokenId')     
                       .addSelect("fileAsset.file_name_first", 'fileNameFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
-                      .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
-                      .addSelect('mint.tx_id', 'nftTxId')
-                      .addSelect('mint.token_id', 'nftTokenId')
-                      .addSelect("purchase.sale_addr", 'nftSellerAddr')
-                      .addSelect("purchase.purchase_addr", 'nftBuyerAddr')
+                      .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
+                      .addSelect('transfer.tx_id', 'nftTxId')
+                      // .addSelect("purchase.sale_addr", 'nftSellerAddr')
+                      // .addSelect("purchase.purchase_addr", 'nftBuyerAddr')
                       .where("purchase.purchase_no = :purchaseNo", { purchaseNo })
                     // .andWhere("nftMint.use_yn = 'N'")
                     // .andWhere("nftMint.burn_yn = 'N'");
 
       const purchaseInfo = await sql.groupBy(``)
                                     .getRawOne();
+
+      const fromTokenId =  parseInt(purchaseInfo.fromTokenId);
+      const toTokenId =  parseInt(purchaseInfo.toTokenId);
+      const transferList = await this.nftTransferRepository.createQueryBuilder('transfer')
+      .select([
+        'transfer.token_id',
+        'transfer.to_addr',
+        'transfer.nft_transfer_no'
+      ])
+      .where(
+        fromTokenId === toTokenId
+          ? "CAST(transfer.token_id AS INTEGER) = :fromTokenId"
+          : "CAST(transfer.token_id AS INTEGER) BETWEEN :fromTokenId AND :toTokenId",
+        { fromTokenId: Number(fromTokenId), toTokenId: Number(toTokenId) }
+      )
+      .andWhere('transfer.nft_transfer_no IN (' + 
+        this.nftTransferRepository.createQueryBuilder('subTransfer')
+          .select('MAX(subTransfer.nft_transfer_no)')
+          .where('CAST(subTransfer.token_id AS INTEGER) = CAST(transfer.token_id AS INTEGER)')
+          .groupBy('subTransfer.token_id')
+          .getQuery() + 
+        ')'
+      )
+      .orderBy("transfer.token_id", "DESC") 
+      .getRawMany();
+
+      // console.log("transferList : "+JSON.stringify(transferList));
+
+      const transferIds = transferList.map(item => item.token_id);
+      // console.log("transferIds : "+transferIds);
+      const missingIds = [];
+      for (let id = fromTokenId; id <= toTokenId; id++) {
+        // console.log(id);
+        if (!transferIds.includes(id.toString())) {
+          // console.log("추가 : "+id);
+          missingIds.push(id);
+        }
+      }
+      // console.log("missingIds : "+JSON.stringify(missingIds));
+    
+      let mintList: any[] = [];
+      if (missingIds.length > 0) {
+        mintList = await this.nftMintRepository.createQueryBuilder("mint")
+                                    .select(["mint.token_id", "mint.issued_to"])
+                                    .where("mint.token_id IN (:...missingIds)", { missingIds })
+                                    .getRawMany();
+      }
+
+      // console.log(mintList);
+
+      const combinedList = [
+        ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.to_addr })),
+        ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.issued_to }))
+      ];
+    
+      const sortedCombinedList = combinedList.sort((a, b) => {
+        return a.tokenId - b.tokenId; 
+      });                                    
+    
+      purchaseInfo.tokenInfo = sortedCombinedList;
 
       return purchaseInfo;
 
@@ -291,15 +297,15 @@ export class PurchaseService {
       console.log("options : "+options);
   
       const sql = this.purchaseRepository.createQueryBuilder('purchase')
-                      .innerJoin(PurchaseAsset, 'purchaseAsset', 'purchaseAsset.purchase_asset_no = purchase.purchase_asset_no')
-                      .innerJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
+                      .innerJoin(Marcket, 'marcket', 'marcket.marcket_no = purchase.marcket_no')
+                      .innerJoin(Asset, 'asset', 'asset.asset_no = marcket.asset_no')
                       .innerJoin(State, 'state', 'state.state = purchase.state')
                       .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
                       .select('purchase.purchase_no', 'purchaseNo')
                       .addSelect('purchase.sale_user_name', 'saleUserName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
-                      .addSelect("asset.price", 'price')                      
+                      .addSelect("marcket.price", 'price')                      
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
                       .addSelect('state.state_desc', 'stateDesc')                      
@@ -317,7 +323,7 @@ export class PurchaseService {
       const list = await sql.orderBy('purchase.purchase_no', getPurchaseDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
                             .offset(skip)
                             .limit(take)
-                            .groupBy(`purchase.purchase_no, asset.price, asset.asset_name, asset.asset_desc,
+                            .groupBy(`purchase.purchase_no, marcket.price, asset.asset_name, asset.asset_desc,
                               asset.metaverse_name, asset.type_def, state.state_desc, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
                                 fileAsset.file_path_second, fileAsset.thumbnail_second`)

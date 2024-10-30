@@ -86,81 +86,81 @@ export class PurchaseAssetController {
    * @param getPurchaseAssetDto 
    * @returns 
    */
-  @Get('/')
-  // @UseGuards(JwtAuthGuard)
-  // @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: '엔터사 구매 목록 조회', description: '엔터사 구매 목록을 조회한다.' })
-  @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
-  @ApiResponse({status:HttpStatus.BAD_REQUEST, description:'필수입력 오류'})
-  @ApiOkResponse({ description: '성공',
-    schema: {example: { 
-      "resultCode": 200,
-      "resultMessage": "SUCESS",
-      "data": {
-        "pageSize": 10,
-        "totalCount": 2,
-        "totalPage": 1,
-        "list": [
-          {
-            "price": 7000,
-            "purchaseAssetNo": 3,
-            "purchaseAddr": "0x12345678900",
-            "purchaseUserName": "엔터사 1",
-            "saleAddr": "0x12345678901",
-            "saleUserName": "크리에이터 1",
-            "assetName": "블링원 테스트 굿즈4",
-            "assetDesc": "굿즈 26번에 대한 에셋입니다.",
-            "metaverseName": "K-POP 월드",
-            "typeDef": "K-셔츠",
-            "startDttm": "2024-09-01 09:00:00",
-            "endDttm": "2024-11-01 09:00:00",
-            "fileNameFirst": "blingone_4.png",
-            "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
-            "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
-            "fileNameSecond": "blingone_3.png",
-            "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
-            "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
-          },
-          {
-            "price": 6000,
-            "purchaseAssetNo": 2,
-            "purchaseAddr": "0x12345678900",
-            "purchaseUserName": "엔터사 1",
-            "saleAddr": "0x12345678901",
-            "saleUserName": "크리에이터 1",
-            "assetName": "블링원 테스트 굿즈4",
-            "assetDesc": "굿즈 26번에 대한 에셋입니다.",
-            "metaverseName": "K-POP 월드",
-            "typeDef": "K-가슴",
-            "startDttm": "2024-09-01 09:00:00",
-            "endDttm": "2024-11-01 09:00:00",
-            "fileNameFirst": "blingone_4.png",
-            "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
-            "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
-            "fileNameSecond": "blingone_3.png",
-            "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
-            "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
-          }
-        ]
-      }
-    }}})
+  // @Get('/')
+  // // @UseGuards(JwtAuthGuard)
+  // // @ApiBearerAuth('access-token')
+  // @ApiOperation({ summary: '엔터사 구매 목록 조회', description: '엔터사 구매 목록을 조회한다.' })
+  // @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
+  // @ApiResponse({status:HttpStatus.BAD_REQUEST, description:'필수입력 오류'})
+  // @ApiOkResponse({ description: '성공',
+  //   schema: {example: { 
+  //     "resultCode": 200,
+  //     "resultMessage": "SUCESS",
+  //     "data": {
+  //       "pageSize": 10,
+  //       "totalCount": 2,
+  //       "totalPage": 1,
+  //       "list": [
+  //         {
+  //           "price": 7000,
+  //           "purchaseAssetNo": 3,
+  //           "purchaseAddr": "0x12345678900",
+  //           "purchaseUserName": "엔터사 1",
+  //           "saleAddr": "0x12345678901",
+  //           "saleUserName": "크리에이터 1",
+  //           "assetName": "블링원 테스트 굿즈4",
+  //           "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+  //           "metaverseName": "K-POP 월드",
+  //           "typeDef": "K-셔츠",
+  //           "startDttm": "2024-09-01 09:00:00",
+  //           "endDttm": "2024-11-01 09:00:00",
+  //           "fileNameFirst": "blingone_4.png",
+  //           "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
+  //           "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
+  //           "fileNameSecond": "blingone_3.png",
+  //           "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+  //           "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+  //         },
+  //         {
+  //           "price": 6000,
+  //           "purchaseAssetNo": 2,
+  //           "purchaseAddr": "0x12345678900",
+  //           "purchaseUserName": "엔터사 1",
+  //           "saleAddr": "0x12345678901",
+  //           "saleUserName": "크리에이터 1",
+  //           "assetName": "블링원 테스트 굿즈4",
+  //           "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+  //           "metaverseName": "K-POP 월드",
+  //           "typeDef": "K-가슴",
+  //           "startDttm": "2024-09-01 09:00:00",
+  //           "endDttm": "2024-11-01 09:00:00",
+  //           "fileNameFirst": "blingone_4.png",
+  //           "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
+  //           "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
+  //           "fileNameSecond": "blingone_3.png",
+  //           "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
+  //           "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
+  //         }
+  //       ]
+  //     }
+  //   }}})
     
-  async getPurchaseList(@Query() getPurchaseAssetDto: GetPurchaseAssetDto ): Promise<void> {
-    const purchaseAssetList = await this.purchaseAssetService.getPurchaseList(getPurchaseAssetDto);
+  // async getPurchaseList(@Query() getPurchaseAssetDto: GetPurchaseAssetDto ): Promise<void> {
+  //   const purchaseAssetList = await this.purchaseAssetService.getPurchaseList(getPurchaseAssetDto);
 
-    const updatedList = purchaseAssetList.list.map((item: any) => ({
-      ...item,
-        // startDttm: moment(item.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
-        // endDttm: moment(item.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
-        payDttm: moment(item.payDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
-    }));
+  //   const updatedList = purchaseAssetList.list.map((item: any) => ({
+  //     ...item,
+  //       // startDttm: moment(item.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+  //       // endDttm: moment(item.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+  //       payDttm: moment(item.payDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+  //   }));
   
-    return this.responseMessage.response({
-      ...purchaseAssetList,
-      list: updatedList
-    });
+  //   return this.responseMessage.response({
+  //     ...purchaseAssetList,
+  //     list: updatedList
+  //   });
 
-  }
+  // }
 
     /**
    * 엔터사 구매 목록 조회 (마이페이지)
@@ -168,7 +168,7 @@ export class PurchaseAssetController {
    * @param getPurchaseAssetDto 
    * @returns 
    */
-    @Get('/mypage')
+    @Get('/')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     @ApiOperation({ summary: '엔터사 구매 목록 조회', description: '엔터사 구매 목록을 조회한다.' })
@@ -184,44 +184,54 @@ export class PurchaseAssetController {
           "totalPage": 1,
           "list": [
             {
-              "price": 7000,
-              "purchaseAssetNo": 3,
-              "purchaseAddr": "0x12345678900",
+              "state": "P3",
+              "price": 0.3,
+              "purchaseAssetNo": 132,
+              "purchaseAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
               "purchaseUserName": "엔터사 1",
-              "saleAddr": "0x12345678901",
+              "saleAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
               "saleUserName": "크리에이터 1",
-              "assetName": "블링원 테스트 굿즈4",
-              "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+              "assetName": "테스트 굿즈1용 에셋2",
+              "assetDesc": "테스트 굿즈1용 에셋2",
               "metaverseName": "K-POP 월드",
               "typeDef": "K-셔츠",
-              "startDttm": "2024-09-01 09:00:00",
-              "endDttm": "2024-11-01 09:00:00",
-              "fileNameFirst": "blingone_4.png",
-              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
-              "fileNameSecond": "blingone_3.png",
-              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
-              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+              "payDttm": "2024-10-29 15:01:13",
+              "stateDesc": "결재완료",
+              "fileNameFirst": "test1.glb",
+              "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
+              "thumbnailFirst": "https://kapi-dev.avataroad.com/",
+              "fileNameSecond": "test1.png",
+              "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
+              "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+              "fileNameThird": "test1-1.glb",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/",
+              "regDttm": "2024-10-30 14:41:07"
             },
             {
-              "price": 6000,
-              "purchaseAssetNo": 2,
-              "purchaseAddr": "0x12345678900",
+              "state": "P3",
+              "price": 0.3,
+              "purchaseAssetNo": 131,
+              "purchaseAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
               "purchaseUserName": "엔터사 1",
-              "saleAddr": "0x12345678901",
+              "saleAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
               "saleUserName": "크리에이터 1",
-              "assetName": "블링원 테스트 굿즈4",
-              "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+              "assetName": "테스트 굿즈1용 에셋1",
+              "assetDesc": "테스트 굿즈1용 에셋1",
               "metaverseName": "K-POP 월드",
-              "typeDef": "K-가슴",
-              "startDttm": "2024-09-01 09:00:00",
-              "endDttm": "2024-11-01 09:00:00",
-              "fileNameFirst": "blingone_4.png",
-              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285849.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285849.png",
-              "fileNameSecond": "blingone_3.png",
-              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261285862.png",
-              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png"
+              "typeDef": "K-셔츠",
+              "payDttm": "2024-10-29 15:01:13",
+              "stateDesc": "결재완료",
+              "fileNameFirst": "test1.glb",
+              "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
+              "thumbnailFirst": "https://kapi-dev.avataroad.com/",
+              "fileNameSecond": "test1.png",
+              "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
+              "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+              "fileNameThird": "test1-1.glb",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/",
+              "regDttm": "2024-10-30 14:41:07"
             }
           ]
         }
@@ -245,64 +255,62 @@ export class PurchaseAssetController {
   
     }
 
-    /**
-   * 엔터사 구매 상세 정보 조회
-   * 
-   * @param user 
-   * @param purchaseAssetNo 
-   * @returns 
-   */
-    @Get('/:purchaseAssetNo')
-    // @UseGuards(JwtAuthGuard)
-    // @ApiBearerAuth('access-token')
-    @ApiOperation({ summary: '엔터사 구매 정보 조회', description: '엔터사 구매 정보를 조회한다.' })
-    @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
-    @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
-    @ApiOkResponse({
-      description: '성공',
-      schema: {
-        example: {
-          resultCode: 200,
-          resultMessage: 'SUCCESS',
-          data: {
-            "resultCode": 200,
-            "resultMessage": "SUCESS",
-            "data": {
-              "price": 7000,
-              "purchaseAssetNo": 3,
-              "productNo": 26,
-              "assetNo": 5,
-              "purchaseAddr": "0x12345678900",
-              "purchaseUserName": "엔터사 1",
-              "saleAddr": "0x12345678901",
-              "saleUserName": "크리에이터 1",
-              "assetName": "블링원 테스트 굿즈4",
-              "assetDesc": "굿즈 26번에 대한 에셋입니다.",
-              "metaverseName": "K-POP 월드",
-              "typeDef": "K-셔츠",
-              "startDttm": "2024-09-01 09:00:00",
-              "endDttm": "2024-11-01 09:00:00",
-              "fileNameFirst": "blingone_4.png",
-              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
-              "fileNameSecond": "blingone_3.png",
-              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
-              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
-            }
-          }
-        }
-      }
-    })
-    async getInfo(@Param('purchaseAssetNo') purchaseAssetNo: number): Promise<any> {
-      const purchaseAsset = await this.purchaseAssetService.getInfo(purchaseAssetNo);
-      return this.responseMessage.response({
-        ...purchaseAsset,
-        // startDttm: moment(purchaseAsset.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
-        // endDttm: moment(purchaseAsset.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
-        payDttm: moment(purchaseAsset.payDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
-      });  
+  //   /**
+  //  * 엔터사 구매 상세 정보 조회
+  //  * 
+  //  * @param user 
+  //  * @param purchaseAssetNo 
+  //  * @returns 
+  //  */
+  //   @Get('/:purchaseAssetNo')
+  //   // @UseGuards(JwtAuthGuard)
+  //   // @ApiBearerAuth('access-token')
+  //   @ApiOperation({ summary: '엔터사 구매 정보 조회', description: '엔터사 구매 정보를 조회한다.' })
+  //   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  //   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+  //   @ApiOkResponse({
+  //     description: '성공',
+  //     schema: {
+  //       example: {
+  //         resultCode: 200,
+  //         resultMessage: 'SUCCESS',
+  //         data: {
+  //           "resultCode": 200,
+  //           "resultMessage": "SUCESS",
+  //           "data": {
+  //             "price": 7000,
+  //             "purchaseAssetNo": 3,
+  //             "productNo": 26,
+  //             "assetNo": 5,
+  //             "purchaseAddr": "0x12345678900",
+  //             "purchaseUserName": "엔터사 1",
+  //             "saleAddr": "0x12345678901",
+  //             "saleUserName": "크리에이터 1",
+  //             "assetName": "블링원 테스트 굿즈4",
+  //             "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+  //             "metaverseName": "K-POP 월드",
+  //             "typeDef": "K-셔츠",
+  //             "fileNameFirst": "blingone_4.png",
+  //             "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
+  //             "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
+  //             "fileNameSecond": "blingone_3.png",
+  //             "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
+  //             "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+  //           }
+  //         }
+  //       }
+  //     }
+  //   })
+  //   async getInfo(@Param('purchaseAssetNo') purchaseAssetNo: number): Promise<any> {
+  //     const purchaseAsset = await this.purchaseAssetService.getInfo(purchaseAssetNo);
+  //     return this.responseMessage.response({
+  //       ...purchaseAsset,
+  //       // startDttm: moment(purchaseAsset.startDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+  //       // endDttm: moment(purchaseAsset.endDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+  //       payDttm: moment(purchaseAsset.payDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
+  //     });  
 
-    }
+  //   }
 
   /**
    * 엔터사 구매 상세 정보 조회 (마이페이지)
@@ -311,7 +319,7 @@ export class PurchaseAssetController {
    * @param purchaseAssetNo 
    * @returns 
    */
-    @Get('/mypage/:purchaseAssetNo')
+    @Get('/:purchaseAssetNo')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     @ApiOperation({ summary: '엔터사 구매 정보 조회', description: '엔터사 구매 정보를 조회한다.' })
@@ -327,26 +335,37 @@ export class PurchaseAssetController {
             "resultCode": 200,
             "resultMessage": "SUCESS",
             "data": {
-              "price": 7000,
-              "purchaseAssetNo": 3,
-              "productNo": 26,
-              "assetNo": 5,
-              "purchaseAddr": "0x12345678900",
+              "state": "P3",
+              "price": 0.3,
+              "purchaseAssetNo": 132,
+              "productNo": 56,
+              "assetNo": 80,
+              "purchaseAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
               "purchaseUserName": "엔터사 1",
-              "saleAddr": "0x12345678901",
+              "saleAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
               "saleUserName": "크리에이터 1",
-              "assetName": "블링원 테스트 굿즈4",
-              "assetDesc": "굿즈 26번에 대한 에셋입니다.",
+              "assetName": "테스트 굿즈1용 에셋1",
+              "assetDesc": "테스트 굿즈1용 에셋1",
               "metaverseName": "K-POP 월드",
               "typeDef": "K-셔츠",
-              "startDttm": "2024-09-01 09:00:00",
-              "endDttm": "2024-11-01 09:00:00",
-              "fileNameFirst": "blingone_4.png",
-              "fileUrlFirst": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299062.png",
-              "thumbnailFirst": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299062.png",
-              "fileNameSecond": "blingone_3.png",
-              "fileUrlSecond": "http://kapi-dev.avataroad.com:5000/file/20240902/1725261299074.png",
-              "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png"
+              "regDttm": "2024-10-29 15:01:10",
+              "payDttm": "2024-10-29 15:01:13",
+              "useYn": "Y",
+              "stateDesc": "결재완료",
+              "fileNameFirst": "test1.glb",
+              "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
+              "thumbnailFirst": "https://kapi-dev.avataroad.com/",
+              "fileNameSecond": "test1.png",
+              "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
+              "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+              "fileNameThird": "test1-1.glb",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/",
+              "nftContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+              "nftTxId": "0x3953751241e89b52dc6526ad6b6073e09f9d752f79b0bdeda888d009ace5376d",
+              "nftTokenId": "1",
+              "nftSellerAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+              "nftBuyerAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
             }
           }
         }

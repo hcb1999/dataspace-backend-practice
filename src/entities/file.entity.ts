@@ -35,11 +35,29 @@ export class File extends BaseEntity {
   @Column({ name: "file_hash_second", type: "varchar", length: 256, comment: "2'nd파일 해쉬", nullable: true })
   fileHashSecond: string;
 
+  @Column({ name: "file_name_third", type: "varchar", length: 256, comment: "3'nd 파일명", nullable: true })
+  fileNameThird: string;
+
+  @Column({ name: "file_path_third", type: "varchar", length: 256, comment: "3'nd파일경로", nullable: true })
+  filePathThird: string;
+
+  @Column({ name: "file_size_third", type: "int4", comment: "3'nd파일 사이즈", nullable: true })
+  fileSizeThird: number;
+
+  @Column({ name: "file_type_third", type: "varchar", length: 80, comment: "3'nd파일 종류", nullable: true })
+  fileTypeThird: string;
+
+  @Column({ name: "file_hash_third", type: "varchar", length: 256, comment: "3'nd파일 해쉬", nullable: true })
+  fileHashThird: string;
+
   @Column({ name: "thumbnail_first", type: "varchar", length: 256, comment: "썸네일 파일", nullable: true })
   thumbnailFirst: string;
 
   @Column({ name: "thumbnail_second", type: "varchar", length: 256, comment: "썸네일 파일", nullable: true })
   thumbnailSecond: string;
+
+  @Column({ name: "thumbnail_third", type: "varchar", length: 256, comment: "썸네일 파일", nullable: true })
+  thumbnailThird: string;
 
   @CreateDateColumn({ type: 'timestamptz', name: "reg_dttm", comment: "등록일시" })
   regDttm: Date;

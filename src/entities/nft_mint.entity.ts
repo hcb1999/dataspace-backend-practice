@@ -20,6 +20,10 @@ export class NftMint extends BaseEntity {
   assetNo: number;
 
   @Index()
+  @Column({ name:"purchase_asset_no", type:"int4", comment:"광고주 구매 번호", nullable:true  })
+  purchaseAssetNo: number;
+
+  @Index()
   @Column({name:"tx_id", type:"varchar", length:100, comment:"TX ID", nullable:true})
   txId: string;
 

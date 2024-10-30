@@ -577,7 +577,7 @@ export class NftProcessor {
         nftBurnInfo = { state: 'B15' };
       } else {
         // 다른 일반적인 오류 처리
-        this.logger.error(`Unexpected error in handleMintTransaction: ${error.message}`);
+        this.logger.error(`Unexpected error in handleBurnTransaction: ${error.message}`);
         nftBurnInfo = { state: 'B15' };
       }
       await queryRunner.manager.update(NftBurn, nftBurnNo, nftBurnInfo);

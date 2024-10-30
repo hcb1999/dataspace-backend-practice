@@ -13,15 +13,15 @@ export class CreatePurchaseAssetDto {
   @ApiProperty({ description: '구매 엔터사명' })
   readonly purchaseUserName: string;
 
-  @IsString()
-  @Length(1, 80)
-  @ApiProperty({ description: '판매자 지갑주소' })
-  readonly saleAddr: string;
+  // @IsString()
+  // @Length(1, 80)
+  // @ApiProperty({ description: '판매자 지갑주소' })
+  // readonly saleAddr: string;
 
-  @IsString()
-  @Length(1, 40)
-  @ApiProperty({ description: '판매 크리에이터명' })
-  readonly saleUserName: string;
+  // @IsString()
+  // @Length(1, 40)
+  // @ApiProperty({ description: '판매 크리에이터명' })
+  // readonly saleUserName: string;
 
   @IsNumber()
   @Type(() => Number)
@@ -38,12 +38,6 @@ export class CreatePurchaseAssetDto {
   // @Length(1, 10)
   // @ApiProperty({ required: false, description: '구매상태 : P2' })
   // readonly state: string;
-
-  // @IsOptional()
-  // @IsString()
-  // @Length(1, 10)
-  // @ApiProperty({ required: false, description: '판매상태 : S2' })
-  // readonly saleState: string;
 
   // @IsOptional()
   // @IsString()

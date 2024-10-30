@@ -34,6 +34,9 @@ export class PurchaseAssetService {
     @Inject('ASSET_REPOSITORY')
     private assetRepository: Repository<Asset>,
 
+    @Inject('STATE_REPOSITORY')
+    private stateRepository: Repository<State>,
+
     @Inject('NFT_MINT_REPOSITORY')
     private nftMintRepository: Repository<NftMint>,
 
@@ -59,10 +62,8 @@ export class PurchaseAssetService {
     try {
 
       const productNo = createPurchaseAssetDto.productNo;
-      const fromAddr = createPurchaseAssetDto.saleAddr.toLowerCase();
-      const toAddr = createPurchaseAssetDto.purchaseAddr.toLowerCase();
       const assetNo = createPurchaseAssetDto.assetNo;
-    
+      const toAddr = createPurchaseAssetDto.purchaseAddr.toLowerCase();
       const productInfo = await this.productRepository.findOne({ where:{productNo} });
       if (!productInfo) {
         throw new NotFoundException("Data Not found.: 굿즈");
@@ -75,17 +76,19 @@ export class PurchaseAssetService {
       if (!assetInfo.tokenId) {
         throw new NotFoundException("Data Not Minted.: 에셋");
       }
+      const fromAddr = assetInfo.regAddr;
+      createPurchaseAssetDto['saleAddr'] = fromAddr;
+      createPurchaseAssetDto['saleUserName'] = assetInfo.regName;
 
       createPurchaseAssetDto['tokenId'] = assetInfo.tokenId;
-      createPurchaseAssetDto['startDttm'] = productInfo.startDttm;
-      createPurchaseAssetDto['endDttm'] = productInfo.endDttm;
+      // createPurchaseAssetDto['startDttm'] = productInfo.startDttm;
+      // createPurchaseAssetDto['endDttm'] = productInfo.endDttm;
 
       // console.log("===== createPurchaseAssetDto : "+JSON.stringify(createPurchaseAssetDto));
       // console.log("===== fromAddr : "+fromAddr);
      
       // PurchaseAsset 저장
       const createPurchaseAsset: CreatePurchaseAssetDto  = {...createPurchaseAssetDto, 
-        saleAddr: fromAddr,
         purchaseAddr: toAddr
       }
       // console.log("===== createPurchaseAsset : "+ JSON.stringify(createPurchaseAsset));
@@ -98,8 +101,8 @@ export class PurchaseAssetService {
 
       // nftService.createTransfer 호출
       const tokenId = assetInfo.tokenId;
-      const nftTransferInfo: CreateTransferDto = {purchaseAssetNo, purchaseNo: null, fromAddr, toAddr, 
-        assetNo, productNo, tokenId, state: ''};
+      const nftTransferInfo: CreateTransferDto = {purchaseAssetNo, marcketNo: null, purchaseNo: null, fromAddr, toAddr, 
+        assetNo, productNo, tokenId, purchaseCnt: 1, state: ''};
       this.nftService.createTransfer(user, nftTransferInfo);
       
     // console.log("===== nftTransferInfo : "+ JSON.stringify(nftTransferInfo));
@@ -115,183 +118,127 @@ export class PurchaseAssetService {
   }
 
   /**
-   * 구매 상태 정보 수정
-   * @param purchaseAssetNo 
-   * @param modifyPurchaseAssetDto 
-   */
-  async updateState(purchaseAssetNo: number, modifyPurchaseAssetDto: ModifyPurchaseAssetDto): Promise<void> {
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-
-        const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
-        if (!purchaseAssetInfo) {
-          throw new NotFoundException("Data Not found. : 엔터사 구매 정보");
-        }
-
-        const state = modifyPurchaseAssetDto.state;
-        const failDesc = modifyPurchaseAssetDto.failDesc;
-        let data = {};
-        if(failDesc){
-          data = { state, failDesc };
-        }else{
-          data = { state }
-        }
-    
-        await queryRunner.manager.update(PurchaseAsset, purchaseAssetNo, data);
-
-      // state가 결제완료(P3)면 NftTransfer 저장
-        if(state=== 'P3'){
-          // NftTransfer 저장
-          const productNo = purchaseAssetInfo.productNo;
-          const assetNo = purchaseAssetInfo.assetNo;
-          const nftMintInfo = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
-          if (!nftMintInfo) {
-            throw new NotFoundException("Data Not found. : NFT 민트 정보");
-          }
-          const nftTransferInfo: CreateTransferDto = {purchaseAssetNo: purchaseAssetInfo.purchaseAssetNo, 
-            purchaseNo: null, fromAddr: purchaseAssetInfo.saleAddr, toAddr: purchaseAssetInfo.purchaseAddr, 
-            assetNo, productNo, tokenId: nftMintInfo.tokenId, state: 'B5'};
-
-          console.log("===== nftTransferInfo : "+ nftTransferInfo);
-          const newTransfer = queryRunner.manager.create(NftTransfer, nftTransferInfo);
-          const result = await queryRunner.manager.save<NftTransfer>(newTransfer);
-        }
-        await queryRunner.commitTransaction();
-
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }finally {
-      await queryRunner.release();
-    }
-  }
-
-  /**
    * 구매 정보 조회
    * 
    * @param purchaseAssetNo 
    * @returns 
    */
-  async getInfo(purchaseAssetNo: number): Promise<any> {
+  // async getInfo(purchaseAssetNo: number): Promise<any> {
 
-    const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
+  //   const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
 
-    try {
-      const purchaseAsset = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
-      if (!purchaseAsset) {                         
-        throw new NotFoundException("Data Not found. : 엔터사 구매 정보");
-      }
+  //   try {
+  //     const purchaseAsset = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
+  //     if (!purchaseAsset) {                         
+  //       throw new NotFoundException("Data Not found. : 엔터사 구매 정보");
+  //     }
 
-      const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
-                      .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
-                      .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
-                      .leftJoin(NftTransfer, 'transfer', 'purchaseAsset.token_id = transfer.token_id')
-                      .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
-                      .addSelect('purchaseAsset.product_no', 'productNo')
-                      .addSelect('purchaseAsset.asset_no', 'assetNo')
-                      .addSelect('purchaseAsset.purchase_addr', 'purchaseAddr')
-                      .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
-                      .addSelect('purchaseAsset.sale_addr', 'saleAddr')
-                      .addSelect('purchaseAsset.sale_user_name', 'saleUserName')
-                      .addSelect("asset.asset_name", 'assetName')
-                      .addSelect("asset.asset_desc", 'assetDesc')
-                      .addSelect("asset.price", 'price')
-                      .addSelect("asset.metaverse_name", 'metaverseName')
-                      .addSelect("asset.type_def", 'typeDef')
-                      .addSelect('purchaseAsset.start_dttm', 'startDttm')
-                      .addSelect('purchaseAsset.end_dttm', 'endDttm')
-                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
-                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
-                      .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
-                      .addSelect('transfer.tx_id', 'nftTxId')
-                      .addSelect('transfer.token_id', 'nftTokenId')
-                      .addSelect("purchaseAsset.sale_addr", 'nftSellerAddr')
-                      .addSelect("purchaseAsset.purchase_addr", 'nftBuyerAddr')
-                      .where("purchaseAsset.purchase_asset_no = :purchaseAssetNo", { purchaseAssetNo })
-                    // .andWhere("nftMint.use_yn = 'N'")
-                    // .andWhere("nftMint.burn_yn = 'N'");
+  //     const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
+  //                     .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
+  //                     .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+  //                     .leftJoin(NftTransfer, 'transfer', 'purchaseAsset.token_id = transfer.token_id')
+  //                     .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
+  //                     .addSelect('purchaseAsset.product_no', 'productNo')
+  //                     .addSelect('purchaseAsset.asset_no', 'assetNo')
+  //                     .addSelect('purchaseAsset.purchase_addr', 'purchaseAddr')
+  //                     .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
+  //                     .addSelect('purchaseAsset.sale_addr', 'saleAddr')
+  //                     .addSelect('purchaseAsset.sale_user_name', 'saleUserName')
+  //                     .addSelect("asset.asset_name", 'assetName')
+  //                     .addSelect("asset.asset_desc", 'assetDesc')
+  //                     .addSelect("asset.price", 'price')
+  //                     .addSelect("asset.metaverse_name", 'metaverseName')
+  //                     .addSelect("asset.type_def", 'typeDef')
+  //                     .addSelect('purchaseAsset.start_dttm', 'startDttm')
+  //                     .addSelect('purchaseAsset.end_dttm', 'endDttm')
+  //                     .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+  //                     .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
+  //                     .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
+  //                     .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+  //                     .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
+  //                     .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+  //                     .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
+  //                     .addSelect('transfer.tx_id', 'nftTxId')
+  //                     .addSelect('transfer.token_id', 'nftTokenId')
+  //                     .addSelect("purchaseAsset.sale_addr", 'nftSellerAddr')
+  //                     .addSelect("purchaseAsset.purchase_addr", 'nftBuyerAddr')
+  //                     .where("purchaseAsset.purchase_asset_no = :purchaseAssetNo", { purchaseAssetNo })
+  //                   // .andWhere("nftMint.use_yn = 'N'")
+  //                   // .andWhere("nftMint.burn_yn = 'N'");
 
-      const purchaseAssetInfo = await sql.groupBy(``)
-                                      .getRawOne();
+  //     const purchaseAssetInfo = await sql.groupBy(``)
+  //                                     .getRawOne();
 
-      return purchaseAssetInfo;
+  //     return purchaseAssetInfo;
 
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }
-  }  
+  //   } catch (e) {
+  //     this.logger.error(e);
+  //     throw e;
+  //   }
+  // }  
 
   /**
    * 구매 목록 조회
    * @param getPurchaseAssetDto 
    */
-  async getPurchaseList(getPurchaseAssetDto: GetPurchaseAssetDto): Promise<any> {
+//   async getPurchaseList(getPurchaseAssetDto: GetPurchaseAssetDto): Promise<any> {
 
-    const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
-    const skip = getPurchaseAssetDto.getOffset();
-    const take = getPurchaseAssetDto.getLimit();
-    const word = getPurchaseAssetDto.word;
+//     const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
+//     const skip = getPurchaseAssetDto.getOffset();
+//     const take = getPurchaseAssetDto.getLimit();
+//     const word = getPurchaseAssetDto.word;
 
-    let options = `purchaseAsset.use_yn='Y' and purchaseAsset.state='P3'
-     and purchaseAsset.sale_state='S2'`;
-    if (word) {
-        options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
-    }
+//     let options = `purchaseAsset.use_yn='Y' and purchaseAsset.state='P3'
+//      and purchaseAsset.sale_state='S2'`;
+//     if (word) {
+//         options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
+//     }
   
-    console.log("options : "+options);
+//     console.log("options : "+options);
 
-    try {
-        const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
-                      .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
-                      .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
-                      .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
-                      .addSelect('purchaseAsset.purchase_addr', 'purchaseAddr')
-                      .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
-                      .addSelect('purchaseAsset.sale_addr', 'saleAddr')
-                      .addSelect('purchaseAsset.sale_user_name', 'saleUserName')
-                      .addSelect("asset.asset_name", 'assetName')
-                      .addSelect("asset.asset_desc", 'assetDesc')
-                      .addSelect("asset.price", 'price')
-                      .addSelect("asset.metaverse_name", 'metaverseName')
-                      .addSelect("asset.type_def", 'typeDef')
-                      .addSelect('purchaseAsset.start_dttm', 'startDttm')
-                      .addSelect('purchaseAsset.end_dttm', 'endDttm')
-                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
-                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
-                      .where(options);
+//     try {
+//         const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
+//                       .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
+//                       .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+//                       .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
+//                       .addSelect('purchaseAsset.purchase_addr', 'purchaseAddr')
+//                       .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
+//                       .addSelect('purchaseAsset.sale_addr', 'saleAddr')
+//                       .addSelect('purchaseAsset.sale_user_name', 'saleUserName')
+//                       .addSelect("asset.asset_name", 'assetName')
+//                       .addSelect("asset.asset_desc", 'assetDesc')
+//                       .addSelect("asset.price", 'price')
+//                       .addSelect("asset.metaverse_name", 'metaverseName')
+//                       .addSelect("asset.type_def", 'typeDef')
+//                       .addSelect('purchaseAsset.start_dttm', 'startDttm')
+//                       .addSelect('purchaseAsset.end_dttm', 'endDttm')
+//                       .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+//                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
+//                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
+//                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+//                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
+//                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+//                       .where(options);
 
 
-        const list = await sql.orderBy('purchaseAsset.purchase_asset_no', getPurchaseAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                              .offset(skip)
-                              .limit(take)
-                              .groupBy(`purchaseAsset.purchase_asset_no, asset.price, asset.asset_name,
-                                asset.asset_desc, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
-                                fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
-                                fileAsset.file_path_second, fileAsset.thumbnail_second`)
-                              .getRawMany();
+//         const list = await sql.orderBy('purchaseAsset.purchase_asset_no', getPurchaseAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
+//                               .offset(skip)
+//                               .limit(take)
+//                               .groupBy(`purchaseAsset.purchase_asset_no, asset.price, asset.asset_name,
+//                                 asset.asset_desc, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
+//                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
+//                                 fileAsset.file_path_second, fileAsset.thumbnail_second`)
+//                               .getRawMany();
 
-        const totalCount = await sql.getCount(); 
+//         const totalCount = await sql.getCount(); 
 
-        return new PageResponse(totalCount, getPurchaseAssetDto.pageSize, list);
-0
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }
-  }
+//         return new PageResponse(totalCount, getPurchaseAssetDto.pageSize, list);
+// 0
+//     } catch (e) {
+//       this.logger.error(e);
+//       throw e;
+//     }
+//   }
 
     /**
    * 구매 정보 조회 (마이페이지)
@@ -313,9 +260,8 @@ export class PurchaseAssetService {
         const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
                         .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
                         .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
-                        .leftJoin(State, 'state', 'state.state = purchaseAsset.sale_state')
+                        .leftJoin(State, 'state', 'state.state = purchaseAsset.state')
                         .leftJoin(NftTransfer, 'transfer', 'purchaseAsset.token_id = transfer.token_id')
-                        .leftJoin(Purchase, 'purchase', 'purchase.purchase_asset_no = ANY(purchaseAsset.purchase_asset_no)')
                         .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
                         .addSelect('purchaseAsset.product_no', 'productNo')
                         .addSelect('purchaseAsset.asset_no', 'assetNo')
@@ -328,23 +274,25 @@ export class PurchaseAssetService {
                         .addSelect("asset.price", 'price')
                         .addSelect("asset.metaverse_name", 'metaverseName')
                         .addSelect("asset.type_def", 'typeDef')
-                        .addSelect('purchaseAsset.start_dttm', 'startDttm')
-                        .addSelect('purchaseAsset.end_dttm', 'endDttm')
+                        // .addSelect('purchaseAsset.start_dttm', 'startDttm')
+                        // .addSelect('purchaseAsset.end_dttm', 'endDttm')
                         .addSelect('purchaseAsset.reg_dttm', 'regDttm')
                         .addSelect('purchaseAsset.pay_dttm', 'payDttm')
                         .addSelect('purchaseAsset.use_yn', 'useYn')
-                        .addSelect('purchaseAsset.sale_state', 'saleState')
-                        .addSelect('state.state_desc', 'saleStateDesc')
+                        .addSelect('purchaseAsset.state', 'state')
+                        .addSelect('state.state_desc', 'stateDesc')
                         .addSelect("fileAsset.file_name_first", 'fileNameFirst')
                         .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                         .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
                         .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                         .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                         .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
-                        .addSelect(process.env.CONTRACT_ADDRESS, 'nftContractAddress')
+                        .addSelect("fileAsset.file_name_third", 'fileNameThird')
+                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
+                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')    
+                        .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
                         .addSelect('transfer.tx_id', 'nftTxId')
                         .addSelect('transfer.token_id', 'nftTokenId')
-                        .addSelect("ARRAY_AGG(purchase.token_id)", 'nftTokenIdAry')
                         .addSelect("purchaseAsset.sale_addr", 'nftSellerAddr')
                         .addSelect("purchaseAsset.purchase_addr", 'nftBuyerAddr')
                         .where("purchaseAsset.purchase_asset_no = :purchaseAssetNo", { purchaseAssetNo })
@@ -376,14 +324,14 @@ export class PurchaseAssetService {
     const purchaseAddr = user.nftWalletAddr;
     const startDttm = getPurchaseAssetDto.startDttm;
     const endDttm = getPurchaseAssetDto.endDttm;
-    const saleState = getPurchaseAssetDto.state;
+    const state = getPurchaseAssetDto.state;
 
     let options = `purchaseAsset.purchase_addr = '${purchaseAddr}' and purchaseAsset.state='P3'`;
     if (word) {
         options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
     }
-    if (saleState) {
-      options += ` and purchaseAsset.sale_state = '${saleState}'`;
+    if (state) {
+      options += ` and purchaseAsset.state = '${state}'`;
     }
     if (startDttm) {
       if(endDttm){
@@ -406,7 +354,7 @@ export class PurchaseAssetService {
         const sql = this.purchaseAssetRepository.createQueryBuilder('purchaseAsset')
                       .leftJoin(Asset, 'asset', 'asset.asset_no = purchaseAsset.asset_no')
                       .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
-                      .leftJoin(State, 'state', 'state.state = purchaseAsset.sale_state')
+                      .leftJoin(State, 'state', 'state.state = purchaseAsset.state')
                       .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
                       .addSelect('purchaseAsset.purchase_addr', 'purchaseAddr')
                       .addSelect('purchaseAsset.purchase_user_name', 'purchaseUserName')
@@ -417,17 +365,20 @@ export class PurchaseAssetService {
                       .addSelect("asset.price", 'price')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
-                      .addSelect('purchaseAsset.start_dttm', 'startDttm')
-                      .addSelect('purchaseAsset.end_dttm', 'endDttm')
+                      // .addSelect('purchaseAsset.start_dttm', 'startDttm')
+                      // .addSelect('purchaseAsset.end_dttm', 'endDttm')
                       .addSelect('purchaseAsset.pay_dttm', 'payDttm')
-                      .addSelect('purchaseAsset.sale_state', 'saleState')
-                      .addSelect('state.state_desc', 'saleStateDesc')
+                      .addSelect('purchaseAsset.state', 'state')
+                      .addSelect('state.state_desc', 'stateDesc')
                       .addSelect("fileAsset.file_name_first", 'fileNameFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect("fileAsset.file_name_third", 'fileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')  
                       .where(options);
 
 
@@ -437,7 +388,8 @@ export class PurchaseAssetService {
                               .groupBy(`purchaseAsset.purchase_asset_no, asset.price, asset.asset_name,
                                 asset.asset_desc, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
-                                fileAsset.file_path_second, fileAsset.thumbnail_second, state.state_desc`)
+                                fileAsset.file_path_second, fileAsset.thumbnail_second, fileAsset.file_name_third,
+                                fileAsset.file_path_third, fileAsset.thumbnail_third, state.state_desc`)
                               .getRawMany();
 
         const totalCount = await sql.getCount(); 
