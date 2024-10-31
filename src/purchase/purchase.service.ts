@@ -274,7 +274,8 @@ export class PurchaseService {
 
       let options = `purchase.purchase_addr = '${purchaseAddr}' and purchase.state = 'P3'`;
       if (word) {
-          options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
+          // options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
+          options += ` and ( asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
       }
       
       if (startDttm) {

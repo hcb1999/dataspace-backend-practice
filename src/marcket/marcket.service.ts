@@ -416,7 +416,8 @@ export class MarcketService {
 
     let options = `marcket.use_yn='Y' and marcket.state='S2'`;
     if (word) {
-        options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
+        // options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
+        options += ` and ( asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
     }
   
     console.log("options : "+options);
@@ -622,7 +623,8 @@ export class MarcketService {
 
     let options = `marcket.sale_addr = '${purchaseAddr}'`;
     if (word) {
-        options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
+        // options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
+        options += ` and ( asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
     }
     if (state) {
       options += ` and marcket.state = '${state}'`;

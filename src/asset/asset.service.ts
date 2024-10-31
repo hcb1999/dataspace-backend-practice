@@ -646,7 +646,8 @@ export class AssetService {
     const word = getAssetDto.word;
 
     // let options = `asset.use_yn='Y'`;
-    let options = `asset.use_yn='Y' AND asset.token_id IS NOT NULL AND asset.token_id != '' AND asset.sold_yn='N'`;
+    // let options = `asset.use_yn='Y' AND asset.token_id IS NOT NULL AND asset.token_id != '' AND asset.sold_yn='N'`;
+    let options = `1 = 1`;
     if (advertiser) {
       options += ` and product.reg_name like '%${advertiser}%'`;
     }
@@ -680,21 +681,22 @@ export class AssetService {
 
     if (state) {
       options += ` and asset.state = '${state}'`;
-    }else{
-      options += ` and asset.state='S2'`;
     }
+    // else{
+    //   options += ` and asset.state='S2'`;
+    // }
 
     if (word) {
-        options += ` and asset.asset_desc like '%${word}%'`;
+        options += ` and (asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%') `;
     }
   
     console.log("options : "+options);
-    console.log("skip : "+skip);
-    console.log("take : "+take);
+    // console.log("skip : "+skip);
+    // console.log("take : "+take);
 
     try {
       const sql = this.assetRepository.createQueryBuilder('asset')
-                            // .leftJoin(State, 'state', 'asset.state = state.state')
+                      .leftJoin(State, 'state', 'asset.state = state.state')
                       .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
                       .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
                             // .innerJoin(NftMint, 'nftMint', 'asset.asset_no = nftMint.asset_no')
@@ -706,6 +708,8 @@ export class AssetService {
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.ad_type", 'adType')
                       .addSelect("asset.type_def", 'typeDef')
+                      // .addSelect('asset.state', 'state')
+                      .addSelect('state.state_desc', 'stateDsec')
                       // .addSelect('product.reg_name', 'productRegName')
                       // .addSelect('product.product_name', 'productName')
                       .addSelect('asset.price', 'price')
@@ -722,7 +726,7 @@ export class AssetService {
                       .where(options);
                       
       const list = await sql.orderBy('asset.asset_no', getAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
-                            .groupBy(`asset.asset_no, product.reg_name, product.product_name, fileAsset.file_no`)
+                            .groupBy(`asset.asset_no, state.state_desc, fileAsset.file_no`)
                             .offset(skip)
                             .limit(take)
                             .getRawMany();
@@ -796,7 +800,9 @@ export class AssetService {
         options += ` and asset.state = '${state}'`;
       }
       if (word) {
-          options += ` and asset.asset_desc like '%${word}%'`;
+          // options += ` and asset.asset_desc like '%${word}%'`;
+          options += ` and (asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%') `;
+          
       }
     
       // console.log("options : "+options);
