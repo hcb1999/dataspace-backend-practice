@@ -402,15 +402,15 @@ export class ProductService {
       let data = { useYn: 'N', state: 'N4' };
       await queryRunner.manager.update(Product, { productNo }, data);
 
-      const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({
-        where: { productNo },
-      });
-      if (purchaseAssetInfo) {
-        let data1 = { useYn: 'N', saleState: 'S4' };
-        const purchaseAssetNo = purchaseAssetInfo.purchaseAssetNo;
-        // 엔터사 에셋 구매 상태 정보 수정
-        await this.purchaseAssetRepository.update(purchaseAssetNo, data1);
-      }
+      // const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({
+      //   where: { productNo },
+      // });
+      // if (purchaseAssetInfo) {
+      //   let data1 = { useYn: 'N', saleState: 'S4' };
+      //   const purchaseAssetNo = purchaseAssetInfo.purchaseAssetNo;
+      //   // 엔터사 에셋 구매 상태 정보 수정
+      //   await this.purchaseAssetRepository.update(purchaseAssetNo, data1);
+      // }
 
       await queryRunner.commitTransaction();
     } catch (e) {

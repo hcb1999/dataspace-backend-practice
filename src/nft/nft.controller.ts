@@ -842,7 +842,7 @@ export class NftController {
         if (!tokenIdAry) {
           throw new Error('Token IDs not received'); // 이벤트에서 tokenId가 설정되지 않았을 경우 예외 처리
         }
-  
+
         this.logger.log(`processMintsTransaction started... After mintTx`);
         const todayKST = new Date();
         const year = todayKST.getFullYear();
@@ -850,14 +850,6 @@ export class NftController {
         const day = String(todayKST.getDate()).padStart(2, '0');
         const startDateString = `${year}-${month}-${day}`;  
         const startDate = new Date(startDateString);
-
-        for (const tokenId of tokenIdAry) {
-          const mintInfo = { productNo, assetNo, issuedTo: ownerAddress, tokenId, 
-            state: 'B4', txId: mintTx.hash };
-          const newMint = queryRunner.manager.create(NftMint, mintInfo);
-          await queryRunner.manager.save<NftMint>(newMint);
-          console.log(`Inserted mintInfo with tokenId: ${tokenId}`);
-        }
 
         const marcket = await this.marcketRepository.findOne({ where:{marcketNo} });
         if (marcket) {
@@ -867,7 +859,26 @@ export class NftController {
           }
           // console.log("===== marcketInfo : "+JSON.stringify(marcketInfo));
           await queryRunner.manager.update(Marcket, marcketNo, marcketInfo);
-        }  
+        } 
+
+        const purchaseAssetNo = marcket.purchaseAssetNo;
+        for (const tokenId of tokenIdAry) {
+          const mintInfo = { productNo, assetNo, issuedTo: ownerAddress, tokenId, 
+            state: 'B4', txId: mintTx.hash, purchaseAssetNo };
+          const newMint = queryRunner.manager.create(NftMint, mintInfo);
+          await queryRunner.manager.save<NftMint>(newMint);
+          console.log(`Inserted mintInfo with tokenId: ${tokenId}`);
+        }
+
+        // const marcket = await this.marcketRepository.findOne({ where:{marcketNo} });
+        // if (marcket) {
+        //   let marcketInfo = { fromTokenId: tokenIdAry[0], toTokenId: tokenIdAry[tokenIdAry.length - 1] }; 
+        //   if(marcket.startDttm = startDate){
+        //     marcketInfo['state'] = 'S2' ;
+        //   }
+        //   // console.log("===== marcketInfo : "+JSON.stringify(marcketInfo));
+        //   await queryRunner.manager.update(Marcket, marcketNo, marcketInfo);
+        // }  
 
         await queryRunner.commitTransaction();
   

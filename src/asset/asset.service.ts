@@ -189,7 +189,7 @@ export class AssetService {
       createAssetDto['metaverseName'] =  metaverseInfo.metaverseName;
       createAssetDto['typeDef'] =  assetTypeInfo.typeDef;
       
-      console.log("createAssetDto : "+JSON.stringify(createAssetDto));
+      // console.log("createAssetDto : "+JSON.stringify(createAssetDto));
       const newAsset = queryRunner.manager.create(Asset, createAssetDto);
       const result = await queryRunner.manager.save<Asset>(newAsset);
       const assetNo = result.assetNo;
@@ -443,7 +443,7 @@ export class AssetService {
                       .leftJoin(State, 'state', 'asset.state = state.state')
                       .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
                       .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
-                      .leftJoin(File, 'file', 'product.file_no = file.file_no')
+                      // .leftJoin(File, 'file', 'product.file_no = file.file_no')
                       .leftJoin(NftMint, 'mint', 'asset.token_id = mint.token_id')
                       .leftJoin(NftTransfer, 'transfer', 'asset.token_id = transfer.token_id')
                       .select('asset.asset_no', 'assetNo')
@@ -495,8 +495,7 @@ export class AssetService {
       //                        .getRawOne();
       // }else{
         assetInfo = await sql.groupBy(`asset.asset_no, product.product_no, product.reg_addr, product.reg_name, 
-          product.product_name, state.state_desc, file.file_name_first,
-          file.file_path_first, file.thumbnail_first, fileAsset.file_no, mint.tx_id, mint.token_id,
+          product.product_name, state.state_desc, fileAsset.file_no, mint.tx_id, mint.token_id,
           transfer.from_addr, transfer.to_addr`)
                            .getRawOne();
 
