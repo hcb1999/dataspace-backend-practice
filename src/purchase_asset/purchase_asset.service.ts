@@ -326,7 +326,8 @@ export class PurchaseAssetService {
     const endDttm = getPurchaseAssetDto.endDttm;
     const state = getPurchaseAssetDto.state;
 
-    let options = `purchaseAsset.purchase_addr = '${purchaseAddr}' and purchaseAsset.state='P3'`;
+    // let options = `purchaseAsset.purchase_addr = '${purchaseAddr}' and purchaseAsset.state='P3'`;
+    let options = `purchaseAsset.purchase_addr = '${purchaseAddr}'`;
     if (word) {
         // options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
         options += ` and ( asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;

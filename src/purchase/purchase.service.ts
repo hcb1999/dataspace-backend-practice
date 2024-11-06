@@ -160,6 +160,7 @@ export class PurchaseService {
                       .addSelect('purchase.purchase_user_name', 'purchaseUserName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
+                      .addSelect("marcket.marcket_asset_name", 'marcketAssetName')
                       .addSelect("marcket.price", 'price')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
@@ -274,8 +275,9 @@ export class PurchaseService {
 
       let options = `purchase.purchase_addr = '${purchaseAddr}' and purchase.state = 'P3'`;
       if (word) {
-          // options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
-          options += ` and ( asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
+        options += ` and ( marcket.marcket_asset_name like '%${word}%' or asset.asset_desc like '%${word}%'
+          or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
+          // options += ` and ( asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
       }
       
       if (startDttm) {
@@ -306,6 +308,7 @@ export class PurchaseService {
                       .addSelect('purchase.sale_user_name', 'saleUserName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
+                      .addSelect("marcket.marcket_asset_name", 'marcketAssetName')
                       .addSelect("marcket.price", 'price')                      
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
@@ -324,7 +327,7 @@ export class PurchaseService {
       const list = await sql.orderBy('purchase.purchase_no', getPurchaseDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
                             .offset(skip)
                             .limit(take)
-                            .groupBy(`purchase.purchase_no, marcket.price, asset.asset_name, asset.asset_desc,
+                            .groupBy(`purchase.purchase_no, marcket.price, asset.asset_name, asset.asset_desc, marcket.marcket_asset_name,
                               asset.metaverse_name, asset.type_def, state.state_desc, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
                                 fileAsset.file_path_second, fileAsset.thumbnail_second`)

@@ -4,6 +4,12 @@ import { Type, Transform } from 'class-transformer';
 
 export class ModifyMarcketDto {
   @IsOptional()
+  @IsString()
+  @Length(1, 256)
+  @ApiProperty({ required: false, description: '마켓의 에셋명' })
+  readonly marcketAssetName: string;
+
+  @IsOptional()
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ required: false, description: '판매가격' })

@@ -73,6 +73,7 @@ export class MarcketService {
       const issueCnt = createMarcketDto.issueCnt;
       const startDttm = createMarcketDto.startDttm;
       const endDttm = createMarcketDto.endDttm;
+      const marcketAssetName = createMarcketDto.marcketAssetName;
     
       const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({ where:{purchaseAssetNo} });
       if (!purchaseAssetInfo) {
@@ -83,7 +84,7 @@ export class MarcketService {
       const assetNo = purchaseAssetInfo.assetNo;
       const productNo = purchaseAssetInfo.productNo;
       const creatroTokenId = purchaseAssetInfo.tokenId;
-      let data = { purchaseAssetNo, assetNo, productNo,
+      let data = { purchaseAssetNo, assetNo, productNo, marcketAssetName,
         saleAddr: user.nftWalletAddr, saleUserName: user.nickName, 
         creatroTokenId, price, issueCnt, inventoryCnt: issueCnt, startDttm, endDttm};
 
@@ -162,7 +163,7 @@ export class MarcketService {
     await queryRunner.startTransaction();
 
     try {
-      const marcketInfo = await this.marcketRepository.findOne({ where:{marcketNo} });
+      const marcketInfo = await this.marcketRepository.findOne({ where:{marcketNo, saleAddr: user.nftWalletAddr} });
       if (!marcketInfo) {
         throw new NotFoundException('Data Not found. : 마켓 에셋 판매 정보');
       }
@@ -297,6 +298,7 @@ export class MarcketService {
                       .addSelect('marcket.purchase_asset_no', 'purchaseAssetNo')
                       .addSelect('marcket.product_no', 'productNo')
                       .addSelect('marcket.asset_no', 'assetNo')
+                      .addSelect('marcket.marcket_asset_name', 'marcketAssetName')
                       .addSelect('marcket.sale_addr', 'saleAddr')
                       .addSelect('marcket.sale_user_name', 'saleUserName')
                       .addSelect("asset.asset_name", 'assetName')
@@ -417,10 +419,11 @@ export class MarcketService {
     let options = `marcket.use_yn='Y' and marcket.state='S2'`;
     if (word) {
         // options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
-        options += ` and ( asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
+        options += ` and ( marcket.marcket_asset_name like '%${word}%' or asset.asset_desc like '%${word}%'
+          or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
     }
   
-    console.log("options : "+options);
+    // console.log("options : "+options);
 
     try {
         const sql = this.marcketRepository.createQueryBuilder('marcket')
@@ -428,6 +431,7 @@ export class MarcketService {
                       .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
                       .select('marcket.marcket_no', 'marcketNo')
                       .addSelect('marcket.purchase_asset_no', 'purchaseAssetNo')
+                      .addSelect('marcket.marcket_asset_name', 'marcketAssetName')
                       .addSelect('marcket.sale_addr', 'saleAddr')
                       .addSelect('marcket.sale_user_name', 'saleUserName')
                       .addSelect("asset.asset_name", 'assetName')
@@ -453,7 +457,7 @@ export class MarcketService {
                               .offset(skip)
                               .limit(take)
                               .groupBy(`marcket.marcket_no, marcket.purchase_asset_no, asset.price, asset.asset_name,
-                                asset.asset_desc, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
+                                asset.asset_desc, marcket.marcket_asset_name, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
                                 fileAsset.file_path_second, fileAsset.thumbnail_second, fileAsset.file_name_third,
                                 fileAsset.file_path_third, fileAsset.thumbnail_third`)
@@ -497,6 +501,7 @@ export class MarcketService {
                         .addSelect('marcket.purchase_no', 'purchaseNo')
                         .addSelect('marcket.product_no', 'productNo')
                         .addSelect('marcket.asset_no', 'assetNo')
+                        .addSelect('marcket.marcket_asset_name', 'marcketAssetName')
                         .addSelect('marcket.sale_addr', 'saleAddr')
                         .addSelect('marcket.sale_user_name', 'saleUserName')
                         .addSelect("asset.asset_name", 'assetName')
@@ -624,7 +629,8 @@ export class MarcketService {
     let options = `marcket.sale_addr = '${purchaseAddr}'`;
     if (word) {
         // options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
-        options += ` and ( asset.asset_desc like '%${word}%' or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
+        options += ` and ( marcket.marcket_asset_name like '%${word}%' or asset.asset_desc like '%${word}%'
+         or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
     }
     if (state) {
       options += ` and marcket.state = '${state}'`;
@@ -644,7 +650,7 @@ export class MarcketService {
       }
     }
 
-    console.log("options : "+options);
+    // console.log("options : "+options);
 
     try {
         const sql = this.marcketRepository.createQueryBuilder('marcket')
@@ -653,8 +659,9 @@ export class MarcketService {
                       .leftJoin(State, 'state', 'state.state = marcket.state')
                       .select('marcket.marcket_no', 'marcketNo')
                       .addSelect('marcket.purchase_asset_no', 'purchaseAssetNo')
+                      .addSelect('marcket.marcket_asset_name', 'marcketAssetName')
                       .addSelect('marcket.sale_addr', 'saleAddr')
-                      .addSelect('marcket.sale_user_name', 'saleUserName')
+                      .addSelect('marcket.sale_user_name', 'saleUserName')                      
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
                       .addSelect("marcket.price", 'price')
@@ -680,7 +687,7 @@ export class MarcketService {
                               .offset(skip)
                               .limit(take)
                               .groupBy(`marcket.marcket_no, marcket.purchase_asset_no, asset.price, asset.asset_name,
-                                asset.asset_desc, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
+                                asset.asset_desc, marcket.marcket_asset_name, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
                                 fileAsset.file_path_second, fileAsset.thumbnail_second, fileAsset.file_name_third,
                                 fileAsset.file_path_third, fileAsset.thumbnail_third, state.state_desc`)
