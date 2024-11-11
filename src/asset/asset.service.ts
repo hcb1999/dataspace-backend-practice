@@ -830,6 +830,7 @@ export class AssetService {
                           // .addSelect("asset.reg_addr", 'regAddr')
                           .addSelect("asset.reg_name", 'assetRegName')
                           .addSelect("asset.asset_name", 'assetName')
+                          .addSelect("asset.asset_url", 'assetUrl')
                           .addSelect("asset.ad_target", 'adTarget')
                           .addSelect("asset.metaverse_name", 'metaverseName')
                           .addSelect("asset.ad_type", 'adType')
