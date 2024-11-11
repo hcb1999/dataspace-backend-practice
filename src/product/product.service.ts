@@ -836,7 +836,7 @@ export class ProductService {
 
     if (word) {
       // options += ` and product.product_desc like '%${word}%'`;
-      options += ` and (product.product like '%${word}%' or product.product like '%${word}%') `;
+      options += ` and (product.product_name like '%${word}%' or product.product_desc like '%${word}%') `;
     }
 
     // console.log("options : "+options);
@@ -979,7 +979,7 @@ export class ProductService {
     }
     if (word) {
       // options += ` and product.product_desc like '%${word}%'`;
-      options += ` and (product.product like '%${word}%' or product.product like '%${word}%') `;
+      options += ` and (product.product_name like '%${word}%' or product.product_desc like '%${word}%') `;
     }
 
     // console.log("options : "+options);

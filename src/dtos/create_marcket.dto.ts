@@ -19,6 +19,11 @@ export class CreateMarcketDto {
   @ApiProperty({ description: '마켓에셋명' })
   readonly marcketAssetName: string;
 
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ required: false, description: '마켓의 상품 설명' })
+  readonly marcketAssetDesc: string;
+
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ description: '판매가격' })

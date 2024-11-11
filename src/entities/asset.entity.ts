@@ -46,8 +46,14 @@ export class Asset extends BaseEntity {
   @Column({ name: "state", type: "varchar", length: 10, comment: "판매 상태", default: 'S1' })
   state: string;
 
-  @Column({ name: "asset_desc", type: "varchar", length: 256, comment: "에셋 설명", nullable: true })
+  // @Column({ name: "asset_desc", type: "varchar", length: 256, comment: "에셋 설명", nullable: true })
+  // assetDesc: string;
+
+  @Column({ name: "asset_desc", type: "text", comment: "에셋 설명", nullable: true })
   assetDesc: string;
+  
+  @Column({ name: "asset_url", type: "varchar", length: 256, comment: "에셋 url", nullable: true })
+  assetUrl: string;
 
   @Index()
   @Column({ name: "file_no", type: "int4", comment: "에셋 이미지 파일번호", default: 0 })

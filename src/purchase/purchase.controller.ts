@@ -109,6 +109,7 @@ export class PurchaseController {
             "marcketAssetName": "테스트 굿즈1용 에셋1",
             "assetName": "테스트 굿즈1용 에셋1",
             "assetDesc": "테스트 굿즈1용 에셋1",
+            "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
             "metaverseName": "K-POP 월드",
             "typeDef": "K-셔츠",
             "stateDesc": "결재완료",
@@ -189,6 +190,7 @@ export class PurchaseController {
               "marcketAsetName": "테스트 굿즈1용 에셋1",
               "assetName": "테스트 굿즈1용 에셋1",
               "assetDesc": "테스트 굿즈1용 에셋1",
+              "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
               "metaverseName": "K-POP 월드",
               "typeDef": "K-셔츠",
               "stateDesc": "결재완료",
@@ -201,28 +203,35 @@ export class PurchaseController {
               "fileNameSecond": "test1.png",
               "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
               "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
-              "nftContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-              "nftTxId": "0xf1de5162ecbdb7ab455014a1b448c3da1ef91bcdb2e6f7b1d3b995f55061838e",
+              "nftContractAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+              "nftContractAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/contracts/0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+              "nftTxId": "0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
+              "nftTxIdUrl": "http://besu-dev-explorer.avataroad.com:8081/transactions/0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
               "tokenInfo": [
                 {
                   "tokenId": "7",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 },
                 {
                   "tokenId": "8",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 },
                 {
                   "tokenId": "9",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 },
                 {
                   "tokenId": "10",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 },
                 {
                   "tokenId": "11",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 }
               ] 
             }

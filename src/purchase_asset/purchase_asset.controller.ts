@@ -346,6 +346,7 @@ export class PurchaseAssetController {
               "saleUserName": "크리에이터 1",
               "assetName": "테스트 굿즈1용 에셋1",
               "assetDesc": "테스트 굿즈1용 에셋1",
+              "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
               "metaverseName": "K-POP 월드",
               "typeDef": "K-셔츠",
               "regDttm": "2024-10-29 15:01:10",
@@ -361,11 +362,15 @@ export class PurchaseAssetController {
               "fileNameThird": "test1-1.glb",
               "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
               "thumbnailThird": "https://kapi-dev.avataroad.com/",
-              "nftContractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-              "nftTxId": "0x3953751241e89b52dc6526ad6b6073e09f9d752f79b0bdeda888d009ace5376d",
+              "nftContractAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+              "nftContractAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/contracts/0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+              "nftTxId": "0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
+              "nftTxIdUrl": "http://besu-dev-explorer.avataroad.com:8081/transactions/0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
               "nftTokenId": "1",
               "nftSellerAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
-              "nftBuyerAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+              "nftSellerAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+              "nftBuyerAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+              "nftBuyerAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
             }
           }
         }

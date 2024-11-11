@@ -84,7 +84,7 @@ export class MarcketService {
       const assetNo = purchaseAssetInfo.assetNo;
       const productNo = purchaseAssetInfo.productNo;
       const creatroTokenId = purchaseAssetInfo.tokenId;
-      let data = { purchaseAssetNo, assetNo, productNo, marcketAssetName,
+      let data = { purchaseAssetNo, assetNo, productNo, marcketAssetName, marcketAssetDesc: createMarcketDto.marcketAssetDesc,
         saleAddr: user.nftWalletAddr, saleUserName: user.nickName, 
         creatroTokenId, price, issueCnt, inventoryCnt: issueCnt, startDttm, endDttm};
 
@@ -213,6 +213,7 @@ export class MarcketService {
       const issueCnt = createMarcketDto.issueCnt;
       const startDttm = createMarcketDto.startDttm;
       const endDttm = createMarcketDto.endDttm;
+      const marcketAssetName = createMarcketDto.marcketAssetName;
     
       const purchaseInfo = await this.purchaseRepository.findOne({ where:{purchaseNo} });
       if (!purchaseInfo) {
@@ -245,7 +246,7 @@ export class MarcketService {
         date1.getDate() === date2.getDate();
       const state = isSameDate(startDttm, startDate) ? 'S2' : 'S1';  
   
-      let data = { purchaseAssetNo, assetNo, productNo,
+      let data = { purchaseAssetNo, assetNo, productNo, marcketAssetName, marcketAssetDesc: createMarcketDto.marcketAssetDesc,
         saleAddr: user.nftWalletAddr, saleUserName: user.nickName, 
         creatroTokenId, resaleYn: 'Y', fromTokenId, toTokenId, price, issueCnt, inventoryCnt: issueCnt, 
         startDttm, endDttm, state, purchaseNo};
@@ -299,10 +300,12 @@ export class MarcketService {
                       .addSelect('marcket.product_no', 'productNo')
                       .addSelect('marcket.asset_no', 'assetNo')
                       .addSelect('marcket.marcket_asset_name', 'marcketAssetName')
+                      .addSelect('marcket.marcket_asset_desc', 'marcketAssetDesc')
                       .addSelect('marcket.sale_addr', 'saleAddr')
                       .addSelect('marcket.sale_user_name', 'saleUserName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
+                      .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("marcket.price", 'price')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
@@ -323,7 +326,9 @@ export class MarcketService {
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
                       .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
+                      .addSelect(`'${process.env.BESU_EXPLORER}contracts/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
                       .addSelect('transfer.tx_id', 'nftTxId')
+                      .addSelect(`'${process.env.BESU_EXPLORER}transactions/'  || transfer.tx_id`, 'nftTxIdUrl')
                       // .addSelect('transfer.token_id', 'nftTokenId')
                       // .addSelect("marcket.sale_addr", 'nftSellerAddr')
                       // .addSelect("marcket.purchase_addr", 'nftBuyerAddr')
@@ -387,8 +392,10 @@ export class MarcketService {
       // console.log(mintList);
 
       const combinedList = [
-        ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.to_addr })),
-        ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.issued_to }))
+        ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.to_addr,
+           ownerAddressUrl: `${process.env.BESU_EXPLORER}accounts/${item.to_addr}` })),
+        ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.issued_to, 
+          ownerAddressUrl: `${process.env.BESU_EXPLORER}accounts/${item.issued_to}` }))
       ];
     
       const sortedCombinedList = combinedList.sort((a, b) => {
@@ -436,6 +443,7 @@ export class MarcketService {
                       .addSelect('marcket.sale_user_name', 'saleUserName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
+                      .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("marcket.price", 'price')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
@@ -457,7 +465,7 @@ export class MarcketService {
                               .offset(skip)
                               .limit(take)
                               .groupBy(`marcket.marcket_no, marcket.purchase_asset_no, asset.price, asset.asset_name,
-                                asset.asset_desc, marcket.marcket_asset_name, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
+                                asset.asset_desc, marcket.marcket_asset_name, asset.asset_url, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
                                 fileAsset.file_path_second, fileAsset.thumbnail_second, fileAsset.file_name_third,
                                 fileAsset.file_path_third, fileAsset.thumbnail_third`)
@@ -502,10 +510,12 @@ export class MarcketService {
                         .addSelect('marcket.product_no', 'productNo')
                         .addSelect('marcket.asset_no', 'assetNo')
                         .addSelect('marcket.marcket_asset_name', 'marcketAssetName')
+                        .addSelect('marcket.marcket_asset_desc', 'marcketAssetDesc')
                         .addSelect('marcket.sale_addr', 'saleAddr')
                         .addSelect('marcket.sale_user_name', 'saleUserName')
                         .addSelect("asset.asset_name", 'assetName')
                         .addSelect("asset.asset_desc", 'assetDesc')
+                        .addSelect("asset.asset_url", 'assetUrl')
                         .addSelect("marcket.price", 'price')
                         .addSelect("asset.metaverse_name", 'metaverseName')
                         .addSelect("asset.type_def", 'typeDef')
@@ -530,7 +540,9 @@ export class MarcketService {
                         .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
                         .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')  
                         .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
+                        .addSelect(`'${process.env.BESU_EXPLORER}contracts/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
                         .addSelect('transfer.tx_id', 'nftTxId')
+                        .addSelect(`'${process.env.BESU_EXPLORER}transactions/'  || transfer.tx_id`, 'nftTxIdUrl')
                         // .addSelect('transfer.token_id', 'nftTokenId')
                         // .addSelect("ARRAY_AGG(purchase.token_id)", 'nftTokenIdAry')
                         // .addSelect("marcket.sale_addr", 'nftSellerAddr')
@@ -592,8 +604,10 @@ export class MarcketService {
         // console.log(mintList);
 
         const combinedList = [
-          ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.to_addr })),
-          ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.issued_to }))
+          ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.to_addr,
+            ownerAddressUrl: `${process.env.BESU_EXPLORER}accounts/${item.to_addr}` })),
+          ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.issued_to,
+            ownerAddressUrl: `${process.env.BESU_EXPLORER}accounts/${item.issued_to}` }))
         ];
       
         const sortedCombinedList = combinedList.sort((a, b) => {
@@ -664,6 +678,7 @@ export class MarcketService {
                       .addSelect('marcket.sale_user_name', 'saleUserName')                      
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
+                      .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("marcket.price", 'price')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
@@ -687,7 +702,7 @@ export class MarcketService {
                               .offset(skip)
                               .limit(take)
                               .groupBy(`marcket.marcket_no, marcket.purchase_asset_no, asset.price, asset.asset_name,
-                                asset.asset_desc, marcket.marcket_asset_name, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
+                                asset.asset_desc, marcket.marcket_asset_name, asset.asset_url, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
                                 fileAsset.file_path_second, fileAsset.thumbnail_second, fileAsset.file_name_third,
                                 fileAsset.file_path_third, fileAsset.thumbnail_third, state.state_desc`)

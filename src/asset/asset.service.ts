@@ -431,7 +431,7 @@ export class AssetService {
 
     try {
       const userNo = user.userNo;
-      const asset = await this.assetRepository.findOne({ where:{assetNo, userNo} });
+      const asset = await this.assetRepository.findOne({ where:{assetNo} });
       if (!asset) {
         throw new NotFoundException("Data Not found. : 에셋");
       }
@@ -450,6 +450,7 @@ export class AssetService {
                       .addSelect("asset.reg_addr", 'assetRegAddr')
                       .addSelect("asset.reg_name", 'assetRegName')
                       .addSelect("asset.asset_name", 'assetName')
+                      .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("asset.ad_target", 'adTarget')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.ad_type", 'adType')
@@ -475,10 +476,14 @@ export class AssetService {
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
                       .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
+                      .addSelect(`'${process.env.BESU_EXPLORER}contracts/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
                       .addSelect('mint.tx_id', 'nftTxId')
+                      .addSelect(`'${process.env.BESU_EXPLORER}transactions/'  || transfer.tx_id`, 'nftTxIdUrl')
                       .addSelect('mint.token_id', 'nftTokenId')
                       .addSelect("transfer.from_addr", 'nftSellerAddr')
+                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || transfer.from_addr`, 'nftSellerAddrUrl')
                       .addSelect("transfer.to_addr", 'nftBuyerAddr')
+                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || transfer.to_addr`, 'nftBuyerAddrUrl')
                       .where("asset.asset_no = :assetNo", { assetNo });
                       // .andWhere("nftMint.use_yn = 'N'")
                       // .andWhere("nftMint.burn_yn = 'N'");
@@ -495,7 +500,7 @@ export class AssetService {
       //                        .getRawOne();
       // }else{
         assetInfo = await sql.groupBy(`asset.asset_no, product.product_no, product.reg_addr, product.reg_name, 
-          product.product_name, state.state_desc, fileAsset.file_no, mint.tx_id, mint.token_id,
+          product.product_name, state.state_desc, fileAsset.file_no, mint.tx_id, mint.token_id, transfer.tx_id,
           transfer.from_addr, transfer.to_addr`)
                            .getRawOne();
 
@@ -538,6 +543,7 @@ export class AssetService {
                       .addSelect("asset.reg_addr", 'assetRegAddr')
                       .addSelect("asset.reg_name", 'assetRegName')
                       .addSelect("asset.asset_name", 'assetName')
+                      .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("asset.ad_target", 'adTarget')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.ad_type", 'adType')
@@ -561,10 +567,14 @@ export class AssetService {
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
                       .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
+                      .addSelect(`'${process.env.BESU_EXPLORER}contracts/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
                       .addSelect('mint.tx_id', 'nftTxId')
+                      .addSelect(`'${process.env.BESU_EXPLORER}transactions/'  || mint.tx_id`, 'nftTxIdUrl')
                       .addSelect('mint.token_id', 'nftTokenId')
                       .addSelect("transfer.from_addr", 'nftSellerAddr')
+                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || transfer.from_addr`, 'nftSellerAddrUrl')
                       .addSelect("transfer.to_addr", 'nftBuyerAddr')
+                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || transfer.to_addr`, 'nftBuyerAddrUrl')
                       .where("asset.asset_no = :assetNo", { assetNo });
                       // .andWhere("nftMint.use_yn = 'N'")
                       // .andWhere("nftMint.burn_yn = 'N'");

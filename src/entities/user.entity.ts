@@ -1,4 +1,4 @@
-import { Entity, BaseEntity, Column, UpdateDateColumn, CreateDateColumn, PrimaryColumn, Unique, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, BaseEntity, Column, UpdateDateColumn, CreateDateColumn, Index, PrimaryColumn, Unique, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "ar_user" })
 @Unique(['nickName'])
@@ -35,6 +35,10 @@ export class User extends BaseEntity {
 
   @Column({ name: "use_glb_url", type: "varchar", length: 256, comment: "Unity사용자의 마지막 rpm의 glb 주소", nullable: true })
   useGlbUrl: string;
+
+  @Index()
+  @Column({name:"purchase_no", comment:"사용자 구매 번호", nullable: true })
+  purchaseNo: number;
 
   nftWalletAddr: string;
   

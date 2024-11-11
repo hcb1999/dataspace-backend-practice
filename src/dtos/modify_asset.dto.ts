@@ -10,6 +10,12 @@ export class ModifyAssetDto {
   readonly assetName: string;
 
   @IsOptional()
+  @IsString()
+  @Length(1, 256)
+  @ApiProperty({ required: false, description: '에셋 url' })
+  readonly assetUrl: string;
+
+  @IsOptional()
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ required: false, description: '굿즈 메타버스 업체 : 1' })
@@ -40,16 +46,13 @@ export class ModifyAssetDto {
   readonly endDttm: Date;
 
   @IsOptional()
-  @IsOptional()
   @IsString()
   @Length(1, 10)
   @ApiProperty({ required: false, description: '판매상태(S1:판매등록, S2: 판매시작, S3:판매중지, S4:판매종료, S5:판매완료)' })
   readonly state: string;
 
   @IsOptional()
-  @IsOptional()
   @IsString()
-  @Length(1, 256)
   @ApiProperty({ required: false, description: '에셋 설명' })
   readonly assetDesc: string;
 

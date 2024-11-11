@@ -10,6 +10,11 @@ export class ModifyMarcketDto {
   readonly marcketAssetName: string;
 
   @IsOptional()
+  @IsString()
+  @ApiProperty({ description: '마켓의 상품 설명', required: false })
+  readonly marcketAssetDesc: string;
+
+  @IsOptional()
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ required: false, description: '판매가격' })

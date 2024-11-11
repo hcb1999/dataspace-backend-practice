@@ -18,6 +18,11 @@ export class CreateAssetDto {
   @ApiProperty({ description: '에셋명' })
   readonly assetName: string;
 
+  @IsString()
+  @Length(1, 256)
+  @ApiProperty({ description: '에셋 url' })
+  readonly assetUrl: string;
+
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ description: '굿즈 메타버스 업체 : 1' })
@@ -51,7 +56,6 @@ export class CreateAssetDto {
 
   @IsOptional()
   @IsString()
-  @Length(1, 256)
   @ApiProperty({ required: false, description: '에셋 설명' })
   readonly assetDesc: string;
 

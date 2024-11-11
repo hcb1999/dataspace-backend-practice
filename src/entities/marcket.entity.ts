@@ -13,8 +13,11 @@ export class Marcket extends BaseEntity {
   @Column({name:"purchase_no", comment:"사용자 구매 번호", nullable: true })
   purchaseNo: number;
 
-  @Column({ name: "marcket_asset_name", type: "varchar", length: 256, comment: "마켓의 에셋명"})
+  @Column({ name: "marcket_asset_name", type: "varchar", length: 256, comment: "마켓의 상품명"})
   marcketAssetName: string;
+
+  @Column({ name: "marcket_asset_desc", type: "text", comment: "마켓의 상품 설명", nullable: true })
+  marcketAssetDesc: string;
 
   @Index()
   @Column({name:"sale_addr", type:"varchar", length:80, comment:"판매 지갑주소", nullable: true })

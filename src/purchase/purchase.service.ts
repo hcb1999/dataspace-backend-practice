@@ -160,6 +160,7 @@ export class PurchaseService {
                       .addSelect('purchase.purchase_user_name', 'purchaseUserName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
+                      .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("marcket.marcket_asset_name", 'marcketAssetName')
                       .addSelect("marcket.price", 'price')
                       .addSelect("asset.metaverse_name", 'metaverseName')
@@ -178,7 +179,9 @@ export class PurchaseService {
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
                       .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
+                      .addSelect(`'${process.env.BESU_EXPLORER}contracts/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
                       .addSelect('transfer.tx_id', 'nftTxId')
+                      .addSelect(`'${process.env.BESU_EXPLORER}transactions/'  || transfer.tx_id`, 'nftTxIdUrl')
                       // .addSelect("purchase.sale_addr", 'nftSellerAddr')
                       // .addSelect("purchase.purchase_addr", 'nftBuyerAddr')
                       .where("purchase.purchase_no = :purchaseNo", { purchaseNo })
@@ -238,8 +241,10 @@ export class PurchaseService {
       // console.log(mintList);
 
       const combinedList = [
-        ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.to_addr })),
-        ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.issued_to }))
+        ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.to_addr,
+           ownerAddressUrl: `${process.env.BESU_EXPLORER}accounts/${item.to_addr}` })),
+        ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAddress: item.issued_to,
+          ownerAddressUrl: `${process.env.BESU_EXPLORER}accounts/${item.issued_to}` }))
       ];
     
       const sortedCombinedList = combinedList.sort((a, b) => {
@@ -308,12 +313,16 @@ export class PurchaseService {
                       .addSelect('purchase.sale_user_name', 'saleUserName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
+                      .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("marcket.marcket_asset_name", 'marcketAssetName')
                       .addSelect("marcket.price", 'price')                      
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
                       .addSelect('state.state_desc', 'stateDesc')                      
-                      .addSelect('purchase.pay_dttm', 'payDttm')                      
+                      .addSelect('purchase.pay_dttm', 'payDttm')     
+                      .addSelect('purchase.purchase_cnt', 'purchaseCnt')                      
+                      .addSelect('purchase.sale_cnt', 'saleCnt')                      
+                      .addSelect('purchase.inventory_cnt', 'inventoryCnt')                    
                       .addSelect("fileAsset.file_name_first", 'fileNameFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
@@ -328,7 +337,7 @@ export class PurchaseService {
                             .offset(skip)
                             .limit(take)
                             .groupBy(`purchase.purchase_no, marcket.price, asset.asset_name, asset.asset_desc, marcket.marcket_asset_name,
-                              asset.metaverse_name, asset.type_def, state.state_desc, fileAsset.file_name_first,
+                              asset.asset_url, asset.metaverse_name, asset.type_def, state.state_desc, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
                                 fileAsset.file_path_second, fileAsset.thumbnail_second`)
                             .getRawMany();
