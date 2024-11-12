@@ -69,6 +69,15 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
+   // Favicon 요청을 무시하는 미들웨어 추가
+   app.use((req:any, res:any, next:any) => {
+    if (req.path === '/favicon.ico') {
+      res.status(204).end(); // 204 No Content 응답
+    } else {
+      next();
+    }
+  });
+
   await app.listen(process.env.SERVER_PORT);
 }
 bootstrap();
