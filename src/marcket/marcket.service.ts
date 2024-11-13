@@ -445,6 +445,7 @@ export class MarcketService {
                       .addSelect("asset.asset_desc", 'assetDesc')
                       .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("marcket.price", 'price')
+                      .addSelect("marcket.inventory_cnt", 'inventoryCnt')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
                       .addSelect('marcket.start_dttm', 'startDttm')
