@@ -5,6 +5,9 @@ export class NftTransfer extends BaseEntity {
   @PrimaryGeneratedColumn({name:"nft_transfer_no", comment:"NFT 이전 번호"})
   nftTransferNo: number;
 
+  @Column({ name:"contract_id", type:"varchar", length:80, comment:"Contract ID", nullable:true  })
+  contractId: string;
+  
   @Index()
   @Column({ name:"purchase_asset_no", type:"int4", comment:"광고주 구매번호", nullable:true })
   purchaseAssetNo: number;

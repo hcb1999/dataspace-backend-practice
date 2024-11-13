@@ -162,6 +162,7 @@ export class PurchaseService {
                       .addSelect("asset.asset_desc", 'assetDesc')
                       .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("marcket.marcket_asset_name", 'marcketAssetName')
+                      .addSelect("marcket.marcket_asset_desc", 'marcketAssetDesc')
                       .addSelect("marcket.price", 'price')
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
