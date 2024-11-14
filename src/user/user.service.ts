@@ -104,6 +104,7 @@ export class UserService {
       }
 
       userInfo['addr'] = user.nftWalletAddr;
+      userInfo['addrUrl'] = process.env.BESU_EXPLORER+"accounts/"+user.nftWalletAddr;
       
       return userInfo;
 

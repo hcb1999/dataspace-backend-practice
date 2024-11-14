@@ -92,10 +92,12 @@ export class UserController {
           "billchainId": null,
           "kakaoId": null,
           "useGlbUrl": null,
+          "purchaseNo": null,
           "useYn": "Y",
-          "regDttm": "2024-08-26 21:13:16",
-          "updDttm": "2024-08-26 21:13:16",
-          "addr": "0x12345678900"
+          "regDttm": "2024-09-04 21:04:04",
+          "updDttm": "2024-09-04 21:04:04",
+          "addr": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+          "addrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906"
         }
       }
     }
