@@ -29,7 +29,8 @@ export class SharpPipe implements PipeTransform {
         image['fileSize'] = image.size;
         image['fileHash'] = orgFileHex;
 
-        if(!orgFileName.endsWith('.glb') && !orgFileName.endsWith('.ply') && !orgFileName.endsWith('.fbx')){
+        if(!orgFileName.endsWith('.glb')  && !orgFileName.endsWith('.GLB') && !orgFileName.endsWith('.ply')
+          && !orgFileName.endsWith('.PLY') && !orgFileName.endsWith('.fbx') && !orgFileName.endsWith('.FBX')){
           // thumbnail로 변환
           const newFileName = image.path.replace('file', 'thumbnail');
           const fileName = join(__dirname, `../../${image.path}`);
