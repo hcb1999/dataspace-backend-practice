@@ -12,8 +12,10 @@ export const multerOptions = {
     }
 
     // if (!isMovie && file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-      if (!isMovie && (file.mimetype.match(/\/(jpg|jpeg|png|gif)$/) || file.originalname.endsWith('.glb') 
-        || file.originalname.endsWith('.ply') || file.originalname.endsWith('.fbx'))) {
+      if (!isMovie && (file.mimetype.match(/\/(jpg|jpeg|png|gif)$/) || file.mimetype.match(/\/(JPG|JPEG|PNG|GIF)$/) 
+         || file.originalname.endsWith('.glb') || file.originalname.endsWith('.GLB') 
+         || file.originalname.endsWith('.ply') || file.originalname.endsWith('.PLY')
+         || file.originalname.endsWith('.fbx') || file.originalname.endsWith('.FBX'))) {
        // 이미지 형식은 jpg, jpeg, png, gif, 또는 glb 확장자를 가진 파일을 허용합니다.
     
       callback(null, true);
