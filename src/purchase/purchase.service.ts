@@ -181,6 +181,9 @@ export class PurchaseService {
                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect("fileAsset.file_name_third", 'fileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
                       .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
                       .addSelect(`'${process.env.BESU_EXPLORER}contracts/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
                       .addSelect('transfer.tx_id', 'nftTxId')
@@ -332,6 +335,9 @@ export class PurchaseService {
                       .addSelect("fileAsset.file_name_second", 'fileNameSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect("fileAsset.file_name_third", 'sfileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
                       .where(options)
                       // .andWhere("nftMint.use_yn = 'N'")
                       // .andWhere("nftMint.burn_yn = 'N'");
@@ -342,7 +348,8 @@ export class PurchaseService {
                             .groupBy(`purchase.purchase_no, marcket.price, asset.asset_name, asset.asset_desc, marcket.marcket_asset_name,
                               asset.asset_url, asset.metaverse_name, asset.type_def, state.state_desc, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
-                                fileAsset.file_path_second, fileAsset.thumbnail_second`)
+                                fileAsset.file_path_second, fileAsset.thumbnail_second, fileAsset.file_name_third,
+                                fileAsset.file_path_third, fileAsset.thumbnail_third`)
                             .getRawMany();
 
       const totalCount = await sql.getCount(); 
