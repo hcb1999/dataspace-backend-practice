@@ -367,9 +367,9 @@ export class AssetService {
 
       const productNo = assetInfo.productNo;
       const nftMintInfo = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
-      if (!nftMintInfo) {
-        throw new NotFoundException("Data Not found. : NFT 민트 정보");
-      }
+      // if (!nftMintInfo) {
+      //   throw new NotFoundException("Data Not found. : NFT 민트 정보");
+      // }
 
       const tokenId = assetInfo.tokenId;
       if(tokenId){
@@ -380,9 +380,9 @@ export class AssetService {
         
         // console.log("===== nftBurnInfo : "+ JSON.stringify(nftBurnInfo));
       }else{
-      // 에셋 상태 정보 수정(민트 안된 에셋). 
-      const data = { useYn: 'N' };
-      await this.assetRepository.update(assetNo, data);
+        // 에셋 상태 정보 수정(민트 안된 에셋). 
+        const data = { useYn: 'N' };
+        await this.assetRepository.update(assetNo, data);
       }
 
     } catch (e) {

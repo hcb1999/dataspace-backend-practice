@@ -119,7 +119,10 @@ export class PurchaseController {
             "thumbnailFirst": "https://kapi-dev.avataroad.com/",
             "fileNameSecond": "test1.png",
             "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
-            "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png"
+            "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+            "fileNameThird": "test1.png",
+            "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+            "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
           },
           {
             "price": 0.1,
@@ -137,7 +140,10 @@ export class PurchaseController {
             "thumbnailFirst": "https://kapi-dev.avataroad.com/",
             "fileNameSecond": "test1.png",
             "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
-            "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png"
+            "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+            "fileNameThird": "test1.png",
+            "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+            "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
           }
         ]
       }
@@ -205,6 +211,9 @@ export class PurchaseController {
               "fileNameSecond": "test1.png",
               "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
               "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+              "fileNameThird": "test1.png",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png",
               "nftContractAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
               "nftContractAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/contracts/0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
               "nftTxId": "0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",

@@ -1596,7 +1596,7 @@ export class NftController {
   
         await burnTx.wait();
   
-        const nftAssetInfo = {useYn: 'N'};
+        const nftAssetInfo = {useYn: 'N', state: 'S4'};
         await queryRunner.manager.update(Asset, assetNo, nftAssetInfo);
 
         const nftMintInfo = {state: 'B16', burnYn: 'Y'};
