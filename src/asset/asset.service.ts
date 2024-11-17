@@ -381,7 +381,7 @@ export class AssetService {
         // console.log("===== nftBurnInfo : "+ JSON.stringify(nftBurnInfo));
       }else{
         // 에셋 상태 정보 수정(민트 안된 에셋). 
-        const data = { useYn: 'N' };
+        const data = { useYn: 'N', state: 'S4' };
         await this.assetRepository.update(assetNo, data);
       }
 
