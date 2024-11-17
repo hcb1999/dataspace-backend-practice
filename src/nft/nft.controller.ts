@@ -23,7 +23,7 @@ import { Asset } from '../entities/asset.entity';
 import { PurchaseAsset } from '../entities/purchase_asset.entity';
 import { Marcket } from '../entities/marcket.entity';
 import { Purchase } from '../entities/purchase.entity';
-import { KNFTCollection, KNFTCollection__factory } from './typechain-types';
+import { ARODEVNFTCollection, ARODEVNFTCollection__factory } from './typechain-types';
 import { Channel, Message } from 'amqplib';
 import { DataSource, Repository } from 'typeorm';
 
@@ -332,8 +332,8 @@ export class NftController {
   }
 
     // TypeChain을 이용하여 Contract 인스턴스 생성
-    createContractInstance(wallet: Wallet): KNFTCollection {
-      return KNFTCollection__factory.connect(this.contractAddress, wallet.connect(this.provider));
+    createContractInstance(wallet: Wallet): ARODEVNFTCollection {
+      return ARODEVNFTCollection__factory.connect(this.contractAddress, wallet.connect(this.provider));
     }
   
     @MessagePattern('mint')
