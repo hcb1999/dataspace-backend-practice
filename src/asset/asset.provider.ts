@@ -7,6 +7,7 @@ import { NftTransfer } from "../entities/nft_transfer.entity";
 import { Product } from "../entities/product.entity";
 import { Metaverse } from "../entities/metaverse.entity";
 import { AssetType } from "../entities/asset_type.entity";
+import { DidWallet } from "../entities/did_wallet.entity";
 
 export const AssetProviders = [
     {
@@ -42,6 +43,10 @@ export const AssetProviders = [
     },{
         provide: 'CREATOR_REPOSITORY',
         useFactory: (dataSource: DataSource) => dataSource.getRepository(Creator),
+        inject: ['DATA_SOURCE'],
+    },{
+        provide: 'DID_WALLET_REPOSITORY',
+        useFactory: (dataSource: DataSource) => dataSource.getRepository(DidWallet),
         inject: ['DATA_SOURCE'],
     }
 ]

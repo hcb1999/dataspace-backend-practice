@@ -59,8 +59,6 @@ async function bootstrap() {
       noAck: false,
       queueOptions: {
         durable: true,
-        // deadLetterExchange: 'dlx_exchange',
-        // deadLetterRoutingKey: 'dlx_routing_key',
         'x-dead-letter-exchange': 'dlx_exchange1',
         'x-dead-letter-routing-key': 'dlx_routing_key1',
       },

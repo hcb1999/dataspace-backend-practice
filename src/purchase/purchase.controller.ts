@@ -106,7 +106,7 @@ export class PurchaseController {
             "price": 0.1,
             "purchaseNo": 50,
             "saleUserName": "엔터사 1",
-            "marcketAssetName": "테스트 굿즈1용 에셋1",
+            "marketAssetName": "테스트 굿즈1용 에셋1",
             "assetName": "테스트 굿즈1용 에셋1",
             "assetDesc": "테스트 굿즈1용 에셋1",
             "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
@@ -128,7 +128,7 @@ export class PurchaseController {
             "price": 0.1,
             "purchaseNo": 49,
             "saleUserName": "엔터사 1",
-            "marcketAssetName": "테스트 굿즈1용 에셋1",
+            "marketAssetName": "테스트 굿즈1용 에셋1",
             "assetName": "테스트 굿즈1용 에셋1",
             "assetDesc": "테스트 굿즈1용 에셋1",
             "metaverseName": "K-POP 월드",
@@ -188,14 +188,14 @@ export class PurchaseController {
             "data": {
               "price": 0.1,
               "purchaseNo": 50,
-              "purchaseAssetNo": 132,
-              "saleAddr": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
-              "saleAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+              "contractNo": 132,
+              "saleAccount": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+              "saleAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906",
               "saleUserName": "크리에이터 2",
-              "purchaseAddr": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
-              "purchaseAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+              "purchaseAccount": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+              "purchaseAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
               "purchaseUserName": "사용자 2",
-              "marcketAsetName": "테스트 굿즈1용 에셋1",
+              "marketAsetName": "테스트 굿즈1용 에셋1",
               "assetName": "테스트 굿즈1용 에셋1",
               "assetDesc": "테스트 굿즈1용 에셋1",
               "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
@@ -221,28 +221,28 @@ export class PurchaseController {
               "tokenInfo": [
                 {
                   "tokenId": "7",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 },
                 {
                   "tokenId": "8",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 },
                 {
                   "tokenId": "9",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 },
                 {
                   "tokenId": "10",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 },
                 {
                   "tokenId": "11",
-                  "ownerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
                 }
               ] 
             }

@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { Purchase } from "../entities/purchase.entity";
-import { Marcket } from "../entities/marcket.entity";
+import { Market } from "../entities/market.entity";
 import { NftMint } from "../entities/nft_mint.entity";
 import { NftTransfer } from "../entities/nft_transfer.entity";
 import { Asset } from "../entities/asset.entity";
@@ -11,8 +11,8 @@ export const PurchaseProviders = [
         useFactory: (dataSource: DataSource) => dataSource.getRepository(Purchase),
         inject: ['DATA_SOURCE'],
     },{
-        provide: 'MARCKET_REPOSITORY',
-        useFactory: (dataSource: DataSource) => dataSource.getRepository(Marcket),
+        provide: 'MARKET_REPOSITORY',
+        useFactory: (dataSource: DataSource) => dataSource.getRepository(Market),
         inject: ['DATA_SOURCE'],
     },{
         provide: 'NFT_MINT_REPOSITORY',

@@ -3,6 +3,18 @@ import { IsString, Length, IsOptional, IsNumber } from "class-validator";
 import { Type } from 'class-transformer';
 
 export class ModifyUserDto {
+  // @IsOptional()
+  // @IsString()
+  // @Length(1, 80)
+  // @ApiProperty({ description: '계정주소'})
+  // readonly account: string;
+
+  // @IsOptional()
+  // @IsString()
+  // @Length(1, 256)
+  // @ApiProperty({ description: '계정 키'})
+  // readonly privateKey: string;
+
   @IsOptional()
   @IsString()
   @Length(1, 40)

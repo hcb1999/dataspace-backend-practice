@@ -26,7 +26,7 @@ export class CreatePurchaseDto {
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ description: '마켓 판매 번호' })
-  readonly marcketNo: number;
+  readonly marketNo: number;
  
   @IsNumber()
   @Type(() => Number)

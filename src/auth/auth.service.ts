@@ -34,7 +34,8 @@ export class AuthService {
     // console.log('nftWalletInfo == ', nftWalletInfo);
     if (nftWalletInfo) {
       // user.nftWalletId = nftWalletInfo.walletId;
-      user.nftWalletAddr = nftWalletInfo.addr;
+      user.nftWalletAccount = nftWalletInfo.account;
+      user.nftWalletAccountPKey = nftWalletInfo.pkey;
     }
 
     return user;
@@ -49,21 +50,28 @@ export class AuthService {
   async getAccessToken(getUserDto: GetUserDto): Promise<any> {
 
     try {
-      const addr = getUserDto.addr.toLowerCase();
-      // console.log("addr : "+addr);
-      const userWalletInfo = await this.nftService.getOneByAddress(addr);
-      if (!userWalletInfo) {
-        throw new NotFoundException("Address not found.");
+      // const addr = getUserDto.addr.toLowerCase();
+      // // console.log("addr : "+addr);
+      // const userWalletInfo = await this.nftService.getOneByAddress(addr);
+      // if (!userWalletInfo) {
+      //   throw new NotFoundException("Address not found.");
+      // }
+
+      const email = getUserDto.email;
+      const userInfo = await this.userService.getOneByEmail(email);
+      if (!userInfo) {
+        throw new NotFoundException('User(email) not found.');
       }
 
-      let userNo = userWalletInfo.userNo;
-      const userInfo = await this.userService.getOne(userNo);
-      if (!userInfo) {
-        throw new NotFoundException("User not found.");
-      }
+      // let userNo = userWalletInfo.userNo;
+      // const userInfo = await this.userService.getOne(userNo);
+      // if (!userInfo) {
+      //   throw new NotFoundException("User not found.");
+      // }
 
       // 토큰생성
-      const payload = { userNo };
+      // const payload = { userNo };
+      const payload = { userNo: userInfo.userNo };
       const accessToken = this.jwtService.sign(payload);
 
       return { accessToken };
@@ -81,19 +89,19 @@ export class AuthService {
    * @returns 
    */
   async register(createUserDto: CreateUserDto): Promise<any> {
+    // const userInfo = await this.userService.create(createUserDto);
 
     try {
-      // const addr = createUserDto.addr;
-      const addr = createUserDto.addr.toLowerCase();
-      // console.log("original addr : "+createUserDto.addr+", addr : "+addr);
+      // const account = createUserDto.account;
       const nickName = createUserDto.nickName;
-      const wallet = await this.userService.getOneByAddress(addr);
-      if (wallet) {
-        throw new ConflictException('Aready registered Address.');
-      }
+      const email = createUserDto.email;
       const nickUser = await this.userService.getOneByNickname(nickName);
       if(nickUser != null) {
           throw new ConflictException('Aready registered Nickname.');
+      }
+      const emailUser = await this.userService.getOneByEmail(email);
+      if(emailUser != null) {
+          throw new ConflictException('Aready registered Email.');
       }
 
       const userInfo = await this.userService.create(createUserDto);
@@ -119,5 +127,6 @@ export class AuthService {
       //   throw new InternalServerErrorException('internal Server Error');
       // }
     }
+     
   }
 }

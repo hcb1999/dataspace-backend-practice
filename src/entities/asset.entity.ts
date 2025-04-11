@@ -46,9 +46,6 @@ export class Asset extends BaseEntity {
   @Column({ name: "state", type: "varchar", length: 10, comment: "판매 상태", default: 'S1' })
   state: string;
 
-  // @Column({ name: "asset_desc", type: "varchar", length: 256, comment: "에셋 설명", nullable: true })
-  // assetDesc: string;
-
   @Column({ name: "asset_desc", type: "text", comment: "에셋 설명", nullable: true })
   assetDesc: string;
   
@@ -64,6 +61,22 @@ export class Asset extends BaseEntity {
 
   @Column({ name: "use_yn", type: "varchar", length: 1, comment: "사용 여부", default: "Y" })
   useYn: string;
+
+  @Index()
+  @Column({ name: "vc_id", type: "varchar", length: 256 , comment: "VC ID", nullable: true })
+  vcId: string;
+
+  @Column({ name: "vc", type: "text", comment: "VC 전문", nullable: true })
+  vc: string;
+
+  @Column({ name: "vc_issuer_name", type: "varchar", length: 256 , comment: "VC 발급자 국문 이름", nullable: true })
+  vcIssuerName: string;
+
+  @Column({ name: "vc_issuer_logo", type: "varchar", length: 256 , comment: "VC 발급자 로고 이미지 URL", nullable: true })
+  vcIssuerLogo: string;
+
+  @Column({ name: "vc_type_name", type: "varchar", length: 256 , comment: "VC 타입 국문 이름", nullable: true })
+  vcTypeName: string;
 
   @Column({ name: "token_id", type: "varchar", length: 40, comment: "토큰ID", nullable: true})
   tokenId: string;

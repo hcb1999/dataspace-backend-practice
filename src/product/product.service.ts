@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { DataSource, Repository, UpdateResult, Like, Between } from 'typeorm';
 import { Product } from '../entities/product.entity';
-import { PurchaseAsset } from '../entities/purchase_asset.entity';
+import { EContract } from '../entities/contract.entity';
 import { Asset } from '../entities/asset.entity';
 import { Advertiser } from '../entities/advertiser.entity';
 import { File } from '../entities/file.entity';
@@ -34,8 +34,8 @@ export class ProductService {
     @Inject('PRODUCT_REPOSITORY')
     private productRepository: Repository<Product>,
 
-    @Inject('PURCHASE_ASSET_REPOSITORY')
-    private purchaseAssetRepository: Repository<PurchaseAsset>,
+    @Inject('CONTRACT_REPOSITORY')
+    private contractRepository: Repository<EContract>,
 
     @Inject('ADVERTISER_REPOSITORY')
     private advertiserRepository: Repository<Advertiser>,
@@ -175,7 +175,7 @@ export class ProductService {
       // const userNo = user.userNo;
       createProductDto['userNo'] = user.userNo;
       createProductDto['regName'] = user.nickName;
-      createProductDto['regAddr'] = user.nftWalletAddr;
+      createProductDto['regAddr'] = user.nftWalletAccount;
 
       const adTypesArray1 = createProductDto.adTypesFirst
         ? createProductDto.adTypesFirst.split(',').map(Number)
@@ -197,7 +197,7 @@ export class ProductService {
         adTypesThird: adTypesArray3,
       };
 
-      // console.log("transformedDto : "+JSON.stringify(transformedDto));
+      console.log("transformedDto : "+JSON.stringify(transformedDto));
       const newProduct = queryRunner.manager.create(Product, transformedDto);
       const result = await queryRunner.manager.save<Product>(newProduct);
 
@@ -205,6 +205,7 @@ export class ProductService {
 
       return { productNo: result.productNo };
     } catch (e) {
+      // await queryRunner.rollbackTransaction();
       this.logger.error(e);
       throw e;
     } finally {
@@ -402,14 +403,14 @@ export class ProductService {
       let data = { useYn: 'N', state: 'N4' };
       await queryRunner.manager.update(Product, { productNo }, data);
 
-      // const purchaseAssetInfo = await this.purchaseAssetRepository.findOne({
+      // const contractInfo = await this.contractRepository.findOne({
       //   where: { productNo },
       // });
-      // if (purchaseAssetInfo) {
+      // if (contractInfo) {
       //   let data1 = { useYn: 'N', saleState: 'S4' };
-      //   const purchaseAssetNo = purchaseAssetInfo.purchaseAssetNo;
+      //   const contractNo = contractInfo.contractNo;
       //   // 엔터사 에셋 구매 상태 정보 수정
-      //   await this.purchaseAssetRepository.update(purchaseAssetNo, data1);
+      //   await this.contractRepository.update(contractNo, data1);
       // }
 
       await queryRunner.commitTransaction();
@@ -730,11 +731,11 @@ export class ProductService {
 
       // console.log("============ productInfo : "+JSON.stringify(productInfo));
 
-      const sql1 = this.purchaseAssetRepository
-        .createQueryBuilder('purchaseAsset')
-        .leftJoin(Asset, 'asset', 'purchaseAsset.asset_no = asset.asset_no')
+      const sql1 = this.contractRepository
+        .createQueryBuilder('contract')
+        .leftJoin(Asset, 'asset', 'contract.asset_no = asset.asset_no')
         .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
-        .select('purchaseAsset.purchase_asset_no', 'purchaseAssetNo')
+        .select('contract.contract_no', 'contractNo')
         .addSelect('asset.reg_name', 'regName')
         .addSelect('asset.asset_name', 'assetName')
         .addSelect('fileAsset.file_name_first', 'fileNameFirst')
@@ -764,12 +765,12 @@ export class ProductService {
           "concat('" + serverDomain + "/', fileAsset.thumbnail_third)",
           'thumbnailThird',
         )
-        .where('purchaseAsset.product_no = :productNo', { productNo });
+        .where('contract.product_no = :productNo', { productNo });
 
       assetList = await sql1
-        .orderBy('purchaseAsset.purchase_asset_no', 'DESC')
+        .orderBy('contract.contract_no', 'DESC')
         .groupBy(
-          `purchaseAsset.purchase_asset_no, asset.reg_name, asset.asset_name, fileAsset.file_no`,
+          `contract.contract_no, asset.reg_name, asset.asset_name, fileAsset.file_no`,
         )
         .getRawMany();
 
@@ -1070,4 +1071,5 @@ export class ProductService {
       throw e;
     }
   }
+  
 }

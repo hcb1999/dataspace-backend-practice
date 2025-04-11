@@ -59,6 +59,7 @@ export class AuthController {
     description: '사용자 정보를 등록하고 JWT Token을 발행한다.' })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: '중복 에러' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: '필수입력 오류' })
   // @ApiCreatedResponse({ description: '사용자 등록 성공.', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
   @ApiOkResponse({

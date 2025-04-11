@@ -1,6 +1,8 @@
 import { logDir } from './config';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const winston = require('winston');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 require('winston-daily-rotate-file');
 
 const levels = {

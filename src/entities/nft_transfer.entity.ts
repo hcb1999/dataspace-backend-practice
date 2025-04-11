@@ -9,16 +9,16 @@ export class NftTransfer extends BaseEntity {
   contractId: string;
   
   @Index()
-  @Column({ name:"purchase_asset_no", type:"int4", comment:"광고주 구매번호", nullable:true })
-  purchaseAssetNo: number;
+  @Column({ name:"contract_no", type:"int4", comment:"광고주 구매번호", nullable:true })
+  contractNo: number;
 
   @Index()
   @Column({ name:"purchase_no", type:"int4", comment:"사용자 구매번호", nullable:true })
   purchaseNo: number;
 
   @Index()
-  @Column({ name:"marcket_no", type:"int4", comment:"마켓 판매번호", nullable:true })
-  marcketNo: number;
+  @Column({ name:"market_no", type:"int4", comment:"마켓 판매번호", nullable:true })
+  marketNo: number;
 
   @Index()
   @Column({name:"tx_id", type:"varchar", length:100, comment:"TX ID", nullable:true})

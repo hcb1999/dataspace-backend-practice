@@ -40,7 +40,9 @@ export class User extends BaseEntity {
   @Column({name:"purchase_no", comment:"사용자 구매 번호", nullable: true })
   purchaseNo: number;
 
-  nftWalletAddr: string;
+  nftWalletAccount: string;
+
+  nftWalletAccountPKey: string;
   
   @Column({ name: "use_yn", type: "varchar", length: 1, comment: "사용 여부(Y:사용, N:탈퇴)", default: "Y" })
   useYn: string;

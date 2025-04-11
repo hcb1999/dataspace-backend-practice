@@ -5,8 +5,8 @@ import { ResponseMetadata } from 'src/common/responseMetadata';
 import { NftService } from './nft.service';
 import { NftController } from './nft.controller';
 import { NftProviders } from './nft.provider';
+import { DidModule } from '../did/did.module';
 // import { BullModule } from '@nestjs/bull';
-import { NftProcessor } from './nft.processor';
 import { NftGateway } from './nft.gateway';
 import { ClientsModule, Transport} from '@nestjs/microservices';
 import { HttpModule } from '@nestjs/axios';
@@ -34,10 +34,11 @@ import { HttpModule } from '@nestjs/axios';
       },
     ]),
     DatabaseModule,
+    DidModule,
     HttpModule, 
     // JwtModule,
     ],
-  controllers: [NftController, NftProcessor], 
+  controllers: [NftController], 
   providers: [...NftProviders, NftService, NftGateway, ResponseMessage, ResponseMetadata],  
   exports: [NftService]
 })

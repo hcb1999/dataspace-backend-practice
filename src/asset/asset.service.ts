@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, GatewayTimeoutException, InternalServerErrorException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { DataSource, Repository, UpdateResult, Like, MoreThan } from 'typeorm';
 import { Asset } from '../entities/asset.entity';
 import { Creator } from '../entities/creator.entity';
@@ -19,8 +19,17 @@ import { NftTransfer } from "../entities/nft_transfer.entity";
 import { CreateMintDto } from '../dtos/create_mint.dto';
 import { CreateBurnDto } from '../dtos/create_burn.dto';
 import { NftService } from '../nft/nft.service';
+import { DidService } from '../did/did.service';
+import { CreateDidAcdgDto } from '../dtos/create_did_acdg.dto';
+import { CreateDidAciDto } from '../dtos/create_did_aci.dto';
+import { CreateDidAcrDto } from '../dtos/create_did_acr.dto';
+import { GetDidAcmDto } from '../dtos/get_did_acm.dto';
+import { GetDidAcdDto } from '../dtos/get_did_acd.dto';
 import { PageResponse } from 'src/common/page.response';
-import { PurchaseAsset } from 'src/entities/purchase_asset.entity';
+import { DidWallet } from "../entities/did_wallet.entity";
+import { createVC, parseVC } from 'src/common/vc-utils';
+import internal from 'stream';
+// import { EContract } from 'src/entities/contract.entity';
 
 @Injectable()
 export class AssetService {
@@ -29,6 +38,7 @@ export class AssetService {
   constructor(
     private configService: ConfigService,
     private nftService: NftService,
+    private didService: DidService,
 
     @Inject('ASSET_REPOSITORY')
     private assetRepository: Repository<Asset>,
@@ -54,6 +64,9 @@ export class AssetService {
     @Inject('CREATOR_REPOSITORY')
     private creatorRepository: Repository<Creator>,
 
+    @Inject('DID_WALLET_REPOSITORY')
+    private didWalletRepository: Repository<DidWallet>,
+
     @Inject('DATA_SOURCE')
     private dataSource: DataSource,
   ) { }
@@ -73,7 +86,7 @@ export class AssetService {
 
     try {
     
-      const address = user.nftWalletAddr;
+      const address = user.nftWalletAccount;
       const productNo = createAssetDto.productNo;
       const metaverseNo = createAssetDto.adTarget;
       const metaverseAssetTypeNo = createAssetDto.adType;
@@ -184,7 +197,7 @@ export class AssetService {
       // 에셋 정보 저장
       createAssetDto['userNo'] = userNo;
       createAssetDto['regName'] = user.nickName;
-      createAssetDto['regAddr'] = user.nftWalletAddr;
+      createAssetDto['regAddr'] = user.nftWalletAccount;
       // createAssetDto['assetName'] =  productInfo.productName;
       createAssetDto['metaverseName'] =  metaverseInfo.metaverseName;
       createAssetDto['typeDef'] =  assetTypeInfo.typeDef;
@@ -193,12 +206,12 @@ export class AssetService {
       const newAsset = queryRunner.manager.create(Asset, createAssetDto);
       const result = await queryRunner.manager.save<Asset>(newAsset);
       const assetNo = result.assetNo;
-      
+
       await queryRunner.commitTransaction();
 
       // nftService.createMint 호출
       const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address, 
-        issueCnt: 1, tokenId: null, state: 'B1', marcketNo: null};
+        issueCnt: 1, tokenId: null, state: 'B1', marketNo: null};
       this.nftService.createMint(user, nftMintInfo);
       
       // console.log("===== nftMintInfo : "+ JSON.stringify(nftMintInfo));
@@ -212,6 +225,242 @@ export class AssetService {
       await queryRunner.release();
     }
   }
+
+  /**
+   * 에셋 NFT MINT & VC 발급
+   * 
+   * @param user 
+   * @param assetNo 
+   */
+  async createNftVc(user: User, assetNo: number): Promise<any> {
+
+    try {
+    
+      const address = user.nftWalletAccount;
+      const userNo = user.userNo;      
+      const assetInfo = await this.assetRepository.findOne({ where:{assetNo, userNo} });
+      if (!assetInfo) {
+        throw new NotFoundException("Data Not found.");
+      }
+
+      // nftService.createMint 호출
+      const productNo = assetInfo.productNo;
+      const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address,
+        issueCnt: 1, tokenId: null, state: 'B1', marketNo: null};
+      this.nftService.createMint(user, nftMintInfo);
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    }
+  }
+
+  /**
+   * 에셋등록증명 VC 발급 & 등록
+   * 
+   * @param user 
+   * @param assetNo 
+   */
+  async createVc(user: User, assetNo: number): Promise<any> {
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
+      const contractAddress = this.configService.get<string>('CONTRACT_ADDRESS');
+      const userNo = user.userNo;
+      const assetInfo = await this.assetRepository.findOne({ where:{assetNo, userNo} });
+      if (!assetInfo) {
+        throw new NotFoundException("Data Not found.");
+      }
+
+       // ETRI API 호출
+      // 1. 아바타 크리덴셜 DID 생성 요청
+      const sql = this.assetRepository.createQueryBuilder('asset')
+                      .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
+                      .leftJoin(NftMint, 'nftMint', 'asset.token_id = nftMint.token_id')
+                      .leftJoin(DidWallet, 'didWallet', 'asset.user_no = didWallet.user_no')
+                      .select('asset.asset_no', 'assetNo')
+                      .addSelect('asset.reg_name', 'nickName')
+                      .addSelect("didWallet.jwt", 'jwt')
+                      .addSelect("didWallet.wallet_did", 'did')
+                      .addSelect("nftMint.tx_id", 'txId')
+                      .addSelect("product.reg_name", 'regName')
+                      .addSelect("product.product_name", 'productName')
+                      .where("asset.asset_no = :assetNo", { assetNo });
+
+      const didInfo = await sql.groupBy(`asset.asset_no, didWallet.user_no, nftMint.token_id, nftMint.tx_id, product.product_no`)
+                          .getRawOne();
+      
+      const createDidAcdgDto: CreateDidAcdgDto = {jwt: didInfo.jwt, id: user.email, did: didInfo.did};
+      const vcDid = await this.didService.createAcdg(createDidAcdgDto);
+      if (!vcDid) {
+        throw new Error("Data Not found.");
+      }
+      console.log("vcDid: "+JSON.stringify(vcDid))
+
+      // 2. 아바타 크리덴셜 발급 요청
+      const attributes = {
+        "assetId": "ARONFT-"+assetNo,
+        "registrantNickName": assetInfo.regName,
+        "assetName": assetInfo.assetName,
+        "EntertainmentCorp": didInfo.regName,
+        "goodsName": didInfo.productName,
+        "metaverseName": assetInfo.metaverseName,
+        "assetType": assetInfo.typeDef,
+        "assetDescription": assetInfo.assetDesc,
+        "assetPrice": String(assetInfo.price),
+        "registrantEmail": user.email,
+        "registrantWalletAddress": assetInfo.regAddr,
+        "txId": didInfo.txId,
+        "contractAddress": contractAddress,
+        "imageURL": assetInfo.assetUrl,
+        "registrationDate": assetInfo.regDttm.toISOString().split('.')[0] + 'Z'
+      };
+      console.log("attributes: "+JSON.stringify(attributes));
+      const createDidAciDto: CreateDidAciDto = {did: vcDid.did, attributes, nickName: didInfo.nickName};
+      const issueVcInfo = await this.didService.createAci(createDidAciDto);
+      if (!issueVcInfo) {
+        throw new Error('VC 등록 오류 - vc');
+      }
+      console.log("issueVcInfo: "+JSON.stringify(issueVcInfo))
+      const parsed = parseVC(issueVcInfo.vc);    
+      const modifyAsset = {vcIssuerName: issueVcInfo.vcIssuerName,
+        vcIssuerLogo: issueVcInfo.vcIssuerLogo, vcTypeName: issueVcInfo.vcTypeName, vcId: parsed.credentialId}
+      console.log("===== modifyAsset : "+JSON.stringify(modifyAsset));
+      await queryRunner.manager.update(Asset, assetNo, modifyAsset);
+
+      // 3. 아바타 크리덴셜 등록  
+      const createDidAcrDto: CreateDidAcrDto = 
+        {
+          id: user.email,
+          jwt: didInfo.jwt,
+          did: didInfo.did,
+          vc: issueVcInfo.vc,
+          vcIssuerName: issueVcInfo.vcIssuerName,
+          vcIssuerLogo: issueVcInfo.vcIssuerLogo,
+          vcTypeName: issueVcInfo.vcTypeName
+        };
+      const vcInfo = await this.didService.createAcr(createDidAcrDto);
+      if (!vcInfo) {
+        throw new Error('VC 등록 오류 - vc');
+      }
+      console.log("vcInfo: "+JSON.stringify(vcInfo))
+      
+      await queryRunner.commitTransaction();
+
+    } catch (e) {
+      this.logger.error(e);
+      // throw new GatewayTimeoutException;
+      throw e;
+    }finally {
+      await queryRunner.release();
+    }
+  }
+
+/*
+  async createVc(user: User, assetNo: number): Promise<any> {
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+    
+      const userNo = user.userNo;
+      const assetInfo = await this.assetRepository.findOne({ where:{assetNo, userNo} });
+      if (!assetInfo) {
+        throw new NotFoundException("Data Not found.");
+      }
+
+       // ETRI API 호출
+      // 1. 아바타 크리덴셜 DID 생성 요청
+      const sql = this.assetRepository.createQueryBuilder('asset')
+                      // .leftJoin(State, 'state', 'asset.state = state.state')
+                      .leftJoin(DidWallet, 'didWallet', 'asset.user_no = didWallet.user_no')
+                      .select('asset.asset_no', 'assetNo')
+                      .addSelect('asset.reg_name', 'nickName')
+                      .addSelect("didWallet.jwt", 'jwt')
+                      .addSelect("didWallet.wallet_did", 'did')
+                      .where("asset.asset_no = :assetNo", { assetNo });
+
+      const didInfo = await sql.groupBy(`asset.asset_no, didWallet.user_no`)
+                          .getRawOne();
+      
+      const createDidAcdgDto: CreateDidAcdgDto = {jwt: didInfo.jwt, id: user.email, did: didInfo.did};
+      const vcDid = await this.didService.createAcdg(createDidAcdgDto);
+      if (!vcDid) {
+        throw new Error("Data Not found.");
+      }
+      console.log("vcDid: "+JSON.stringify(vcDid))
+
+      // 2. 아바타 크리덴셜 발급 요청
+      const createDidAciDto: CreateDidAciDto = {did: vcDid.did, nickName: didInfo.nickName};
+      const issueVcInfo = await this.didService.createAci(createDidAciDto);
+      if (!issueVcInfo) {
+        throw new Error('VC 등록 오류 - vc');
+      }
+      console.log("issueVcInfo: "+JSON.stringify(issueVcInfo))
+
+      // 3. 아바타 크리덴셜 등록  
+      const parsed = parseVC(issueVcInfo.vc);    
+      const vc = createVC({
+        // credentialId: "https://tmvvca.example.com/vccredential/Daram_ConcertAttendance/6",
+        credentialId: parsed.credentialId, 
+        issuer: "did:ezid:1vSzrJIcUko6CoXEGOMzpKxdmJuDzn",
+        issuanceDate: "2025-03-31T09:14:24Z",
+        expirationDate: "2035-07-12T09:14:24Z",
+        subjectId: "did:ezid:gj48YMzcdeimDkBbAOCId7ZTiX825r",
+        subjectType: "Daram_ConcertAttendance",
+        attendanceName: "2025 다람 공연 확인증",
+        attendanceDate: "2025-07-11T12:00:00Z",
+        attendanceProvider: "다람ENT",
+        displayName: "2025 다람 공연 확인증",
+        displayImage: "https://tmvvca.dreamsecurity.com:28082/DidVCA/images/tmv/cre_img02_b.png",
+        credentialStatusId: "https://tmvvca.dreamsecurity.com:28082/DidVCA/vccredential/status?type=Daram_ConcertAttendance&num=123456",
+        verificationMethod: "did:ezid:1vSzrJIcUko6CoXEGOMzpKxdmJuDzn#keys-0",
+        challenge: "b1GXQmVawS7dfHTYQeTAezYumEC",
+        jws: "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..iUkPXFXhy4Pln-bCi7_aU-dBNSScdlrvG7spa-vrWSBDMoX-xnnRWgPJDVJtdabT4mw1HMc_plRY0JdMt2FdDA",
+      });
+      
+      console.log(vc);
+      // const vc = "{\"@context\":[\"https://www.w3.org/2018/credentials/v1\",\"https://www.ezid.com/vc\"],\"id\":\"https://tmvvca.dreamsecurity.com:28082/DidVCA/vccredential/Daram_ConcertAttendance/6\",\"type\":[\"VerifiableCredential\",\"CertificateCredential\"],\"issuer\":\"did:ezid:1vSzrJIcUko6CoXEGOMzpKxdmJuDzn\",\"issuanceDate\":\"2025-03-31T09:14:24Z\",\"expirationDate\":\"2035-07-12T09:14:24Z\",\"credentialStatus\":{\"id\":\"https://tmvvca.dreamsecurity.com:28082/DidVCA/vccredential/status?type=Daram_ConcertAttendance&num=123456\",\"type\":[\"CredentialStatusList2017\"]},\"credentialSubject\":{\"id\":\"did:ezid:gj48YMzcdeimDkBbAOCId7ZTiX825r\",\"type\":[\"Daram_ConcertAttendance\"],\"attendance\":{\"name\":\"2025 다람 공연 확인증\",\"date\":\"2025-07-11T12:00:00Z\",\"provider\":\"다람ENT\"},\"displayName\":\"2025 다람 공연 확인증\",\"displayImage\":\"https://tmvvca.dreamsecurity.com:28082/DidVCA/images/tmv/cre_img02_b.png\"},\"proof\":{\"type\":[\"Ed25519Signature2018\"],\"proofPurpose\":\"assertionMethod\",\"created\":\"2025-03-31T09:14:24Z\",\"verificationMethod\":\"did:ezid:1vSzrJIcUko6CoXEGOMzpKxdmJuDzn#keys-0\",\"challenge\":\"b1GXQmVawS7dfHTYQeTAezYumEC\",\"jws\":\"eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..iUkPXFXhy4Pln-bCi7_aU-dBNSScdlrvG7spa-vrWSBDMoX-xnnRWgPJDVJtdabT4mw1HMc_plRY0JdMt2FdDA\"}}";
+      // // 에셋등록증으로 수정
+      // const vc = "{\"@context\":[\"https://www.w3.org/2018/credentials/v1\",\"https://www.ezid.com/vc\"],\"id\":\"https://tmvvca.dreamsecurity.com:28082/DidVCA/vccredential/Daram_ConcertAttendance/6\",\"type\":[\"VerifiableCredential\",\"CertificateCredential\"],\"issuer\":\"did:ezid:1vSzrJIcUko6CoXEGOMzpKxdmJuDzn\",\"issuanceDate\":\"2025-03-31T09:14:24Z\",\"expirationDate\":\"2035-07-12T09:14:24Z\",\"credentialStatus\":{\"id\":\"https://tmvvca.dreamsecurity.com:28082/DidVCA/vccredential/status?type=Daram_ConcertAttendance&num=123456\",\"type\":[\"CredentialStatusList2017\"]},\"credentialSubject\":{\"id\":\"did:ezid:gj48YMzcdeimDkBbAOCId7ZTiX825r\",\"type\":[\"Daram_ConcertAttendance\"],\"attendance\":{\"name\":\"2025 다람 공연 확인증\",\"date\":\"2025-07-11T12:00:00Z\",\"provider\":\"다람ENT\"},\"displayName\":\"2025 다람 공연 확인증\",\"displayImage\":\"https://tmvvca.dreamsecurity.com:28082/DidVCA/images/tmv/cre_img02_b.png\"},\"proof\":{\"type\":[\"Ed25519Signature2018\"],\"proofPurpose\":\"assertionMethod\",\"created\":\"2025-03-31T09:14:24Z\",\"verificationMethod\":\"did:ezid:1vSzrJIcUko6CoXEGOMzpKxdmJuDzn#keys-0\",\"challenge\":\"b1GXQmVawS7dfHTYQeTAezYumEC\",\"jws\":\"eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..iUkPXFXhy4Pln-bCi7_aU-dBNSScdlrvG7spa-vrWSBDMoX-xnnRWgPJDVJtdabT4mw1HMc_plRY0JdMt2FdDA\"}}";
+      const createDidAcrDto: CreateDidAcrDto = 
+        {
+          id: user.email,
+          jwt: didInfo.jwt,
+          did: didInfo.did,
+          vc,
+          vcIssuerName: issueVcInfo.vcIssuerName,
+          vcIssuerLogo: issueVcInfo.vcIssuerLogo,
+          vcTypeName: issueVcInfo.vcTypeName
+        };
+      const vcInfo = await this.didService.createAcr(createDidAcrDto);
+      if (!vcInfo) {
+        throw new Error('VC 등록 오류 - vc');
+      }
+      console.log("vcInfo: "+JSON.stringify(vcInfo))
+
+      const modifyAsset = {...assetInfo, vc: createDidAcrDto.vc, vcIssuerName: issueVcInfo.vcIssuerName,
+        vcIssuerLogo: issueVcInfo.vcIssuerLogo, vcTypeName: issueVcInfo.vcTypeName, vcId: parsed.credentialId}
+      console.log("===== assetInfo : "+JSON.stringify(assetInfo));
+      await queryRunner.manager.update(Asset, assetNo, modifyAsset);
+      
+      await queryRunner.commitTransaction();
+
+    } catch (e) {
+      this.logger.error(e);
+      // throw new GatewayTimeoutException;
+      throw e;
+    }finally {
+      await queryRunner.release();
+    }
+  }
+*/
 
   /**
    * 에셋 정보 수정   //반드시 mint 전에만 가능.
@@ -447,8 +696,8 @@ export class AssetService {
                       .leftJoin(NftMint, 'mint', 'asset.token_id = mint.token_id')
                       .leftJoin(NftTransfer, 'transfer', 'asset.token_id = transfer.token_id')
                       .select('asset.asset_no', 'assetNo')
-                      .addSelect("asset.reg_addr", 'assetRegAddr')
-                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || asset.reg_addr`, 'assetRegAddrUrl')
+                      .addSelect("asset.reg_addr", 'assetRegAccount')
+                      .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || asset.reg_addr`, 'assetRegAccountUrl')
                       .addSelect("asset.reg_name", 'assetRegName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_url", 'assetUrl')
@@ -457,8 +706,8 @@ export class AssetService {
                       .addSelect("asset.ad_type", 'adType')
                       .addSelect("asset.type_def", 'typeDef')
                       .addSelect("product.product_no", 'productNo')
-                      .addSelect("product.reg_addr", 'productRegAddr')
-                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || product.reg_addr`, 'productRegAddrUrl')
+                      .addSelect("product.reg_addr", 'productRegAccount')
+                      .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || product.reg_addr`, 'productRegAccountUrl')
                       .addSelect('product.reg_name', 'productRegName')
                       .addSelect('product.product_name', 'productName')
                       .addSelect('asset.price', 'price')
@@ -478,14 +727,16 @@ export class AssetService {
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
                       .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
-                      .addSelect(`'${process.env.BESU_EXPLORER}contracts/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
+                      .addSelect(`'${process.env.BC_EXPLORER}address/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
                       .addSelect('mint.tx_id', 'nftTxId')
-                      .addSelect(`'${process.env.BESU_EXPLORER}transactions/'  || mint.tx_id`, 'nftTxIdUrl')
+                      .addSelect(`'${process.env.BC_EXPLORER}tx/'  || mint.tx_id`, 'nftTxIdUrl')
                       .addSelect('mint.token_id', 'nftTokenId')
-                      .addSelect("transfer.from_addr", 'nftSellerAddr')
-                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || transfer.from_addr`, 'nftSellerAddrUrl')
-                      .addSelect("transfer.to_addr", 'nftBuyerAddr')
-                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || transfer.to_addr`, 'nftBuyerAddrUrl')
+                      .addSelect("transfer.from_addr", 'nftSellerAccount')
+                      .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || transfer.from_addr`, 'nftSellerAccountUrl')
+                      .addSelect("transfer.to_addr", 'nftBuyerAccount')
+                      .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || transfer.to_addr`, 'nftBuyerAccountUrl')
+                      .addSelect('asset.vc_id', 'assetVcId')
+                      // .addSelect('asset.vc', 'assetVc')
                       .where("asset.asset_no = :assetNo", { assetNo });
                       // .andWhere("nftMint.use_yn = 'N'")
                       // .andWhere("nftMint.burn_yn = 'N'");
@@ -542,8 +793,8 @@ export class AssetService {
                       .leftJoin(NftMint, 'mint', 'asset.token_id = mint.token_id')
                       .leftJoin(NftTransfer, 'transfer', 'asset.token_id = transfer.token_id')
                       .select('asset.asset_no', 'assetNo')
-                      .addSelect("asset.reg_addr", 'assetRegAddr')
-                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || asset.reg_addr`, 'assetRegAddrUrl')
+                      .addSelect("asset.reg_addr", 'assetRegAccount')
+                      .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || asset.reg_addr`, 'assetRegAccountUrl')
                       .addSelect("asset.reg_name", 'assetRegName')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_url", 'assetUrl')
@@ -552,8 +803,8 @@ export class AssetService {
                       .addSelect("asset.ad_type", 'adType')
                       .addSelect("asset.type_def", 'typeDef')
                       .addSelect("product.product_no", 'productNo')
-                      .addSelect("product.reg_addr", 'productRegAddr')
-                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || product.reg_addr`, 'productRegAddrUrl')
+                      .addSelect("product.reg_addr", 'productRegAccount')
+                      .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || product.reg_addr`, 'productRegAccountUrl')
                       .addSelect('product.reg_name', 'productRegName')
                       .addSelect('product.product_name', 'productName')
                       .addSelect('asset.price', 'price')
@@ -571,14 +822,16 @@ export class AssetService {
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
                       .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
-                      .addSelect(`'${process.env.BESU_EXPLORER}contracts/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
+                      .addSelect(`'${process.env.BC_EXPLORER}address/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
                       .addSelect('mint.tx_id', 'nftTxId')
-                      .addSelect(`'${process.env.BESU_EXPLORER}transactions/'  || mint.tx_id`, 'nftTxIdUrl')
+                      .addSelect(`'${process.env.BC_EXPLORER}tx/'  || mint.tx_id`, 'nftTxIdUrl')
                       .addSelect('mint.token_id', 'nftTokenId')
-                      .addSelect("transfer.from_addr", 'nftSellerAddr')
-                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || transfer.from_addr`, 'nftSellerAddrUrl')
-                      .addSelect("transfer.to_addr", 'nftBuyerAddr')
-                      .addSelect(`'${process.env.BESU_EXPLORER}accounts/'  || transfer.to_addr`, 'nftBuyerAddrUrl')
+                      .addSelect("transfer.from_addr", 'nftSellerAccount')
+                      .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || transfer.from_addr`, 'nftSellerAccountUrl')
+                      .addSelect("transfer.to_addr", 'nftBuyerAccount')
+                      .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || transfer.to_addr`, 'nftBuyerAccountUrl')
+                      .addSelect('asset.vc_id', 'assetVcId')
+                      // .addSelect('asset.vc', 'assetVc')
                       .where("asset.asset_no = :assetNo", { assetNo });
                       // .andWhere("nftMint.use_yn = 'N'")
                       // .andWhere("nftMint.burn_yn = 'N'");
@@ -737,6 +990,8 @@ export class AssetService {
                       .addSelect("fileAsset.file_name_third", 'fileNameThird')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
                       .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
+                      .addSelect('asset.vc_id', 'assetVcId')
+                      // .addSelect('asset.vc', 'assetVc')
                       .where(options);
                       
       const list = await sql.orderBy('asset.asset_no', getAssetDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
@@ -854,6 +1109,8 @@ export class AssetService {
                           .addSelect("fileAsset.file_name_third", 'fileNameThird')
                           .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
                           .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
+                          .addSelect('asset.vc_id', 'assetVcId')
+                          // .addSelect('asset.vc', 'assetVc')
                           .where(options);
 
         sql.andWhere("asset.user_no = :userNo", { userNo });
@@ -873,5 +1130,212 @@ export class AssetService {
         throw e;
       }
     }
+
+  /**
+   * 에셋의 크리덴셜 상세정보 조회
+   * 
+   * @param assetNo 
+   * @returns 
+   */
+  async getAcd(assetNo: number): Promise<any> {
+
+    try {
+      console.log("assetNo : "+assetNo);
+      const asset = await this.assetRepository.findOne({ where:{assetNo} });
+      if (!asset) {
+        throw new NotFoundException("Data Not found. : 에셋");
+      }
+
+      // const mintInfo = await this.nftMintRepository.findOne({ where:{assetNo} });
+
+      // case. ETRI 조회
+      const sql = this.assetRepository.createQueryBuilder('asset')
+                      // .leftJoin(State, 'state', 'asset.state = state.state')
+                      .leftJoin(User, 'user', 'asset.user_no = user.user_no')
+                      .leftJoin(DidWallet, 'didWallet', 'asset.user_no = didWallet.user_no')
+                      .select('asset.asset_no', 'assetNo')
+                      .addSelect("user.email", 'email')
+                      .addSelect("didWallet.jwt", 'jwt')
+                      .addSelect("asset.vc_id", 'vcId')
+                      .where("asset.asset_no = :assetNo", { assetNo });
+
+      const assetInfo = await sql.groupBy(`asset.asset_no, user.user_no, didWallet.user_no`)
+                          .getRawOne();
+
+      const getDidAcdDto: GetDidAcdDto = {id: assetInfo.email, jwt: assetInfo.jwt, vcId: assetInfo.vcId};
+      const assetAcd = await this.didService.getAcd(getDidAcdDto);
+
+      // // case. DB 조회
+      // const sql = this.assetRepository.createQueryBuilder('asset')
+      // .select('asset.vc', 'vc')
+      // .where("asset.asset_no = :assetNo", { assetNo });
+
+      // assetInfo = await sql.getRawOne();
+
+      // const assetAcd = {vc: assetInfo.vc};
+
+      return { assetVc: assetAcd.vc };
+
+    } catch (e) {
+      // this.logger.error(e);
+      // throw e;
+      this.logger.error(e.message);
+      if (e.message.includes('Data Not found. : 에셋')) {
+        throw new NotFoundException('Data Not found. : 에셋');
+      } else {
+        // throw new NotFoundException(e.message);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
+  }   
+  
+  /**
+   * 사용자 에셋 판매 등록용 에셋 정보 등록
+   * 
+   * @param user 
+   * @param files 
+   * @param createAssetDto 
+   */
+    async createSale(user: User, files: any, createAssetDto: CreateAssetDto): Promise<any> {
+
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+  
+      try {
+      
+        const address = user.nftWalletAccount;
+        const productNo = createAssetDto.productNo;
+        const metaverseNo = createAssetDto.adTarget;
+        const metaverseAssetTypeNo = createAssetDto.adType;
+        const productInfo = await this.productRepository.findOne({ where:{productNo} });
+        if (!productInfo) {
+          throw new NotFoundException("Data Not found. : 굿즈");
+        }
+        const metaverseInfo = await this.metaverseRepository.findOne({ where:{metaverseNo} });
+        if (!metaverseInfo) {
+          throw new NotFoundException("Data Not found. : 굿즈 메타버스 업체");
+        }      
+        const assetTypeInfo = await this.assetTypeRepository.findOne({ where:{metaverseNo, metaverseAssetTypeNo} });
+        if (!assetTypeInfo) {
+          throw new NotFoundException("Data Not found. : 굿즈 메타버스 업체별 에셋 분류");
+        }
+  
+        const userNo = user.userNo;
+        // const addr = user.nftWalletAddr;
+        // console.log("===== userNo : "+ userNo);
+        // console.log("===== addr : "+ addr);
+        const creatorInfo = await this.creatorRepository.findOne({ where:{userNo} });
+        if (!creatorInfo) {
+          const creatorInfo1 = {userNo};
+  
+          // console.log("===== creator : "+ JSON.stringify(creatorInfo1));
+          const newCreator = queryRunner.manager.create(Creator, creatorInfo1);
+          const result = await queryRunner.manager.save<Creator>(newCreator);
+        }
+  
+        // console.log("=========== file 갯수 : "+files.length)
+        // if (!files) {
+        //   throw new BadRequestException("파일 미입력");
+        // }
+  
+        if (files) {
+          let fileNameFirst = '';
+          let fileTypeFirst = '';
+          let filePathFirst = '';
+          let fileSizeFirst = 0;
+          let fileHashFirst = '';
+          let thumbnailFirst = '';
+          let fileNameSecond = '';
+          let fileTypeSecond = '';
+          let filePathSecond = '';
+          let fileSizeSecond = 0;
+          let fileHashSecond = '';
+          let thumbnailSecond = '';
+          let fileNameThird = '';
+          let fileTypeThird = '';
+          let filePathThird = '';
+          let fileSizeThird = 0;
+          let fileHashThird = '';
+          let thumbnailThird = '';
+          // 에셋 파일 정보 저장
+          const promises = files.map(async (file:any, index:any) => { 
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            if(index == 0){
+              // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+              fileNameFirst = file.fileName;
+              fileTypeFirst = file.fileType;
+              filePathFirst = file.filePath;
+              fileSizeFirst = file.fileSize;
+              fileHashFirst = file.fileHash;
+              if(file.thumbnail) {
+                thumbnailFirst = file.thumbnail;
+              }
+            } else if (index == 1) {
+              // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+              fileNameSecond = file.fileName;
+              fileTypeSecond = file.fileType;
+              filePathSecond = file.filePath;
+              fileSizeSecond = file.fileSize;
+              fileHashSecond = file.fileHash;
+              if (file.thumbnail) {
+                thumbnailSecond = file.thumbnail;
+              }
+            } else {
+              // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+              fileNameThird = file.fileName;
+              fileTypeThird = file.fileType;
+              filePathThird = file.filePath;
+              fileSizeThird = file.fileSize;
+              fileHashThird = file.fileHash;
+              if (file.thumbnail) {
+                thumbnailThird = file.thumbnail;
+              }
+            }
+  
+          // Hash값 체크
+          // const fileRepo = await this.fileRepository.find({ where:{fileHash} });
+          // if(fileRepo && fileRepo.length){
+          //   throw new ConflictException("동일한 파일 존재");
+          // }
+          })
+  
+          let fileInfo = {fileNameFirst, filePathFirst, fileSizeFirst, fileTypeFirst, fileHashFirst, thumbnailFirst,
+            fileNameSecond, filePathSecond, fileSizeSecond, fileTypeSecond, fileHashSecond, thumbnailSecond,
+            fileNameThird, filePathThird, fileSizeThird, fileTypeThird, fileHashThird, thumbnailThird};
+  
+          // console.log("=== fileInfo : "+JSON.stringify(fileInfo));
+          const newFile = queryRunner.manager.create(FileAsset, fileInfo);
+          await queryRunner.manager.save<FileAsset>(newFile);
+          createAssetDto['fileNo'] = newFile.fileNo;
+          // console.log("===  fileNo : "+newFile.fileNo);
+          // console.log("createAssetDto : "+JSON.stringify(createAssetDto));
+        }
+  
+        // 에셋 정보 저장
+        createAssetDto['userNo'] = userNo;
+        createAssetDto['regName'] = user.nickName;
+        createAssetDto['regAddr'] = user.nftWalletAccount;
+        // createAssetDto['assetName'] =  productInfo.productName;
+        createAssetDto['metaverseName'] =  metaverseInfo.metaverseName;
+        createAssetDto['typeDef'] =  assetTypeInfo.typeDef;
+        
+        // console.log("createAssetDto : "+JSON.stringify(createAssetDto));
+        const newAsset = queryRunner.manager.create(Asset, createAssetDto);
+        const result = await queryRunner.manager.save<Asset>(newAsset);
+        const assetNo = result.assetNo;
+  
+        await queryRunner.commitTransaction();
+  
+        return { assetNo };
+  
+      } catch (e) {
+        // await queryRunner.rollbackTransaction();
+        this.logger.error(e);
+        throw e;
+      }finally {
+        await queryRunner.release();
+      }
+    }  
 
 }

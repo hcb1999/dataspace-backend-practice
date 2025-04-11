@@ -7,13 +7,13 @@ export class CreateTransferDto {
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ description: '엔터사 구매 번호', required: false })
-  readonly purchaseAssetNo: number;
+  readonly contractNo: number;
 
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ description: '마켓 판매 번호', required: false })
-  readonly marcketNo: number;
+  readonly marketNo: number;
 
   @IsOptional()
   @IsNumber()

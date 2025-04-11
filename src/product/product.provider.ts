@@ -1,9 +1,6 @@
 import { DataSource } from "typeorm";
 import { Product } from "../entities/product.entity";
-// import { Asset } from "../entities/asset.entity";
-// import { NftMint } from "../entities/nft_mint.entity";
-// import { Purchase } from "../entities/purchase.entity";
-import { PurchaseAsset } from "../entities/purchase_asset.entity";
+import { EContract } from "../entities/contract.entity";
 import { State } from "../entities/state.entity";
 import { Advertiser } from "../entities/advertiser.entity";
 
@@ -13,8 +10,8 @@ export const ProductProviders = [
         useFactory: (dataSource: DataSource) => dataSource.getRepository(Product),
         inject: ['DATA_SOURCE'],
     },{
-        provide: 'PURCHASE_ASSET_REPOSITORY',
-        useFactory: (dataSource: DataSource) => dataSource.getRepository(PurchaseAsset),
+        provide: 'CONTRACT_REPOSITORY',
+        useFactory: (dataSource: DataSource) => dataSource.getRepository(EContract),
         inject: ['DATA_SOURCE'],
     },{
         provide: 'STATE_REPOSITORY',

@@ -62,6 +62,53 @@ export class AssetController {
     return this.responseMessage.response(asset);
   }
 
+  /**
+   * 에셋 NFT MINT & VC 발급
+   * 
+   * @param user 
+   * @param files 
+   * @param createAssetDto 
+   * @returns 
+   */
+  @Post("/nft/:assetNo")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '에셋 NFT MINT & 등록증명 VC 발급', description: '에셋 NFT MINT & 등록증명 VC를 발급한다.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음 또는 등록된 제품 없음' })
+  async createNftVc(@GetUser() user: User, @Param('assetNo') assetNo: number): Promise<any> {
+    console.log("++++++++++++++++++++++");
+    fileLogger.info('asset-createNft');
+    fileLogger.info(user);
+    fileLogger.info(`assetNo: ${assetNo}`);
+    await this.assetService.createNftVc(user, assetNo);
+    return this.responseMessage.response(null);
+  }
+
+  /**
+   * 에셋등록증명 VC 발급 & 등록
+   * 
+   * @param user 
+   * @param files 
+   * @param createAssetDto 
+   * @returns 
+   */
+  @Post("/vc/:assetNo")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '에셋등록증명 VC 발급', description: '에셋등록증명 VC를 발급한다.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  @ApiResponse({ status: HttpStatus.GATEWAY_TIMEOUT, description: 'DID 서버 에러' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음 또는 등록된 제품 없음' })
+  async createVc(@GetUser() user: User, @Param('assetNo') assetNo: number): Promise<any> {
+    console.log("++++++++++++++++++++++");
+    fileLogger.info('asset-createVc');
+    fileLogger.info(user);
+    fileLogger.info(`assetNo: ${assetNo}`);
+    await this.assetService.createVc(user, assetNo);
+    return this.responseMessage.response(null);
+  }
+
   /** 
    * 에셋 정보 수정(판매 전 & NFT 발행 전만 가능)  
    * 
@@ -203,12 +250,13 @@ export class AssetController {
               "typeDef": "K-티셔츠",
               "stateDsec": "판매완료",
               "tokenId": "16",
-              "fileNameFirst": "ë¸ë§ì êµ¿ì¦ í°ìì¸ .jpg",
+              "fileNameFirst": "test1.jpg",
               "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241030/1730247629590.jpg",
               "thumbnailFirst": "https://kapi-dev.avataroad.com/thumbnail/20241030/1730247629590.jpg",
               "fileNameSecond": "671f001eb1daf0aac58c4924.glb",
               "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241030/1730247629591.glb",
               "thumbnailSecond": "https://kapi-dev.avataroad.com/",
+              "assetVcId": "asset_vc_id-1",
               "fileNameThird": "",
               "fileUrlThird": "https://kapi-dev.avataroad.com/",
               "thumbnailThird": "https://kapi-dev.avataroad.com/"
@@ -233,7 +281,8 @@ export class AssetController {
               "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
               "fileNameThird": "test1-1.glb",
               "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
-              "thumbnailThird": "https://kapi-dev.avataroad.com/"
+              "thumbnailThird": "https://kapi-dev.avataroad.com/",
+              "assetVcId": "asset_vc_id-2",
             }
           ]
         }
@@ -292,7 +341,8 @@ export class AssetController {
                 "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261299074.png",
                 "fileNameThird": "test1.png",
                 "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
-                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png",
+                "assetVcId": "asset_vc_id-1"
               },
               {
                 "price": 6000,
@@ -316,7 +366,8 @@ export class AssetController {
                 "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261285862.png",
                 "fileNameThird": "test1.png",
                 "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
-                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png",
+                "assetVcId": "asset_vc_id-2"
               },
               {
                 "price": 5000,
@@ -340,7 +391,8 @@ export class AssetController {
                 "thumbnailSecond": "http://kapi-dev.avataroad.com:5000/thumbnail/20240902/1725261205917.png",
                 "fileNameThird": "test1.png",
                 "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
-                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
+                "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png",
+                "assetVcId": "asset_vc_id-3"
               }
             ]
           }
@@ -375,8 +427,8 @@ export class AssetController {
           "price": 0.3,
           "state": "S5",
           "assetNo": 80,
-          "assetRegAddr": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
-          "assetRegAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+          "assetRegAccount": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+          "assetRegAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906",
           "assetRegName": "크리에이터 1",
           "assetName": "테스트 굿즈1용 에셋1",
           "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
@@ -385,8 +437,8 @@ export class AssetController {
           "adType": 1,
           "typeDef": "K-셔츠",
           "productNo": 56,
-          "productRegAddr": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-          "productRegAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "productRegAccount": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "productRegAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
           "productRegName": "엔터사 1",
           "productName": "테스트 굿즈1",
           "stateDesc": "판매완료",
@@ -403,15 +455,16 @@ export class AssetController {
           "fileNameThird": "test1-1.glb",
           "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
           "thumbnailThird": "https://kapi-dev.avataroad.com/",
+          "assetVcId": "asset_vc_id-1",
           "nftContractAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
           "nftContractAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/contracts/0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
           "nftTxId": "0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
           "nftTxIdUrl": "http://besu-dev-explorer.avataroad.com:8081/transactions/0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
           "nftTokenId": "1",
-          "nftSellerAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
-          "nftSellerAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
-          "nftBuyerAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-          "nftBuyerAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+          "nftSellerAccount": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+          "nftSellerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+          "nftBuyerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+          "nftBuyerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
         }
       }
     }
@@ -449,8 +502,8 @@ export class AssetController {
           "data": {
             "price": 0.3,
             "assetNo": 80,
-            "assetRegAddr": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
-            "assetRegAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+            "assetRegAccount": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+            "assetRegAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906",
             "assetRegName": "크리에이터 1",
             "assetName": "테스트 굿즈1용 에셋1",
             "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
@@ -459,8 +512,8 @@ export class AssetController {
             "adType": 1,
             "typeDef": "K-셔츠",
             "productNo": 56,
-            "productRegAddr": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-            "productRegAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "productRegAccount": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "productRegAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
             "productRegName": "엔터사 1",
             "productName": "테스트 굿즈1",
             "assetDesc": "테스트 굿즈1용 에셋1",
@@ -476,14 +529,15 @@ export class AssetController {
             "fileNameThird": "test1-1.glb",
             "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
             "thumbnailThird": "https://kapi-dev.avataroad.com/",
+            "assetVcId": "asset_vc_id-2",
             "nftContractAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
             "nftContractAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/contracts/0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
             "nftTxId": "0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
             "nftTxIdUrl": "http://besu-dev-explorer.avataroad.com:8081/transactions/0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
-            "nftSellerAddr": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
-            "nftSellerAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
-            "nftBuyerAddr": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-            "nftBuyerAddrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+            "nftSellerAccount": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+            "nftSellerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+            "nftBuyerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+            "nftBuyerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
           }
         }
       }
@@ -499,4 +553,21 @@ export class AssetController {
       });  
 
     }
+
+  /**
+   * 에셋 크리덴셜 상세정보 조회
+   * 
+   * @param getDidAcdDto 
+   * @returns 
+   */
+    @Get('/acd/:assetNo')
+    @ApiOperation({ summary: '에셋 크리덴셜 상세정보 조회', description: '에셋 크리덴셜 상세정보를 조회한다.' })
+    @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+    // @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+    @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: '필수입력 오류' })
+    async getAcd(@Param('assetNo') assetNo: number): Promise<any> {
+      const result = await this.assetService.getAcd(assetNo);
+      return this.responseMessage.response(result);
+    }
+
 }

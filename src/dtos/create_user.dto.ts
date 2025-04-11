@@ -4,8 +4,18 @@ import { IsString, Length, IsOptional } from "class-validator";
 export class CreateUserDto {
   @IsString()
   @Length(1, 80)
-  @ApiProperty({ description: '지갑주소'})
-  readonly addr: string;
+  @ApiProperty({ description: '이메일주소'})
+  readonly email: string;
+
+  // @IsString()
+  // @Length(1, 80)
+  // @ApiProperty({ description: '계정'})
+  // readonly account: string;
+
+  // @IsString()
+  // @Length(1, 256)
+  // @ApiProperty({ description: '계정 키'})
+  // readonly privateKey: string;
 
   @IsString()
   @Length(1, 40)

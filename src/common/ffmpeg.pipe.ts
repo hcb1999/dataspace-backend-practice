@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { existsSync, mkdirSync, readFileSync } from "fs";
 import * as crypto from 'crypto';
 import { join } from "path";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const ffmpeg = require("fluent-ffmpeg");
 
 @Injectable()

@@ -96,8 +96,9 @@ export class UserController {
           "useYn": "Y",
           "regDttm": "2024-09-04 21:04:04",
           "updDttm": "2024-09-04 21:04:04",
-          "addr": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
-          "addrUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906"
+          "account": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+          "privateKey": "0x123456abcdef123456abcdef123456abcdef123456abcdef123456abcdef1234",
+          "accountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906"
         }
       }
     }

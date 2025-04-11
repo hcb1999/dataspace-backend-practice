@@ -24,9 +24,5 @@ export type { ERC165 } from "./@openzeppelin/contracts/utils/introspection/ERC16
 export { ERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/ERC165__factory";
 export type { IERC165 } from "./@openzeppelin/contracts/utils/introspection/IERC165";
 export { IERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/IERC165__factory";
-export type { KNFTCollectionSingle } from "./contracts/KNFTCollection_Single.sol/KNFTCollectionSingle";
-export { KNFTCollectionSingle__factory } from "./factories/contracts/KNFTCollection_Single.sol/KNFTCollectionSingle__factory";
-export type { KNFTCollection } from "./contracts/KNFTCollection";
-export { KNFTCollection__factory } from "./factories/contracts/KNFTCollection__factory";
-export type { NFTCollectible } from "./contracts/NFTCollectible";
-export { NFTCollectible__factory } from "./factories/contracts/NFTCollectible__factory";
+export type { ARODEVNFTCollection } from "./contracts/ARODEVNFTCollection";
+export { ARODEVNFTCollection__factory } from "./factories/contracts/ARODEVNFTCollection__factory";

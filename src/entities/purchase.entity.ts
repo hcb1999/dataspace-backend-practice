@@ -20,8 +20,8 @@ export class Purchase extends BaseEntity {
   saleUserName: string;
 
   @Index()
-  @Column({ name:"marcket_no", type:"int4", comment:"구매한 마켓 판매 번호" })
-  marcketNo: number;
+  @Column({ name:"market_no", type:"int4", comment:"구매한 마켓 판매 번호" })
+  marketNo: number;
 
   @Column({ name: "state", type: "varchar", length: 10, comment: "구매 상태", default: 'P2' })
   state: string;

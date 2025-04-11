@@ -8,7 +8,7 @@ export class GetTransferDto extends PageRequest {
     @IsNumber()
     @Type(() => Number)
     @ApiProperty({ description: '광고주 구매번호', required: false })
-    purchaseAssetNo?: number;
+    contractNo?: number;
   
     @IsOptional()
     @IsNumber()

@@ -18,9 +18,15 @@ export class CreateAssetDto {
   @ApiProperty({ description: '에셋명' })
   readonly assetName: string;
 
+  // @IsString()
+  // @Length(1, 256)
+  // @ApiProperty({ description: '에셋 url' })
+  // readonly assetUrl: string;
+
+  @IsOptional()
   @IsString()
   @Length(1, 256)
-  @ApiProperty({ description: '에셋 url' })
+  @ApiProperty({ required: false, description: '에셋 url' })
   readonly assetUrl: string;
 
   @IsNumber()
@@ -40,12 +46,12 @@ export class CreateAssetDto {
 
   @IsDate()
   @Type(() => Date)
-  @ApiProperty({ description: '판매기간-시작일자(YYYY-MM-DD 형식)' })
+  @ApiProperty({ description: '판매기간-시작일자(YYYY-MM-DD 형식)', default: new Date().toISOString() })
   readonly startDttm: Date;
 
   @IsDate()
   @Type(() => Date)
-  @ApiProperty({ description: '판매기간-종료일자(YYYY-MM-DD 형식)' })
+  @ApiProperty({ description: '판매기간-종료일자(YYYY-MM-DD 형식)', default: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString() })
   readonly endDttm: Date;
 
   @IsOptional()

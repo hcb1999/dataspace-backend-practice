@@ -30,10 +30,11 @@ export function setupSwagger(app: INestApplication): void {
     // 그룹 순서 변경
     document.tags = [
       { name: '인증 API', description: '인증에 관련된 API' },
+      { name: 'DID API', description: 'DID에 관련된 API' },
       { name: '사용자 API', description: '사용자 정보에 관련된 API' },
       { name: '굿즈 API', description: '굿즈 정보에 관련된 API' },
       { name: '에셋 API', description: '에셋 정보에 관련된 API' },
-      { name: '엔터사 구매 API', description: '엔터사 구매 정보에 관련된 API' },
+      { name: '엔터사 계약 API', description: '엔터사 계약 정보에 관련된 API' },
       { name: '마켓 판매 API', description: '마켓 판매 정보에 관련된 API' },
       { name: '사용자 구매 API', description: '사용자 구매 정보에 관련된 API' },
       { name: '에셋타입 API', description: '메타버스 업체별 에셋타입 정보에 관련된 API' },

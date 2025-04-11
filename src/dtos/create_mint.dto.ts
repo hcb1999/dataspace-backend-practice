@@ -53,13 +53,13 @@ export class CreateMintDto {
   // @IsNumber()
   // @Type(() => Number)
   // @ApiProperty({ required: false, description: '엔터사 구매 번호' })
-  // readonly purchaseAssetNo: number;
+  // readonly contractNo: number;
 
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ required: false, description: '마켓 에셋 판매 번호' })
-  readonly marcketNo: number;
+  readonly marketNo: number;
 
   // @IsArray()
   // @Length(1, 512, { each: true })

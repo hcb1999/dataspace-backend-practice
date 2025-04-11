@@ -9,10 +9,11 @@ import { MetaverseModule } from './metaverse/metaverse.module';
 import { NftModule } from './nft/nft.module';
 import { ProductModule } from './product/product.module';
 import { PurchaseModule } from './purchase/purchase.module';
-import { PurchaseAssetModule } from './purchase_asset/purchase_asset.module';
+import { ContractModule } from './contract/contract.module';
 import { StateModule } from './state/state.module';
 import { UserModule } from './user/user.module';
-import { MarcketModule } from './marcket/marcket.module';
+import { MarketModule } from './market/market.module';
+import { DidModule } from './did/did.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 // import { BullModule } from '@nestjs/bull';
@@ -33,10 +34,11 @@ import { memoryStorage } from 'multer';
     NftModule,
     ProductModule,
     PurchaseModule,
-    PurchaseAssetModule,
+    ContractModule,
     StateModule,
     UserModule,
-    MarcketModule,
+    MarketModule,
+    DidModule,
     MulterModule.register({
       storage: memoryStorage()
     }),
