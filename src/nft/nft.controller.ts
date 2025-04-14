@@ -443,7 +443,7 @@ export class NftController {
         }
       }      
   
-      console.log(`Mint transaction hash: ${mintTx.hash}`);
+      // console.log(`Mint transaction hash: ${mintTx.hash}`);
       // Mint 상태 업데이트를 위해 tokenId가 설정될 때까지 대기
       await new Promise((resolve) => setTimeout(resolve, parseInt(process.env.TIME_INTERVAL))); // 예시로 5초 대기 (너무 길지 않게 조절)
   
@@ -835,9 +835,9 @@ export class NftController {
           if (parsedLog.name === "NewTransferToken") {
             const from = parsedLog.args[0];  
             const to = parsedLog.args[1];  
-            const tokenId = parsedLog.args[2];  
+            const tokenId1 = parsedLog.args[2];  
             this.logger.log('Transfer Token TransactionHash :'+nftTransferTx.hash);
-            this.logger.log("=== Transfered Token : "+ from + " --->  "+ to  + ', token ID : ' +tokenId);
+            this.logger.log("=== Transfered Token : "+ from + " --->  "+ to  + ', token ID : ' +tokenId1);
             break;
           }
         } catch (err) {
@@ -1714,7 +1714,7 @@ export class NftController {
     try {
 
       const tokenIds = Array.from({ length: purchaseCnt }, (_, i) => tokenId + i);
-      console.log("tokenIds : "+tokenIds);
+      // console.log("tokenIds : "+tokenIds);
       const nftTransferTx = await contract.transferTokens(tokenIds, ownerAddress);
       // this.logger.log(`Token Transfer transaction sent: ${nftTransferTx.hash}`);
 
@@ -1727,9 +1727,9 @@ export class NftController {
           if (parsedLog.name === "NewTransferTokens") {
             const from = parsedLog.args[0];  
             const to = parsedLog.args[1];  
-            const tokenIds = parsedLog.args[2];  
+            const tokenIds1 = parsedLog.args[2];  
             this.logger.log('Transfer Token TransactionHash :'+nftTransferTx.hash);
-            this.logger.log("=== Transfered Token : "+ from + " --->  "+ to  + ', token IDs : ' +tokenIds);
+            this.logger.log("=== Transfered Token : "+ from + " --->  "+ to  + ', token IDs : ' +tokenIds1);
             break;
           }
         } catch (err) {

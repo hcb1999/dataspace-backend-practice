@@ -243,11 +243,19 @@ export class AssetService {
         throw new NotFoundException("Data Not found.");
       }
 
-      // nftService.createMint 호출
-      const productNo = assetInfo.productNo;
-      const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address,
-        issueCnt: 1, tokenId: null, state: 'B1', marketNo: null};
-      this.nftService.createMint(user, nftMintInfo);
+      if(!assetInfo.tokenId){
+        // nft MINT & VC 발급
+        console.log("nft MINT & VC 발급");
+        // nftService.createMint 호출        
+        const productNo = assetInfo.productNo;
+        const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address,
+          issueCnt: 1, tokenId: null, state: 'B1', marketNo: null};
+        this.nftService.createMint(user, nftMintInfo);
+      }else{
+        // VC 발급
+        console.log("VC 발급");
+        await this.createVc(user, assetNo);
+      }
 
     } catch (e) {
       this.logger.error(e);

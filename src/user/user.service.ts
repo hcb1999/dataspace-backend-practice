@@ -228,6 +228,17 @@ export class UserService {
     }
   }
 
+  async getDidWallet(userNo: number): Promise<DidWallet> {
+    try {
+        const ret = await this.didWalletRepository.findOne({ where:{userNo} });
+
+        return ret;
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    }
+  }
+
    /**
    * 사용자 등록
    * 
@@ -283,7 +294,6 @@ export class UserService {
       // console.log("nftWalletInfo : "+JSON.stringify(nftWalletInfo));
       const newNftWallet = queryRunner.manager.create(NftWallet, nftWalletInfo);
       await queryRunner.manager.save<NftWallet>(newNftWallet);
-
       
       // // faucet userNo 찾기
       // const faucetEmail =  this.configService.get<string>('FAUCET_EMAIL');
@@ -300,7 +310,7 @@ export class UserService {
 
       // ETRI API 호출
       // 1. 사용자 연결 인증 요청
-      const createDidUserDto: CreateDidUserDto = {id: email};
+      const createDidUserDto: CreateDidUserDto = {id: email, userNo: userNo};
       const userJwt = await this.didService.createUser(createDidUserDto);
       if (!userJwt) {      
         throw new NotFoundException('DID 등록 오류 - jwt');

@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Put, Param, Query, Logger, Req, UseGuards, UseInterceptors, UploadedFile, HttpStatus, Delete, ValidationPipe, UploadedFiles } from '@nestjs/common';
 import { AssetService } from './asset.service';
-import { ApiBearerAuth, ApiConsumes, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GetUser } from '../auth/get_user.decorator';
 import { User } from '../entities/user.entity';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -93,6 +93,7 @@ export class AssetController {
    * @param createAssetDto 
    * @returns 
    */
+  @ApiExcludeEndpoint()
   @Post("/vc/:assetNo")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')

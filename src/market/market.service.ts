@@ -8,11 +8,13 @@ import { Asset } from '../entities/asset.entity';
 import { State } from '../entities/state.entity';
 import { FileAsset } from '../entities/file_asset.entity';
 import { User } from '../entities/user.entity';
+import { DidWallet } from '../entities/did_wallet.entity';
 import { ProductService } from '../product/product.service';
 import { UserService } from '../user/user.service';
 import { AssetService } from '../asset/asset.service';
 import { ContractService } from '../contract/contract.service';
 import { NftService } from '../nft/nft.service';
+import { DidService } from '../did/did.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateMarketDto} from '../dtos/create_market.dto';
 import { ModifyMarketDto } from '../dtos/modify_market.dto';
@@ -21,6 +23,8 @@ import { CreateMintDto } from '../dtos/create_mint.dto';
 import { CreateMarketSaleDto} from '../dtos/create_market_sale.dto';
 import { CreateProductDto } from '../dtos/create_product.dto';
 import { CreateUserDto } from '../dtos/create_user.dto';
+import { CreateDidUserDto } from '../dtos/create_did_user.dto';
+import { CreateDidWalletDto } from '../dtos/create_did_wallet.dto';
 import { CreateAssetDto } from '../dtos/create_asset.dto';
 import { CreateContractDto } from '../dtos/create_contract.dto';
 import { NftMint } from "../entities/nft_mint.entity";
@@ -38,6 +42,7 @@ export class MarketService {
     private assetService: AssetService,
     private contractService: ContractService,
     private nftService: NftService,
+    private didService: DidService,
 
     @Inject('MARKET_REPOSITORY')
     private marketRepository: Repository<Market>,
@@ -837,7 +842,35 @@ export class MarketService {
         user = await this.userService.create(createUserDto);
         user.nftWalletAccount = (await this.userService.getWalletAddress(user.userNo)).account;          
       }
-      console.log("user: "+JSON.stringify(user));  
+      console.log("user: "+JSON.stringify(user));
+      
+      let didWallet = await this.userService.getDidWallet(user.userNo);
+      if (!didWallet) {
+        console.log("market-didWallet이 없어요.");
+        // 1.1. 사용자 연결 인증 요청
+        const createDidUserDto: CreateDidUserDto = {id: email};
+              const userJwt = await this.didService.createUser(createDidUserDto);
+              if (!userJwt) {      
+                throw new NotFoundException('DID 등록 오류 - jwt');
+              }
+              console.log("userJwt: "+JSON.stringify(userJwt))
+
+        // 1.2. 아바타 가상자갑 생성 요청
+        const createDidWalletDto: CreateDidWalletDto = {nickName, imageUrl: '', id: email, jwt: userJwt.jwt};
+        const userDid = await this.didService.createWallet(createDidWalletDto);
+        if (!userDid) {
+          throw new NotFoundException('DID 등록 오류 - did');
+        }      
+        console.log("userDid: "+JSON.stringify(userDid))
+
+        // DidWallet 저장
+        let didWalletInfo = {userNo: user.userNo, jwt: userJwt.jwt, walletDid: userDid.did};
+        // console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
+        const newDidWallet = queryRunner.manager.create(DidWallet, didWalletInfo);
+        await queryRunner.manager.save<DidWallet>(newDidWallet);
+      }else{
+        console.log("market-didWallet이 있어요.");
+      }
 
       // 2. 굿즈 등록
       const createProductDto: CreateProductDto = {

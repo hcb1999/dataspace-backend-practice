@@ -13,6 +13,7 @@ import { User } from "../entities/user.entity";
 import { createVC, parseVC } from 'src/common/vc-utils';
 import axios from 'axios';
 import { InternalServerErrorException } from '@nestjs/common';
+import { Console } from 'console';
 
 @Injectable()
 export class DidService {
@@ -73,12 +74,25 @@ export class DidService {
         // });
         console.log("response.data: "+JSON.stringify(response.data));
         if(response.data){
-          if(response.data.result == 'Success'){
+          if(response.data.result == 'Success'){           
             // did_wallet_update 저장 필요 
-            const user = await this.userRepository.findOne({ where: { email: createDidUserDto.id } });
-
-            await this.didWalletRepository.update({ userNo: user.userNo }, { jwt: response.data.jwt });
-
+            let userNo = 0;
+            if(createDidUserDto.userNo){
+              userNo = createDidUserDto.userNo;
+              console.log("user: userNo"+userNo);
+            }else{
+              const user = await this.userRepository.findOne({ where: { email: createDidUserDto.id } });
+              userNo = user.userNo;
+              console.log("user: "+JSON.stringify(user));
+            }
+            
+            const didWallet = await this.didWalletRepository.findOne({ where: { userNo } });
+            if(didWallet){  
+              console.log("did-didWallet 있어요.");
+              await this.didWalletRepository.update({ userNo: userNo }, { jwt: response.data.jwt });
+            }
+            console.log("data === : "+JSON.stringify(response.data));
+            await queryRunner.commitTransaction();
             return {jwt: response.data.jwt};
           }
         }else {
@@ -86,6 +100,8 @@ export class DidService {
           return null;
         }
       } catch (error) {
+        console.log(error.response.data.failureReason);
+        console.log(error.response.data.failureMessage);
         if(error.response.data.failureReason == 'FAILURE_REASON_NO_REGISTRATION'){
           console.error("웹지갑에 등록되지 않은 사용자입니다.");
           // error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
@@ -155,6 +171,8 @@ export class DidService {
           return null;
         }
       } catch (error) {
+        console.log(error.response.data.failureReason);
+        console.log(error.response.data.failureMessage);
         if(error.response.data.failureReason == 'FAILURE_REASEON_NO_REGISTRATION'){
           console.error("웹지갑에 등록되지 않은 사용자입니다.");
           error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';

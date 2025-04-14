@@ -8,6 +8,7 @@ import { UserModule } from '../user/user.module';
 import { AssetModule } from '../asset/asset.module';
 import { ContractModule } from '../contract/contract.module';
 import { NftModule } from '../nft/nft.module';
+import { DidModule } from '../did/did.module';
 import { ResponseMessage } from '../common/response';
 
 @Module({
@@ -18,6 +19,7 @@ import { ResponseMessage } from '../common/response';
     AssetModule,
     ContractModule,
     NftModule,
+    DidModule,
   //   JwtModule,
   ],
   controllers: [MarketController],
