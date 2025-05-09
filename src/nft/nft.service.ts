@@ -19,11 +19,15 @@ import { PageResponse } from 'src/common/page.response';
 // import { Queue } from 'bull';
 import { ClientProxy } from '@nestjs/microservices'
 import { HttpService } from '@nestjs/axios'; 
+import { Contract , Wallet, ethers, providers } from "ethers";
+import { ARODEVNFTCollection, ARODEVNFTCollection__factory } from './typechain-types';
 
 
 @Injectable()
 export class NftService {
   private logger = new Logger('NftService');
+  private provider: providers.JsonRpcProvider;
+  private contractAddress: string;
 
   constructor(
     private configService: ConfigService,
@@ -58,6 +62,10 @@ export class NftService {
     private client: ClientProxy,
 
   ){
+    // 이더리움 네트워크에 연결
+    this.provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
+    this.contractAddress = process.env.CONTRACT_ADDRESS;
+
     // // ClientProxy 초기화
     // this.client = ClientProxyFactory.create({
     //   transport: Transport.RMQ,
@@ -74,6 +82,112 @@ export class NftService {
     // });
     
   }
+
+  // Starting Source
+  // TypeChain을 이용하여 Contract 인스턴스 생성
+  createContractInstance(wallet: Wallet): ARODEVNFTCollection {
+    return ARODEVNFTCollection__factory.connect(this.contractAddress, wallet.connect(this.provider));
+  }  
+
+  /**
+   * Ether Transfer 생성
+   * 
+   * @param createMintDto 
+   * @returns 
+   */
+  async transferEth(nftInfo: {userNo: number, faucetPKey:string, faucetAmount:number, toAddr:string}): Promise<Boolean> {  
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    const userNo = nftInfo.userNo;
+    const faucetPKey = nftInfo.faucetPKey;
+    const amount = nftInfo.faucetAmount;
+    const toAddr = nftInfo.toAddr;
+
+  
+    const fromWallet = new ethers.Wallet(faucetPKey).connect(this.provider);
+    // console.log(`processMintTransaction started... fromWallet : ${JSON.stringify(fromWallet, null, 2)}`);
+        
+    let contract: any;
+    try {
+
+      // NFT 계약 인스턴스 생성
+      contract = this.createContractInstance(fromWallet);
+      // this.knftCollection = this.createContractInstance(fromWallet);
+      this.logger.log(`Contract instance created successfully`);
+    } catch (error) {
+      this.logger.error(`Error creating contract instance: ${error.message}`);
+      return false;
+    }
+
+    try {
+      const amountInWei = ethers.utils.parseEther(amount.toString());
+      const ethTransferTx = await contract.transferOnlyEther(amountInWei, toAddr, {
+        value: amountInWei // 여기에서 value가 보내는 이더 값
+      });
+      // this.logger.log(`ETH Transfer sent: ${ethTransferTx.hash}`);
+
+      const receipt = await ethTransferTx.wait();
+
+      for (const log of receipt.logs) {
+        try {
+          const parsedLog = contract.interface.parseLog(log);
+          
+          if (parsedLog.name === "NewTransferEther") {
+            const from = parsedLog.args[0];  
+            const to = parsedLog.args[1];  
+            const amount = parsedLog.args[2];  
+            this.logger.log("=== Transfered Only Ether : "+ from + " --->  "+ to  + ",  " +amount +' Ether');
+            // console.log(`userNo: ${userNo}`);
+            // const wallet = await this.nftWalletRepository.findOneBy({ userNo });
+            // console.log("before update wallet: "+JSON.stringify(wallet)); 
+            // const wallet1 = await this.nftWalletRepository.update({userNo}, {chargedYn: 'Y'});
+            // console.log("wallet1: "+wallet1); 
+            // const wallet2 = await this.nftWalletRepository.findOneBy({ userNo });
+            // console.log("after update wallet2: "+JSON.stringify(wallet2)); 
+            // break;
+            return true;
+          }
+        } catch (err) {
+          this.logger.log("Error parsing log:", err);
+          return false;
+        }
+      }
+
+    } catch (error) {
+      this.logger.error(`Error in transferEth: ${error.message}`);
+      return false;
+      // this.logger.error(`Error in transferEth`);
+      }
+  }
+
+  // Queue로 전송
+  // async transferEth(nftInfo: {userNo: number, faucetPKey:string, faucetAmount:number, toAddr:string}): Promise<void> {  
+
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+  
+  //   try {
+  //       const userNo = nftInfo.userNo;
+  //       const faucetPKey = nftInfo.faucetPKey;
+  //       const amount = nftInfo.faucetAmount;
+  //       const toAddr = nftInfo.toAddr;
+  
+  //       // MQ로 Mint 트랜잭션 처리 요청
+  //       const data = { userNo, faucetPKey, amount, toAddr };
+  //       console.log('Sending data:', data);
+  //       await this.client.emit('transferEther', data);        
+  
+  //     } catch (e) {
+  //       this.logger.error(e);
+  //       throw e;
+  //     } finally {    
+  //       await queryRunner.release();
+  //     }
+  // }
 
  /**
    * NFT Mint 생성

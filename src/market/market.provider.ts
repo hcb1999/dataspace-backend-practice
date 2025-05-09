@@ -3,6 +3,7 @@ import { Market } from "../entities/market.entity";
 import { EContract } from "../entities/contract.entity";
 import { Purchase } from "../entities/purchase.entity";
 import { Product } from "../entities/product.entity";
+import { NftWallet } from "../entities/nft_wallet.entity";
 import { NftMint } from "../entities/nft_mint.entity";
 import { NftTransfer } from "../entities/nft_transfer.entity";
 import { Asset } from "../entities/asset.entity";
@@ -24,6 +25,10 @@ export const MarketProviders = [
     },{
         provide: 'PRODUCT_REPOSITORY',
         useFactory: (dataSource: DataSource) => dataSource.getRepository(Product),
+        inject: ['DATA_SOURCE'],
+    },{
+        provide: 'NFT_WALLET_REPOSITORY',
+        useFactory: (dataSource: DataSource) => dataSource.getRepository(NftWallet),
         inject: ['DATA_SOURCE'],
     },{
         provide: 'NFT_MINT_REPOSITORY',

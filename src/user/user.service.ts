@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Inject, Injectable, Logger, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { DataSource, Repository, UpdateResult, Like, Between } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from '../dtos/create_user.dto';
 import { ModifyUserDto } from '../dtos/modify_user.dto';
@@ -8,6 +9,7 @@ import { NftWallet } from "../entities/nft_wallet.entity";
 import { DidWallet } from "../entities/did_wallet.entity";
 import { ethers } from "ethers";
 import { DidService } from '../did/did.service';
+import { NftService } from '../nft/nft.service';
 import { CreateDidUserDto } from '../dtos/create_did_user.dto';
 import { CreateDidWalletDto } from '../dtos/create_did_wallet.dto';
 // import { PageResponse } from 'src/common/page.response';
@@ -19,7 +21,9 @@ export class UserService {
   private logger = new Logger('UserService');
 
   constructor(
+    private configService: ConfigService,
     private didService: DidService,
+    private nftService: NftService,
 
     @Inject('USER_REPOSITORY')
     private userRepository: Repository<User>,
@@ -249,7 +253,7 @@ export class UserService {
     const queryRunner = this.dataSource.createQueryRunner();
 
     try {
- 
+
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
@@ -289,25 +293,6 @@ export class UserService {
       const userNo = regUser.userNo;
       // const account = createUserDto.account;
 
-      // NftWallet 저장
-      let nftWalletInfo = {userNo, account, pkey};
-      // console.log("nftWalletInfo : "+JSON.stringify(nftWalletInfo));
-      const newNftWallet = queryRunner.manager.create(NftWallet, nftWalletInfo);
-      await queryRunner.manager.save<NftWallet>(newNftWallet);
-      
-      // // faucet userNo 찾기
-      // const faucetEmail =  this.configService.get<string>('FAUCET_EMAIL');
-      // const faucetAmount =  this.configService.get<number>('FAUCET_AMOUNT');
-      // const faucetInfo = await this.userRepository.findOne({ where:{email: faucetEmail } });
-      // if (!faucetInfo) {
-      //   throw new NotFoundException("Data Not found. : faucet email");
-      // }
-
-      // // nftService.transferEth 호출      
-      // const nftInfo = { userNo: faucetInfo.userNo, faucetAmount, toAddr: addr };
-      // // console.log("===== nftInfo : "+ JSON.stringify(nftInfo)); 
-      // this.nftService.transferEth(nftInfo);
-
       // ETRI API 호출
       // 1. 사용자 연결 인증 요청
       const createDidUserDto: CreateDidUserDto = {id: email, userNo: userNo};
@@ -331,10 +316,153 @@ export class UserService {
       const newDidWallet = queryRunner.manager.create(DidWallet, didWalletInfo);
       await queryRunner.manager.save<DidWallet>(newDidWallet);
 
-      await queryRunner.commitTransaction();
+      // NftWallet 저장
+      let nftWalletInfo = {userNo, account, pkey};
+      // console.log("nftWalletInfo : "+JSON.stringify(nftWalletInfo));
+      const newNftWallet = queryRunner.manager.create(NftWallet, nftWalletInfo);
+      await queryRunner.manager.save<NftWallet>(newNftWallet);
+      
+      // faucet userNo 찾기
+      const faucetEmail =  this.configService.get<string>('FAUCET_EMAIL');
+      const faucetAmount =  this.configService.get<number>('FAUCET_AMOUNT');
+      // console.log("===== faucetEmail : "+ JSON.stringify(faucetEmail)); 
+      // console.log("===== faucetAmount : "+ JSON.stringify(faucetAmount)+" type : " + typeof(faucetAmount)); 
+      const faucetInfo = await this.nftWalletRepository.findOne({ where:{account: faucetEmail } });
+      if (!faucetInfo) {
+        throw new NotFoundException("Data Not found. : faucet email");
+      }
 
-      return regUser;
+      // nftService.transferEth 호출      
+      console.log("===== toAddr : "+ account+" toPkey : " + pkey); 
+      const nftInfo = { userNo, faucetPKey: faucetInfo.pkey, faucetAmount, toAddr: account };
+      // console.log("===== nftInfo : "+ JSON.stringify(nftInfo)); 
+      const ret = await this.nftService.transferEth(nftInfo);
+      if(ret){
+        // console.log("TRUE"); 
+        await queryRunner.commitTransaction();
+        return regUser;
+      }else{
+        await queryRunner.rollbackTransaction();
+        throw new InternalServerErrorException('Transfer Ether Error');
+      } 
+    } catch (e) {
+      await queryRunner.rollbackTransaction ();    
+      // console.log("111111111111111111");      
+      // console.log(e.message);      
+      this.logger.error(e.message);
+      if (e.message.includes('Aready registered Account.')) {
+        throw new ConflictException('Aready registered Account.');
+      } else if (e.message.includes('Aready registered email.')) {
+        throw new ConflictException('Aready registered email.');
+      } else if (e.message.includes('Aready registered Nickname.')) {
+        throw new ConflictException('Aready registered Nickname.');
+      } else if (e.message.includes('Data Not found. : faucet email')) {
+        throw new NotFoundException('Data Not found. : faucet email');
+      } else {
+        throw new InternalServerErrorException(e.message);
+      }
+      
+    }finally {
+      await queryRunner.release();
+    }
+  }
+/*
+  async create(createUserDto: CreateUserDto): Promise<any> {
+    const queryRunner = this.dataSource.createQueryRunner();
 
+    try {
+
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      // const wallet = ethers.Wallet.createRandom();
+      // const account = wallet.address.toLowerCase();
+      // const pkey =  wallet.privateKey;
+
+      // // 계정 생성 및 계정 중복 체크 
+      // const walletInfo = await this.nftWalletRepository.findOne({ where:{account} });
+      // if (walletInfo) {
+      //   throw new ConflictException('Aready registered Account.');
+      // }
+
+      // const email = createUserDto.email;
+      // if(email != null) {
+      //   const user = await this.userRepository.findOne({ where:{email} });
+      //   if (user) {
+      //     throw new ConflictException('Aready registered email.');
+      //   }
+      // }else{
+      //   // console.log("email is null")
+      // }
+      
+      // const nickName = createUserDto.nickName;
+      // if(nickName != null) {
+      //   const user = await this.userRepository.findOne({ where:{nickName} });
+      //   if (user) {
+      //     throw new ConflictException('Aready registered Nickname.');
+      //   }
+      // }else{
+      //   // console.log("nickname is null")
+      // }
+
+      // // User 저장
+      // const newUser = queryRunner.manager.create(User, createUserDto);
+      // const regUser = await queryRunner.manager.save<User>(newUser);
+      // const userNo = regUser.userNo;
+      // // const account = createUserDto.account;
+
+      const email = createUserDto.email;
+      const nickName = createUserDto.nickName;
+      const user = await this.userRepository.findOne({ where:{email} });
+      const userNo = user.userNo;
+
+      // ETRI API 호출
+      // 1. 사용자 연결 인증 요청
+      const createDidUserDto: CreateDidUserDto = {id: email, userNo};
+      const userJwt = await this.didService.createUser(createDidUserDto);
+      if (!userJwt) {      
+        throw new NotFoundException('DID 등록 오류 - jwt');
+      }
+      console.log("userJwt: "+JSON.stringify(userJwt))
+
+      // 2. 아바타 가상자갑 생성 요청
+      const createDidWalletDto: CreateDidWalletDto = {nickName, imageUrl: '', id: email, jwt: userJwt.jwt};
+      const userDid = await this.didService.createWallet(createDidWalletDto);
+      if (!userDid) {
+        throw new NotFoundException('DID 등록 오류 - did');
+      }
+      console.log("userDid: "+JSON.stringify(userDid))
+
+      // DidWallet 저장
+      let didWalletInfo = {userNo, jwt: userJwt.jwt, walletDid: userDid.did};
+      console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
+      const newDidWallet = queryRunner.manager.create(DidWallet, didWalletInfo);
+      await queryRunner.manager.save<DidWallet>(newDidWallet);
+
+      // // NftWallet 저장
+      // let nftWalletInfo = {userNo, account, pkey};
+      // // console.log("nftWalletInfo : "+JSON.stringify(nftWalletInfo));
+      // const newNftWallet = queryRunner.manager.create(NftWallet, nftWalletInfo);
+      // await queryRunner.manager.save<NftWallet>(newNftWallet);
+      
+      // // faucet userNo 찾기
+      // const faucetEmail =  this.configService.get<string>('FAUCET_EMAIL');
+      // const faucetAmount =  this.configService.get<number>('FAUCET_AMOUNT');
+      // // console.log("===== faucetEmail : "+ JSON.stringify(faucetEmail)); 
+      // // console.log("===== faucetAmount : "+ JSON.stringify(faucetAmount)+" type : " + typeof(faucetAmount)); 
+      // const faucetInfo = await this.nftWalletRepository.findOne({ where:{account: faucetEmail } });
+      // if (!faucetInfo) {
+      //   throw new NotFoundException("Data Not found. : faucet email");
+      // }
+
+      // // nftService.transferEth 호출      
+      // console.log("===== toAddr : "+ account+" toPkey : " + pkey); 
+      // const nftInfo = { userNo, faucetPKey: faucetInfo.pkey, faucetAmount, toAddr: account };
+      // // console.log("===== nftInfo : "+ JSON.stringify(nftInfo)); 
+      // const ret = await this.nftService.transferEth(nftInfo);
+      
+      await queryRunner.commitTransaction (); 
+      return;
     } catch (e) {
       await queryRunner.rollbackTransaction ();    
       // console.log("111111111111111111");      
@@ -356,4 +484,6 @@ export class UserService {
       await queryRunner.release();
     }
   }  
+*/
+
 }

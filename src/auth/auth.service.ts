@@ -129,4 +129,48 @@ export class AuthService {
     }
      
   }
+  /*
+  async register(createUserDto: CreateUserDto): Promise<any> {
+    // const userInfo = await this.userService.create(createUserDto);
+
+    try {
+      // const account = createUserDto.account;
+      // const nickName = createUserDto.nickName;
+      // const email = createUserDto.email;
+      // const nickUser = await this.userService.getOneByNickname(nickName);
+      // if(nickUser != null) {
+      //     throw new ConflictException('Aready registered Nickname.');
+      // }
+      // const emailUser = await this.userService.getOneByEmail(email);
+      // if(emailUser != null) {
+      //     throw new ConflictException('Aready registered Email.');
+      // }
+
+      const userInfo = await this.userService.create(createUserDto);
+      if (userInfo) {
+        let userNo = userInfo.userNo;
+        // 토큰생성
+        const payload = { userNo };
+        const accessToken = this.jwtService.sign(payload);
+        
+        return { accessToken };
+      }
+
+    } catch (e) {
+      this.logger.error(e);
+      // throw new ConflictException(e.message);
+      throw e;
+      // 예외 메시지 추출
+      // if (e instanceof ConflictException) {
+      //   console.log('ConflictException');
+      //   throw new ConflictException(e.message);
+      // } else {
+      //   console.log('Internal');
+      //   throw new InternalServerErrorException('internal Server Error');
+      // }
+    }
+     
+  }
+*/
+
 }

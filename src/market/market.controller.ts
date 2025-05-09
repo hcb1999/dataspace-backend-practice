@@ -545,4 +545,26 @@ export class MarketController {
     return this.responseMessage.response(market);
   }
 
+  /**
+   * 에셋 NFT MINT & VC 발급
+   * 
+   * @param user 
+   * @param files 
+   * @param createAssetDto 
+   * @returns 
+   */
+  @Post("/sale/:marketNo")
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '에셋 NFT MINT & 등록증명 VC 발급', description: '에셋 NFT MINT & 등록증명 VC를 발급한다.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음 또는 등록된 제품 없음' })
+  async createNftVc(@Param('marketNo') marketNo: number): Promise<any> {
+    console.log("++++++++++++++++++++++");
+    fileLogger.info('market-createNft');
+    fileLogger.info(`marketNo: ${marketNo}`);
+    await this.marketService.createNftVc(marketNo);
+    return this.responseMessage.response(null);
+  }
+
 }

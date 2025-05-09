@@ -18,6 +18,7 @@ import { MessagePattern, Ctx, Payload, RmqContext} from '@nestjs/microservices';
 import { Contract , Wallet, ethers, providers } from "ethers";
 import { NftGateway } from './nft.gateway'; // WebSocket Gateway
 import { NftMint } from '../entities/nft_mint.entity';
+import { NftWallet } from '../entities/nft_wallet.entity';
 import { NftTransfer } from '../entities/nft_transfer.entity';
 import { NftBurn } from '../entities/nft_burn.entity';
 import { Asset } from '../entities/asset.entity';
@@ -66,6 +67,9 @@ export class NftController {
 
     @Inject('MARKET_REPOSITORY')
     private marketRepository: Repository<Market>,
+
+    @Inject('NFT_WALLET_REPOSITORY')
+    private nftWalletRepository: Repository<NftWallet>,
 
     // @Inject('NFT_MINT_REPOSITORY')
     // private nftMintRepository: Repository<NftMint>,
@@ -350,6 +354,121 @@ export class NftController {
     return ARODEVNFTCollection__factory.connect(this.contractAddress, wallet.connect(this.provider));
   }
   
+/*
+  @MessagePattern('transferEther')
+  // async handleMint(@Payload() 
+  //   data: { nftMintNo: number, assetNo: number, productNo: number, ownerAddress: string, ownerPKey: string }
+  //   ,
+  //   @Ctx() context: RmqContext
+  // ): Promise<boolean> {
+  async handleTransferEth(@Payload() 
+    data: { userNo: number, faucetPKey: string, amount: number, toAddr: string }
+    ,
+    @Ctx() context: RmqContext
+  ) {
+
+    console.log(`handleTransferEth started...`);
+    // let result = true;
+    
+    const channel: Channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+      // originalMsg를 Message 타입으로 변환
+    const message = originalMsg as Message; 
+
+    // console.log('Context:', context); 
+    // console.log('Received data:', JSON.stringify(data)); 
+    const userNo = data.userNo;
+    const faucetPKey = data.faucetPKey;
+    const amount = data.amount;
+    const toAddr = data.toAddr;
+
+    console.log(`userNo: ${userNo}`);
+    console.log(`ownerPKey: ${faucetPKey}`);
+    console.log(`amount: ${amount}`);
+    console.log(`toAddr: ${toAddr}`);
+    // console.log(`provider: ${JSON.stringify(this.provider, null, 2)}`);
+
+    // const wallet = new ethers.Wallet(walletPrivateKey).connect(this.provider);
+    const fromWallet = new ethers.Wallet(faucetPKey).connect(this.provider);
+    // console.log(`processMintTransaction started... fromWallet : ${JSON.stringify(fromWallet, null, 2)}`);
+    
+    let contract: any;
+    try {
+
+      // NFT 계약 인스턴스 생성
+      contract = this.createContractInstance(fromWallet);
+      // this.knftCollection = this.createContractInstance(fromWallet);
+      this.logger.log(`Contract instance created successfully`);
+    } catch (error) {
+      this.logger.error(`Error creating contract instance: ${error.message}`);
+      // channel.nack(originalMsg, false, false);  // 실패 시 명시적으로 nack 호출
+      return;
+    }
+  
+    // // 이벤트 리스너 추가
+    // contract.on('NewTransferEther', (eFrom:any, eTo:any, price:any, event:any) => {
+    //   this.logger.log(`NewTransferEther Event: Faucet: ${eFrom}, to : ${eTo}, ${price}`);
+
+    // });
+
+    try {
+      const amountInWei = ethers.utils.parseEther(amount.toString());
+      const ethTransferTx = await contract.transferOnlyEther(amountInWei, toAddr, {
+        value: amountInWei // 여기에서 value가 보내는 이더 값
+      });
+      // this.logger.log(`ETH Transfer sent: ${ethTransferTx.hash}`);
+
+      const receipt = await ethTransferTx.wait();
+
+      for (const log of receipt.logs) {
+        try {
+          const parsedLog = contract.interface.parseLog(log);
+          
+          if (parsedLog.name === "NewTransferEther") {
+            const from = parsedLog.args[0];  
+            const to = parsedLog.args[1];  
+            const amount = parsedLog.args[2];  
+            this.logger.log("=== Transfered Only Ether : "+ from + " --->  "+ to  + ",  " +amount +' Ether');
+            console.log(`userNo: ${userNo}`);
+            const wallet = await this.nftWalletRepository.findOneBy({ userNo });
+            console.log("before update wallet: "+JSON.stringify(wallet)); 
+            const wallet1 = await this.nftWalletRepository.update({userNo}, {chargedYn: 'Y'});
+            console.log("wallet1: "+wallet1); 
+            const wallet2 = await this.nftWalletRepository.findOneBy({ userNo });
+            console.log("after update wallet2: "+JSON.stringify(wallet2)); 
+            break;
+          }
+        } catch (err) {
+          this.logger.log("Error parsing log:", err);
+        }
+      }
+
+      channel.ack(message); // 성공적으로 처리되면 메시지를 확인
+
+    } catch (error) {
+      // this.logger.error(`Error in handleEtherTransfer: ${error.message}`);
+      this.logger.error(`Error in handleEtherTransfer`);
+      // let nftTransferInfo = {};
+      let errorMsg = '';
+
+      if (error.code === 'NETWORK_ERROR') {
+        // 블록체인에 문제가 발생한 경우
+        // this.logger.error(`Blockchain network error in handleTransfer: ${error.message}`);
+        errorMsg = 'Blockchain is unreachable';
+        // nftTransferInfo = { state: 'B99' };
+      }  else {
+        // 다른 일반적인 오류 처리
+        // this.logger.error(`Transaction Or Unexpected error in handleTransfer: ${error.message}`);
+        errorMsg = 'Transaction failed due to invalid input Or data';
+        // nftTransferInfo = { state: 'B8' };
+      }
+
+      channel.ack(message);
+
+    }
+  }
+*/
+
   @MessagePattern('mint')
   // async handleMint(@Payload() 
   //   data: { nftMintNo: number, assetNo: number, productNo: number, ownerAddress: string, ownerPKey: string }
@@ -1272,15 +1391,16 @@ export class NftController {
         console.log(`Inserted mintInfo with tokenId: ${tokenId}`);
       } 
 
-      const data = { tokenId: tokenIdAry[0] };
+      const data = { soldYn: 'Y',  state: 'S5', tokenId: tokenIdAry[0] };
       await queryRunner.manager.update(Asset, assetNo, data);
-      await queryRunner.manager.update(EContract, contractNo, data);
+      const data1 = { tokenId: tokenIdAry[0] };
+      await queryRunner.manager.update(EContract, contractNo, data1);
 
       await queryRunner.commitTransaction();
 
     } catch (error) {
       this.logger.error(`Error in handleMint`);
-      // this.logger.error(`Error in handleMintTransaction: ${error.message}`);
+      this.logger.error(`Error in handleMintTransaction: ${error.message}`);
       // let nftMintInfo = {};
       let errorMsg = '';
 
@@ -1385,7 +1505,7 @@ export class NftController {
       }
       console.log("issueVcInfo: "+JSON.stringify(issueVcInfo))
       const parsed = parseVC(issueVcInfo.vc);    
-      const modifyAsset = {vcIssuerName: issueVcInfo.vcIssuerName,
+      const modifyAsset = {state: 'S5', soldYn: 'Y', vcIssuerName: issueVcInfo.vcIssuerName,
         vcIssuerLogo: issueVcInfo.vcIssuerLogo, vcTypeName: issueVcInfo.vcTypeName, vcId: parsed.credentialId}
       console.log("===== modifyAsset : "+JSON.stringify(modifyAsset));
       await queryRunner2.manager.update(Asset, assetNo, modifyAsset);

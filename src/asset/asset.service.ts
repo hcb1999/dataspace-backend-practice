@@ -240,7 +240,7 @@ export class AssetService {
       const userNo = user.userNo;      
       const assetInfo = await this.assetRepository.findOne({ where:{assetNo, userNo} });
       if (!assetInfo) {
-        throw new NotFoundException("Data Not found.");
+        throw new NotFoundException("Data Not found. : 에셋 정보");
       }
 
       if(!assetInfo.tokenId){
@@ -1009,8 +1009,8 @@ export class AssetService {
                             .getRawMany();
 
       const totalCount = await sql.getCount(); 
-      // console.log("totalCount : "+totalCount);
-      // console.log("list : "+list.length);
+      console.log("totalCount : "+totalCount);
+      console.log("list : "+list.length);
 
       return new PageResponse(totalCount, getAssetDto.pageSize, list);
 

@@ -100,8 +100,7 @@ export class DidService {
           return null;
         }
       } catch (error) {
-        console.log(error.response.data.failureReason);
-        console.log(error.response.data.failureMessage);
+        // console.log(error.response.data.failureReason);
         if(error.response.data.failureReason == 'FAILURE_REASON_NO_REGISTRATION'){
           console.error("웹지갑에 등록되지 않은 사용자입니다.");
           // error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
@@ -109,6 +108,8 @@ export class DidService {
         }else if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_BIO_AUTHENTICATION'){
           console.error("유효하지 않은 바이오 인증입니다.");
           error.response.data.failureReason = '유효하지 않은 바이오 인증입니다.';
+        }else{
+          error.response.data.failureReason += " : "+error.response.data.failureMessage;
         }
   
         // console.log("failureReason: "+failureReason);
@@ -244,7 +245,8 @@ export class DidService {
           return null;
         }
       } catch (error) {
-        console.error("error : "+JSON.stringify(error));
+        // console.error("error : "+JSON.stringify(error));
+        console.error("error : "+JSON.stringify(error.response.data.failureReason));
         if(error.response.data.failureReason == 'FAILURE_REASEON_NO_REGISTRATION'){
           console.error("웹지갑에 등록되지 않은 사용자입니다.");
           error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
@@ -306,14 +308,15 @@ export class DidService {
         const response = await axios.post(url, data, {
           headers: { "Content-Type": "application/json" },
         });
+        // console.log("response: "+JSON.stringify(response.data));
         if(response.data){
           if(response.data.result == 'Success')
-            // console.log("response.data: "+JSON.stringify(response.data));
-            // const parsed = parseVC(response.data.vc);
-            // console.log("vc.id: "+parsed.credentialId);
-            // console.log("vcIssuerName: "+response.data.vcIssuerName);
-            // console.log("vcIssuerLogo: "+response.data.vcIssuerLogo);
-            // console.log("vcTypeName: "+response.data.vcTypeName);
+            console.log("response.data: "+JSON.stringify(response.data));
+            const parsed = parseVC(response.data.vc);
+            console.log("vc.id: "+parsed.credentialId);
+            console.log("vcIssuerName: "+response.data.vcIssuerName);
+            console.log("vcIssuerLogo: "+response.data.vcIssuerLogo);
+            console.log("vcTypeName: "+response.data.vcTypeName);
             return {vc: response.data.vc,
                     vcIssuerName: response.data.vcIssuerName,
                     vcIssuerLogo: response.data.vcIssuerLogo,
@@ -322,7 +325,9 @@ export class DidService {
           console.error("POST(createAci) ERROR: "+response.data.failureReason);
           return null;
         }
-      } catch (error) {       
+      } catch (error) {
+        // console.log("createAci error : "+JSON.stringify(error));      
+        // console.log("createAci error : "+error.response.data.failureReason);      
         if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_VC_TYPE'){
           console.error("유효하지 않은 VC TYPE 입니다.");
           error.response.data.failureReason = '유효하지 않은 VC TYPE 입니다.';

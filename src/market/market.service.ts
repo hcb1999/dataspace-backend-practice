@@ -27,8 +27,13 @@ import { CreateDidUserDto } from '../dtos/create_did_user.dto';
 import { CreateDidWalletDto } from '../dtos/create_did_wallet.dto';
 import { CreateAssetDto } from '../dtos/create_asset.dto';
 import { CreateContractDto } from '../dtos/create_contract.dto';
+import { NftWallet } from '../entities/nft_wallet.entity';
 import { NftMint } from "../entities/nft_mint.entity";
 import { NftTransfer } from "../entities/nft_transfer.entity";
+import { CreateDidAcdgDto } from '../dtos/create_did_acdg.dto';
+import { CreateDidAciDto } from '../dtos/create_did_aci.dto';
+import { CreateDidAcrDto } from '../dtos/create_did_acr.dto';
+import { createVC, parseVC } from 'src/common/vc-utils';
 import { PageResponse } from 'src/common/page.response';
 
 @Injectable()
@@ -61,6 +66,9 @@ export class MarketService {
 
     @Inject('STATE_REPOSITORY')
     private stateRepository: Repository<State>,
+
+    @Inject('NFT_WALLET_REPOSITORY')
+    private nftWalletRepository: Repository<NftWallet>,
 
     @Inject('NFT_MINT_REPOSITORY')
     private nftMintRepository: Repository<NftMint>,
@@ -515,6 +523,7 @@ export class MarketService {
       const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
   
       try {
+        // console.log("marketNo: "+marketNo);
         const saleAddr = user.nftWalletAccount;
         const market = await this.marketRepository.findOne({ where:{marketNo, saleAddr} });
         if (!market) {                         
@@ -843,7 +852,7 @@ export class MarketService {
         user.nftWalletAccount = (await this.userService.getWalletAddress(user.userNo)).account;          
       }
       console.log("user: "+JSON.stringify(user));
-      
+   
       let didWallet = await this.userService.getDidWallet(user.userNo);
       if (!didWallet) {
         console.log("market-didWallet이 없어요.");
@@ -868,11 +877,33 @@ export class MarketService {
         // console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
         const newDidWallet = queryRunner.manager.create(DidWallet, didWalletInfo);
         await queryRunner.manager.save<DidWallet>(newDidWallet);
+
       }else{
         console.log("market-didWallet이 있어요.");
       }
 
-      // 2. 굿즈 등록
+      // 2. charged 체크
+      // Charged 상태 업데이트 될 때까지 대기
+
+      // const timeIntaval = this.configService.get<number>('TIME_INTERVAL_DB');
+      // const maxRetries = this.configService.get<number>('MAX_RETRIES');      
+       
+      // let cRetries = 0;
+      // let nftWallet = null;
+      // while (cRetries < maxRetries) {
+      //   const nftWallet = await this.nftWalletRepository.findOne({ where:{userNo: user.userNo} });
+      //   console.log(`⏳ nftWallet. ${JSON.stringify(nftWallet)}`);
+      //   if (nftWallet.chargedYn !== 'Y') {
+      //     cRetries++;
+      //     console.log(`⏳ nftWallet 정보가 없음. ${cRetries}번째 재시도 중...`);
+      //     await new Promise((resolve) => setTimeout(resolve, timeIntaval));
+      //   }
+      // }
+      // if (nftWallet.chargedYn !== 'Y') {
+      //   throw new NotFoundException('Data Not found. : 계좌의 충전 정보');
+      // }
+
+      // 3. 굿즈 등록
       const createProductDto: CreateProductDto = {
         productName: assetName,
         productDesc: assetDesc || assetName,
@@ -912,7 +943,7 @@ export class MarketService {
       const product = await this.productService.create(user, files, createProductDto);
       console.log("product: "+JSON.stringify(product));
 
-      // 3. 에셋 등록
+      // 4. 에셋 등록
       const createAssetDto: CreateAssetDto = {
         productNo: product.productNo,
         assetName,
@@ -931,7 +962,7 @@ export class MarketService {
       const asset = await this.assetService.createSale(user, files, createAssetDto);
       console.log("asset: "+JSON.stringify(asset));
 
-      // 4. 엔터사 구매 등록
+      // 5. 엔터사 구매 등록
       const createContractDto: CreateContractDto = {
         productNo: product.productNo,
         assetNo: asset.assetNo,
@@ -943,7 +974,7 @@ export class MarketService {
       const contract = await this.contractService.purchaseSale(user, createContractDto);
       console.log("contract: "+JSON.stringify(contract));
    
-      // 5. 엔터사 판매 등록
+      // 6. 엔터사 판매 등록
       const createMarketDto: CreateMarketDto = {
         contractNo: contract.contractNo,
         // contractNo: 4,
@@ -961,7 +992,7 @@ export class MarketService {
       console.log("market: "+JSON.stringify(market));
 
       const timeIntaval = this.configService.get<number>('TIME_INTERVAL_DB');
-      const maxRetries = this.configService.get<number>('MAX_RETRIES');
+      const maxRetries = this.configService.get<number>('MAX_RETRIES');    
 
       let retries = 0;
       let marketInfo = null;
@@ -993,6 +1024,152 @@ export class MarketService {
       this.logger.error(e);
       throw e;
     } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 에셋 NFT MINT & VC 발급
+   * 
+   * @param marketNo 
+   */
+  async createNftVc(marketNo: number): Promise<any> {
+
+    try {
+
+      const marketInfo = await this.marketRepository.findOne({ where:{marketNo} });
+      if (!marketInfo) {
+        throw new NotFoundException("Data Not found. : 마켓 정보");
+      }
+
+      let user = await this.userService.getOneByNickname(marketInfo.saleUserName);
+      user.nftWalletAccount = marketInfo.saleAddr;
+      if(!marketInfo.fromTokenId){
+        // nft MINT & VC 발급
+        console.log("nft MINT & VC 발급");
+        // nftService.createMarketMint 호출
+        const address = user.nftWalletAccount;
+        console.log("user : "+JSON.stringify(user));
+        const nftMintInfo: CreateMintDto = {assetNo: marketInfo.assetNo, productNo: marketInfo.productNo,
+          issuedTo: marketInfo.saleAddr, issueCnt: marketInfo.issueCnt, tokenId: null, state: 'B1', marketNo};
+        this.nftService.createMarketMintSale(user, nftMintInfo);
+      }else{
+        // VC 발급
+        console.log("VC 발급");
+        await this.createVc(user, marketInfo.assetNo);
+      }
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    }
+  } 
+  
+  /**
+   * 에셋등록증명 VC 발급 & 등록
+   * 
+   * @param assetNo 
+   */
+  async createVc(user: User, assetNo: number): Promise<any> {
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+       // ETRI API 호출
+      // 1. 아바타 크리덴셜 DID 생성 요청
+      const sql = this.assetRepository.createQueryBuilder('asset')
+                  // .leftJoin(State, 'state', 'asset.state = state.state')
+                      .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
+                      .leftJoin(NftMint, 'nftMint', 'asset.token_id = nftMint.token_id')
+                      .leftJoin(DidWallet, 'didWallet', 'asset.user_no = didWallet.user_no')
+                      .leftJoin(User, 'user', 'asset.user_no = user.user_no')
+                      .select('asset.asset_no', 'assetNo')
+                      .addSelect('asset.reg_name', 'nickName')
+                      .addSelect('asset.asset_name', 'assetName')
+                      .addSelect('asset.asset_desc', 'assetDesc')
+                      .addSelect('asset.metaverse_name', 'metaverseName')
+                      .addSelect('asset.type_def', 'typeDef')
+                      .addSelect('asset.price', 'price')
+                      .addSelect('asset.reg_addr', 'regAddr')
+                      .addSelect('asset.asset_url', 'assetUrl')
+                      .addSelect('asset.reg_dttm', 'regDttm')
+                      .addSelect("didWallet.jwt", 'jwt')
+                      .addSelect("didWallet.wallet_did", 'did')
+                      .addSelect("user.email", 'email')
+                      .addSelect("nftMint.tx_id", 'txId')
+                      .addSelect("product.reg_name", 'regName')
+                      .addSelect("product.product_name", 'productName')
+                      .where("asset.asset_no = :assetNo", { assetNo });
+
+      const didInfo = await sql.groupBy(`asset.asset_no, didWallet.user_no, user.user_no, nftMint.token_id, 
+        nftMint.tx_id, product.product_no`)
+                          .getRawOne();
+      
+      const createDidAcdgDto: CreateDidAcdgDto = {jwt: didInfo.jwt, id: didInfo.email, did: didInfo.did};
+      const vcDid = await this.didService.createAcdg(createDidAcdgDto);
+      if (!vcDid) {
+        throw new Error('Data Not found.');
+      }
+      console.log("vcDid: "+JSON.stringify(vcDid))
+
+      // 2. 아바타 크리덴셜 발급 요청
+      const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
+      const contractAddress = this.configService.get<string>('CONTRACT_ADDRESS');
+      const attributes = {
+        "assetId": "ARONFT-"+assetNo,
+        "registrantNickName": didInfo.nickName,
+        "assetName": didInfo.assetName,
+        "EntertainmentCorp": didInfo.regName,
+        "goodsName": didInfo.productName,
+        "metaverseName": didInfo.metaverseName,
+        "assetType": didInfo.typeDef,
+        "assetDescription": didInfo.assetDesc,
+        "assetPrice": String(didInfo.price),
+        "registrantEmail": didInfo.email,
+        "registrantWalletAddress": didInfo.regAddr,
+        "txId": didInfo.txId,
+        "contractAddress": contractAddress,
+        "imageURL": didInfo.assetUrl,
+        "registrationDate": didInfo.regDttm.toISOString().split('.')[0] + 'Z'
+      };
+      const createDidAciDto: CreateDidAciDto = {did: vcDid.did, attributes, nickName: didInfo.nickName};
+      const issueVcInfo = await this.didService.createAci(createDidAciDto);
+      if (!issueVcInfo) {
+        throw new Error('VC 등록 오류 - vc');
+      }
+      console.log("issueVcInfo: "+JSON.stringify(issueVcInfo))
+      const parsed = parseVC(issueVcInfo.vc);    
+      const modifyAsset = {vcIssuerName: issueVcInfo.vcIssuerName,
+        vcIssuerLogo: issueVcInfo.vcIssuerLogo, vcTypeName: issueVcInfo.vcTypeName, vcId: parsed.credentialId}
+      console.log("===== modifyAsset : "+JSON.stringify(modifyAsset));
+      await queryRunner.manager.update(Asset, assetNo, modifyAsset);
+
+      // 3. 아바타 크리덴셜 등록  
+      const createDidAcrDto: CreateDidAcrDto = 
+        {
+          id: didInfo.email,
+          jwt: didInfo.jwt,
+          did: didInfo.did,
+          vc: issueVcInfo.vc,
+          vcIssuerName: issueVcInfo.vcIssuerName,
+          vcIssuerLogo: issueVcInfo.vcIssuerLogo,
+          vcTypeName: issueVcInfo.vcTypeName
+        };
+      const vcInfo = await this.didService.createAcr(createDidAcrDto);
+      if (!vcInfo) {
+        throw new Error('VC 등록 오류 - vc');
+      }
+      console.log("vcInfo: "+JSON.stringify(vcInfo))
+      
+      await queryRunner.commitTransaction();
+
+    } catch (e) {
+      this.logger.error(e);
+      // throw new GatewayTimeoutException;
+      throw e;
+    }finally {
       await queryRunner.release();
     }
   }
