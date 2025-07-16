@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, InternalSer
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { NftService } from '../nft/nft.service';
+import { DidService } from '../did/did.service';
 import { GetUserDto } from '../dtos/get_user.dto';
 import { CreateUserDto } from '../dtos/create_user.dto';
 import { User } from '../entities/user.entity';
@@ -16,6 +17,7 @@ export class AuthService {
     private jwtService: JwtService,
     private userService: UserService,
     private nftService: NftService,
+    private didService: DidService,
   ) { }
 
   /**
@@ -76,6 +78,39 @@ export class AuthService {
 
       return { accessToken };
 
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    }
+  }
+
+  /**
+   * 사용자 등록 조회 및 등록된 사용자에게 accessToken 재발행
+   * 
+   * @param getUserDto
+   * @returns 
+   */
+  async getBioAccessToken(getUserDto: GetUserDto): Promise<any> {
+
+    try {
+      const email = getUserDto.email;
+      const userInfo = await this.userService.getOneByEmail(email);
+      if (!userInfo) {
+        throw new NotFoundException('User(email) not found.');
+      }
+
+      // DID 로긴 호출
+      const newJwt = await this.didService.createUser({ id: getUserDto.email, userNo: userInfo.userNo });
+      if(newJwt.jwt){
+        // 토큰생성
+        // const payload = { userNo };
+        const payload = { userNo: userInfo.userNo };
+        const accessToken = this.jwtService.sign(payload);
+
+        return { accessToken };
+      }else{
+        return null
+      }
     } catch (e) {
       this.logger.error(e);
       throw e;

@@ -120,19 +120,19 @@ export class UserController {
    * @param metaverseNo 
    * @returns 
    */
-    // @Delete('/')
-    // @UseGuards(JwtAuthGuard)
-    // @ApiBearerAuth('access-token')
-    // @ApiOperation({ summary: '사용자 정보 삭제', description: '사용자 정보를 삭제한다.' })
-    // @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
-    // @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
-    // @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
-    // @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
-    // async remove(@GetUser() user: User): Promise<void> {
-    //   fileLogger.info('user-delete');
-    //   fileLogger.info(user);
-    //   await this.userService.delete(user);
-    //   return this.responseMessage.response(null);
-    // }
+    @Delete('/')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('access-token')
+    @ApiOperation({ summary: '사용자 정보 삭제', description: '사용자 정보를 삭제한다.' })
+    @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+    @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+    @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
+    @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
+    async remove(@GetUser() user: User): Promise<void> {
+      fileLogger.info('user-delete');
+      fileLogger.info(user);
+      await this.userService.delete(user);
+      return this.responseMessage.response(null);
+    }
   
 }

@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm";
 import { Asset } from "../entities/asset.entity";
+import { FileAsset } from "../entities/file_asset.entity";
 import { Creator } from "../entities/creator.entity";
 import { State } from "../entities/state.entity";
 import { NftMint } from "../entities/nft_mint.entity";
@@ -13,6 +14,10 @@ export const AssetProviders = [
     {
         provide: 'ASSET_REPOSITORY',
         useFactory: (dataSource: DataSource) => dataSource.getRepository(Asset),
+        inject: ['DATA_SOURCE'],
+    },{
+        provide: 'FILE_ASSET_REPOSITORY',
+        useFactory: (dataSource: DataSource) => dataSource.getRepository(FileAsset),
         inject: ['DATA_SOURCE'],
     },{
         provide: 'STATE_REPOSITORY',

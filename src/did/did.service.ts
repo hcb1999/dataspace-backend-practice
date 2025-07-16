@@ -230,8 +230,8 @@ export class DidService {
         jwt: createDidAcdgDto.jwt,
         did: createDidAcdgDto.did,
       };
-      console.log("url: "+url);
-      console.log("data: "+JSON.stringify(data));
+      console.log("===== 1. 아바타 크리덴셜 DID 생성 url: "+url);
+      console.log("===== 1. 아바타 크리덴셜 DID 생성 data: "+JSON.stringify(data));
 
       try {
         const response = await axios.post(url, data, {
@@ -301,8 +301,8 @@ export class DidService {
         nickName: createDidAciDto.nickName,
         attributes: createDidAciDto.attributes
       };
-      console.log("url: "+url);
-      console.log("data: "+JSON.stringify(data));
+      console.log("=====2. 아바타 크리덴셜 발급 url: "+url);
+      console.log("=====2. 아바타 크리덴셜 발급 data: "+JSON.stringify(data));
   
       try {
         const response = await axios.post(url, data, {
@@ -326,8 +326,8 @@ export class DidService {
           return null;
         }
       } catch (error) {
-        // console.log("createAci error : "+JSON.stringify(error));      
-        // console.log("createAci error : "+error.response.data.failureReason);      
+        console.log("createAci error : "+JSON.stringify(error));      
+        console.log("createAci error : "+error.response.data.failureReason);      
         if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_VC_TYPE'){
           console.error("유효하지 않은 VC TYPE 입니다.");
           error.response.data.failureReason = '유효하지 않은 VC TYPE 입니다.';
@@ -335,7 +335,7 @@ export class DidService {
           console.error("유효하지 않은 DID 입니다.");
           error.response.data.failureReason = '유효하지 않은 DID 입니다.';
         }
-  
+        
         throw new InternalServerErrorException({
           statusCode: error.response.status,
           message: error.response.data.failureReason,
@@ -381,8 +381,8 @@ export class DidService {
         vcTypeName: createDidAcrDto.vcTypeName,
         checkBusinessCard: false
       };
-      console.log("url: "+url);
-      console.log("data: "+JSON.stringify(data));
+      console.log("=====3. 아바타 크리덴셜 등록 url: "+url);
+      console.log("=====3. 아바타 크리덴셜 등록 data: "+JSON.stringify(data));
   
       try {
         const response = await axios.post(url, data, {
@@ -396,7 +396,7 @@ export class DidService {
           return null;
         }
       } catch (error) {
-
+        console.error("error: "+JSON.stringify(error));
         if(error.response.data.failureReason == 'FAILURE_REASEON_NO_REGISTRATION'){
           console.error("웹지갑에 등록되지 않은 사용자입니다.");
           error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';

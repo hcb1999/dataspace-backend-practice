@@ -1077,11 +1077,14 @@ export class MarketService {
     await queryRunner.startTransaction();
 
     try {
+      const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
+
        // ETRI API 호출
       // 1. 아바타 크리덴셜 DID 생성 요청
       const sql = this.assetRepository.createQueryBuilder('asset')
                   // .leftJoin(State, 'state', 'asset.state = state.state')
                       .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
+                      .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
                       .leftJoin(NftMint, 'nftMint', 'asset.token_id = nftMint.token_id')
                       .leftJoin(DidWallet, 'didWallet', 'asset.user_no = didWallet.user_no')
                       .leftJoin(User, 'user', 'asset.user_no = user.user_no')
@@ -1101,10 +1104,11 @@ export class MarketService {
                       .addSelect("nftMint.tx_id", 'txId')
                       .addSelect("product.reg_name", 'regName')
                       .addSelect("product.product_name", 'productName')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'assetUrl')
                       .where("asset.asset_no = :assetNo", { assetNo });
 
       const didInfo = await sql.groupBy(`asset.asset_no, didWallet.user_no, user.user_no, nftMint.token_id, 
-        nftMint.tx_id, product.product_no`)
+        nftMint.tx_id, product.product_no, fileAsset.thumbnail_first`)
                           .getRawOne();
       
       const createDidAcdgDto: CreateDidAcdgDto = {jwt: didInfo.jwt, id: didInfo.email, did: didInfo.did};
@@ -1115,7 +1119,6 @@ export class MarketService {
       console.log("vcDid: "+JSON.stringify(vcDid))
 
       // 2. 아바타 크리덴셜 발급 요청
-      const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
       const contractAddress = this.configService.get<string>('CONTRACT_ADDRESS');
       const attributes = {
         "assetId": "ARONFT-"+assetNo,

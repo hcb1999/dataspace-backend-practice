@@ -43,6 +43,9 @@ export class AssetService {
     @Inject('ASSET_REPOSITORY')
     private assetRepository: Repository<Asset>,
 
+      @Inject('FILE_ASSET_REPOSITORY')
+    private fileAssetRepository: Repository<FileAsset>,
+
     @Inject('STATE_REPOSITORY')
     private stateRepository: Repository<State>,
 
@@ -283,6 +286,13 @@ export class AssetService {
       if (!assetInfo) {
         throw new NotFoundException("Data Not found.");
       }
+      const fileAssetInfo = await this.fileAssetRepository.findOne({ where:{fileNo: assetInfo.fileNo} });
+      if (fileAssetInfo) {
+        assetInfo.assetUrl = serverDomain + fileAssetInfo.thumbnailFirst;
+      }else{
+        assetInfo.assetUrl = null;
+      }
+      console.log("==========  assetInfo.assetUrl: "+assetInfo.assetUrl);
 
        // ETRI API 호출
       // 1. 아바타 크리덴셜 DID 생성 요청

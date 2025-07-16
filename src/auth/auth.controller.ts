@@ -49,6 +49,38 @@ export class AuthController {
   }
 
   /**
+   * 사용자 등록 조회 및 등록된 사용자에게 accessToken 재발행
+   * 
+   * @param getUserDto 
+   * @returns accessToken
+   */
+  @Post('/bio')
+  @ApiOperation({ summary: '사용자 등록 조회 및 등록된 사용자에게 accessToken 재발행', 
+    description: '사용자를 등록을 조회하고 등록된 사용자에게는 access-Token을 재발행한다.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  // @ApiCreatedResponse({ description: '로그인 성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: '필수입력 오류' })
+  @ApiOkResponse({
+    description: '성공',
+    schema: {
+      example: {
+        "resultCode": 200,
+        "resultMessage": "SUCESS",
+        "data": {
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTm8iOjEsImlhdCI6MTcyNDY0NDUzMiwiZXhwIjoxNzI0NjQ4MTMyfQ.-BFmJS6gVQJtAfeiBIeDnm8b8KjmdqqdbuzoJpHIvU4"
+        }
+      }
+    }
+  })
+  async getBioAccessToken(@Body(ValidationPipe) getUserDto: GetUserDto): Promise<any> {
+    fileLogger.info('auth');
+    fileLogger.info(getUserDto);
+    const accessToken: any = await this.authService.getBioAccessToken(getUserDto);
+    return this.responseMessage.response(accessToken);
+  }
+
+  /**
   * 사용자 등록 및 JWT Token 발행
   * 
   * @param userDto 

@@ -9,12 +9,14 @@ import { ResponseMessage } from '../common/response';
 import { HttpModule } from '@nestjs/axios';
 import { UserModule } from '../user/user.module';
 import { NftModule } from '../nft/nft.module';
+import { DidModule } from '../did/did.module';
 
 @Module({
   imports: [
     HttpModule,
     UserModule,
     NftModule,
+    DidModule,
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.register({
         secret: jwtConstants.SECRET,

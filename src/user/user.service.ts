@@ -168,8 +168,10 @@ export class UserService {
         throw new UnauthorizedException("Unauthorized User.");
       }
 
-      let data = { useYn: 'N' }
-      await this.userRepository.update(userNo, data);
+      // let data = { useYn: 'N' }
+      // await this.userRepository.update(userNo, data);
+
+      await this.userRepository.delete( userNo);
 
     } catch (e) {
       this.logger.error(e);
