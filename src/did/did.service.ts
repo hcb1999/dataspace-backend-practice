@@ -245,7 +245,7 @@ export class DidService {
           return null;
         }
       } catch (error) {
-        // console.error("error : "+JSON.stringify(error));
+        console.error("error : "+JSON.stringify(error));
         console.error("error : "+JSON.stringify(error.response.data.failureReason));
         if(error.response.data.failureReason == 'FAILURE_REASEON_NO_REGISTRATION'){
           console.error("웹지갑에 등록되지 않은 사용자입니다.");
@@ -304,6 +304,15 @@ export class DidService {
       console.log("=====2. 아바타 크리덴셜 발급 url: "+url);
       console.log("=====2. 아바타 크리덴셜 발급 data: "+JSON.stringify(data));
   
+      /*
+      // 비동기 딜레이 유틸리티 함수
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+      console.log("5초 대기 시작...");
+      await delay(5000); // ✅ 여기서 5초간 대기합니다.
+      console.log("5초 대기 완료.");
+      */
+
       try {
         const response = await axios.post(url, data, {
           headers: { "Content-Type": "application/json" },

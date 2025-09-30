@@ -11,6 +11,7 @@ import { SharpPipe } from '../common/sharp.pipe';
 import { CreateAssetDto } from '../dtos/create_asset.dto';
 import { ModifyAssetDto } from '../dtos/modify_asset.dto';
 import { GetAssetDto } from '../dtos/get_asset.dto';
+import { GetAssetListDto } from '../dtos/get_asset_list.dto';
 import fileLogger from '../common/logger';
 import * as moment from 'moment-timezone';
 
@@ -292,6 +293,89 @@ export class AssetController {
   })
   async getAssetList(@Query() getAssetDto: GetAssetDto): Promise<any> {
     const assetList = await this.assetService.getAssetList(getAssetDto);
+    return this.responseMessage.response(assetList);
+  }
+
+  /**
+   * 에셋 목록 조회(에셋 번호 리스트)
+   * 
+   * @param user 
+   * @param getAssetDto 
+   * @returns 
+   */
+  @Post('/list')
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '에셋 목록 조회', description: '에셋 목록을 조회한다.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: '필수입력 오류' })
+  @ApiOkResponse({
+    description: '성공',
+    schema: {
+      example: {
+        "resultCode": 200,
+        "resultMessage": "SUCESS",
+        "data": {
+          "pageSize": 10,
+          "totalCount": 2,
+          "totalPage": 1,
+          "list": [
+            {
+              "price": 0.2,
+              "assetNo": 81,
+              "assetRegName": "엔터사 2",
+              "assetName": "bling t-shirt",
+              "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
+              "adTarget": 3,
+              "metaverseName": "K-POP 월드",
+              "adType": 2,
+              "typeDef": "K-티셔츠",
+              "stateDsec": "판매완료",
+              "tokenId": "16",
+              "fileNameFirst": "test1.jpg",
+              "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241030/1730247629590.jpg",
+              "thumbnailFirst": "https://kapi-dev.avataroad.com/thumbnail/20241030/1730247629590.jpg",
+              "fileNameSecond": "671f001eb1daf0aac58c4924.glb",
+              "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241030/1730247629591.glb",
+              "thumbnailSecond": "https://kapi-dev.avataroad.com/",
+              "assetVcId": "asset_vc_id-1",
+              "fileNameThird": "",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/"
+            },
+            {
+              "price": 0.3,
+              "assetNo": 80,
+              "assetRegName": "크리에이터 1",
+              "assetName": "테스트 굿즈1용 에셋1",
+              "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
+              "adTarget": 3,
+              "metaverseName": "K-POP 월드",
+              "adType": 1,
+              "typeDef": "K-셔츠",
+              "stateDsec": "판매완료",
+              "tokenId": "1",
+              "fileNameFirst": "test1.glb",
+              "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
+              "thumbnailFirst": "https://kapi-dev.avataroad.com/",
+              "fileNameSecond": "test1.png",
+              "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
+              "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
+              "fileNameThird": "test1-1.glb",
+              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181477346.glb",
+              "thumbnailThird": "https://kapi-dev.avataroad.com/",
+              "assetVcId": "asset_vc_id-2",
+            }
+          ]
+        }
+      }
+    }
+  })
+  async getAssetListbyNoList(@Body() getAssetDto: GetAssetListDto): Promise<any> {
+    fileLogger.info('asset-list');
+    fileLogger.info(`assetIds: ${getAssetDto.assetIds}`);
+    const assetList = await this.assetService.getAssetListNoList(getAssetDto.assetIds);
     return this.responseMessage.response(assetList);
   }
 

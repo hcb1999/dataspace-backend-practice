@@ -314,18 +314,19 @@ export class UserService {
 
       // DidWallet 저장
       let didWalletInfo = {userNo, jwt: userJwt.jwt, walletDid: userDid.did};
-      // console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
+      console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
       const newDidWallet = queryRunner.manager.create(DidWallet, didWalletInfo);
       await queryRunner.manager.save<DidWallet>(newDidWallet);
 
       // NftWallet 저장
       let nftWalletInfo = {userNo, account, pkey};
-      // console.log("nftWalletInfo : "+JSON.stringify(nftWalletInfo));
+      console.log("nftWalletInfo : "+JSON.stringify(nftWalletInfo));
       const newNftWallet = queryRunner.manager.create(NftWallet, nftWalletInfo);
       await queryRunner.manager.save<NftWallet>(newNftWallet);
       
       // faucet userNo 찾기
-      const faucetEmail =  this.configService.get<string>('FAUCET_EMAIL');
+      // const faucetEmail =  this.configService.get<string>('FAUCET_EMAIL');
+      const faucetEmail =  this.configService.get<string>('FAUCET_ADDRESS');
       const faucetAmount =  this.configService.get<number>('FAUCET_AMOUNT');
       // console.log("===== faucetEmail : "+ JSON.stringify(faucetEmail)); 
       // console.log("===== faucetAmount : "+ JSON.stringify(faucetAmount)+" type : " + typeof(faucetAmount)); 

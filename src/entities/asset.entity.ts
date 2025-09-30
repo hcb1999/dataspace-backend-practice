@@ -49,6 +49,9 @@ export class Asset extends BaseEntity {
   @Column({ name: "asset_desc", type: "text", comment: "에셋 설명", nullable: true })
   assetDesc: string;
   
+  @Column({ name: "asset_desc_kor", type: "text", comment: "에셋 설명(한글)", nullable: true })
+  assetDescKor: string;
+
   @Column({ name: "asset_url", type: "varchar", length: 256, comment: "에셋 url", nullable: true })
   assetUrl: string;
 

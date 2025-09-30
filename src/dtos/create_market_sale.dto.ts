@@ -20,7 +20,7 @@ export class CreateMarketSaleDto {
 
   @IsOptional()
   @IsString()
-  @Length(1, 256)
+  // @Length(1, 256)
   @ApiProperty({ required: false, description: '에셋 설명' })
   readonly assetDesc: string;
 
@@ -33,7 +33,7 @@ export class CreateMarketSaleDto {
   @IsOptional() 
   @IsNumber()
   @Type(() => Number)
-  @ApiProperty({ required: false, description: '메타버스 업체 : 2(로블록스)', default: 2 })
+  @ApiProperty({ required: false, description: '메타버스 업체 : 2(제페토)', default: 2 })
   readonly adTarget: number;
 
   @IsNumber()

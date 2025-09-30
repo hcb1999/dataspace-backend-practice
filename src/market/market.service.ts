@@ -19,6 +19,7 @@ import { ConfigService } from '@nestjs/config';
 import { CreateMarketDto} from '../dtos/create_market.dto';
 import { ModifyMarketDto } from '../dtos/modify_market.dto';
 import { GetMarketDto } from '../dtos/get_market.dto';
+import { DeleteMarketSaleJwtDto} from '../dtos/delete_market_sale_jwt.dto';
 import { CreateMintDto } from '../dtos/create_mint.dto';
 import { CreateMarketSaleDto} from '../dtos/create_market_sale.dto';
 import { CreateProductDto } from '../dtos/create_product.dto';
@@ -69,6 +70,9 @@ export class MarketService {
 
     @Inject('NFT_WALLET_REPOSITORY')
     private nftWalletRepository: Repository<NftWallet>,
+
+    @Inject('DID_WALLET_REPOSITORY')
+    private didWalletRepository: Repository<DidWallet>,
 
     @Inject('NFT_MINT_REPOSITORY')
     private nftMintRepository: Repository<NftMint>,
@@ -813,6 +817,37 @@ export class MarketService {
     }
   }
 
+
+/**
+ *  사용자 JWT Token 삭제
+ * 
+ * @param createMarketSaleDto 
+ */
+  async delJwt(deleteMarketSaleJwtDto: DeleteMarketSaleJwtDto): Promise<any> {
+    
+    try {
+      const email = deleteMarketSaleJwtDto.email;
+   
+      // 1. 사용자 체크
+      let user = await this.userService.getOneByEmail(email);
+      if (!user) {
+        throw new NotFoundException('Data Not found. : 사용자 정보');
+      }
+      console.log("user: "+JSON.stringify(user));
+   
+      // 1. 사용자의 didWallet 체크
+      let didWallet = await this.userService.getDidWallet(user.userNo);
+      if (didWallet) {
+          await this.didWalletRepository.update({ userNo: user.userNo}, {jwt: null});
+      }
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    } 
+
+  }
+
+
 /**
  *  사용자 에셋 판매 등록
  * 
@@ -880,7 +915,23 @@ export class MarketService {
 
       }else{
         console.log("market-didWallet이 있어요.");
+        if(didWallet.jwt === null || didWallet.jwt === undefined) {
+            // 1.1. 사용자 연결 인증 요청
+            const createDidUserDto: CreateDidUserDto = {id: email};
+              const userJwt = await this.didService.createUser(createDidUserDto);
+              if (!userJwt) {      
+                throw new NotFoundException('DID 등록 오류 - jwt');
+              }
+              console.log("userJwt: "+JSON.stringify(userJwt))
+
+          // DidWallet에 JWT수정
+          let didWalletInfo = {jwt: userJwt.jwt};
+          // console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
+          await queryRunner.manager.update(DidWallet, {userNo: user.userNo}, didWalletInfo);
+        }
+
       }
+
 
       // 2. charged 체크
       // Charged 상태 업데이트 될 때까지 대기
@@ -1092,6 +1143,7 @@ export class MarketService {
                       .addSelect('asset.reg_name', 'nickName')
                       .addSelect('asset.asset_name', 'assetName')
                       .addSelect('asset.asset_desc', 'assetDesc')
+                      .addSelect('asset.asset_desc_kor', 'assetDescKor')
                       .addSelect('asset.metaverse_name', 'metaverseName')
                       .addSelect('asset.type_def', 'typeDef')
                       .addSelect('asset.price', 'price')

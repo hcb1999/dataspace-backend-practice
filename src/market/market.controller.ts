@@ -12,6 +12,7 @@ import { CreateMarketDto} from '../dtos/create_market.dto';
 import { ModifyMarketDto } from '../dtos/modify_market.dto';
 import { GetMarketDto } from '../dtos/get_market.dto';
 import { CreateMarketSaleDto} from '../dtos/create_market_sale.dto';
+import { DeleteMarketSaleJwtDto} from '../dtos/delete_market_sale_jwt.dto';
 import fileLogger from '../common/logger';
 import * as moment from 'moment-timezone';
 
@@ -507,6 +508,38 @@ export class MarketController {
       });  
 
     }
+
+  /**
+   * 사용자 JWT Token 삭제
+   * 
+   * @param user 
+   * @param deleteMarketSaleJwtDto 
+   * @returns 
+   */
+  @Post("/sale/delJwt")
+  @ApiOperation({ summary: '사용자 JWT Token 삭제', description: '사용자 JWT Token 정보를 삭제한다.' })
+  @ApiResponse({status:HttpStatus.INTERNAL_SERVER_ERROR, description:'서버 에러'})
+  @ApiResponse({status:HttpStatus.BAD_REQUEST, description:'입력값 오류'})
+  // @ApiResponse({status:HttpStatus.NOT_FOUND, description:'등록된 엔터사 에셋 미존재'})
+  @ApiCreatedResponse({description: '성공', schema: {example: {resultCode: HttpStatus.CREATED,resultMessage: 'SUCCESS'}}})
+  @ApiOkResponse({
+    description: '성공',
+    schema: {
+      example: {
+        "resultCode": 200,
+        "resultMessage": "SUCCESS",
+        "data": {
+          "marketNo": 28
+        }
+      }
+    }
+  })
+  async delJwt( @Body(ValidationPipe) deleteMarketSaleJwtDto: DeleteMarketSaleJwtDto): Promise<any> {
+    fileLogger.info('market-delJwt');
+    fileLogger.info(deleteMarketSaleJwtDto);
+    await this.marketService.delJwt(deleteMarketSaleJwtDto);
+    return this.responseMessage.response(null);
+  }
 
   /**
    * 사용자 에셋 판매 등록

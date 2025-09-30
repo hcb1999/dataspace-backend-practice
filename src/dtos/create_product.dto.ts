@@ -52,7 +52,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
-  @Length(1, 256)
+  // @Length(1, 256)
   @ApiProperty({ description: '굿즈 설명' , required: false})
   readonly productDesc: string;
 

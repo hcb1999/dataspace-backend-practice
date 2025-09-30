@@ -5,7 +5,7 @@ export class DidWallet extends BaseEntity {
   @PrimaryColumn({name:"user_no", type:"int4", comment:"사용자 번호"})
   userNo: number;
 
-  @Column({ name:"jwt", type:"varchar", length:256, comment:"jwt", nullable: true })
+  @Column({ name:"jwt", type:"varchar", length:512, comment:"jwt", nullable: true })
   jwt: string;
 
   @Column({ name:"wallet_did", type:"varchar", length:256, comment:"지갑 DID", nullable: true })

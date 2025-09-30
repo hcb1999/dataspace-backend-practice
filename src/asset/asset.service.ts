@@ -732,6 +732,7 @@ export class AssetService {
                       .addSelect('asset.state', 'state')
                       .addSelect('state.state_desc', 'stateDesc')
                       .addSelect('asset.asset_desc', 'assetDesc')
+                      .addSelect('asset.asset_desc_kor', 'assetDescKor')
                       .addSelect('asset.start_dttm', 'startDttm')
                       .addSelect('asset.end_dttm', 'endDttm')
                       .addSelect('asset.reg_dttm', 'regDttm')
@@ -827,6 +828,7 @@ export class AssetService {
                       .addSelect('product.product_name', 'productName')
                       .addSelect('asset.price', 'price')
                       .addSelect('asset.asset_desc', 'assetDesc')
+                      .addSelect('asset.asset_desc_kor', 'assetDescKor')
                       .addSelect('asset.start_dttm', 'startDttm')
                       .addSelect('asset.end_dttm', 'endDttm')
                       .addSelect('asset.reg_dttm', 'regDttm')
@@ -1023,6 +1025,63 @@ export class AssetService {
       console.log("list : "+list.length);
 
       return new PageResponse(totalCount, getAssetDto.pageSize, list);
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    }
+  }
+
+  /**
+   * 에셋 목록 조회(에셋 번호 리스트)
+   * 
+   * @param getAssetDto
+   * @returns 
+   */
+  async getAssetListNoList(assetIds: number[]): Promise<any> {
+
+    const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
+
+    try {
+      const sql = this.assetRepository.createQueryBuilder('asset')
+                      .leftJoin(State, 'state', 'asset.state = state.state')
+                      .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
+                      .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
+                            // .innerJoin(NftMint, 'nftMint', 'asset.asset_no = nftMint.asset_no')
+                      .select('asset.asset_no', 'assetNo')
+                      // .addSelect("asset.reg_addr", 'regAddr')
+                      .addSelect("asset.reg_name", 'assetRegName')
+                      .addSelect("asset.asset_name", 'assetName')
+                      .addSelect("asset.asset_url", 'assetUrl')
+                      .addSelect("asset.ad_target", 'adTarget')
+                      .addSelect("asset.metaverse_name", 'metaverseName')
+                      .addSelect("asset.ad_type", 'adType')
+                      .addSelect("asset.type_def", 'typeDef')
+                      // .addSelect('asset.state', 'state')
+                      .addSelect('state.state_desc', 'stateDsec')
+                      // .addSelect('product.reg_name', 'productRegName')
+                      // .addSelect('product.product_name', 'productName')
+                      .addSelect('asset.price', 'price')
+                      .addSelect('asset.token_id', 'tokenId')
+                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
+                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect("fileAsset.file_name_third", 'fileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
+                      .addSelect('asset.vc_id', 'assetVcId')
+                      .where('asset.asset_no IN (:...assetIds)', { assetIds })
+                      .orderBy('asset.asset_no', 'DESC')
+                      .groupBy(`asset.asset_no, state.state_desc, fileAsset.file_no`)
+
+      const list = await sql.getRawMany();
+      const totalCount = list.length; 
+      console.log("totalCount : "+totalCount);
+
+      return new PageResponse(totalCount, 10, list);
 
     } catch (e) {
       this.logger.error(e);
