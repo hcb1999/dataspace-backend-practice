@@ -152,7 +152,7 @@ export class AssetController {
   @Patch('/:assetNo/state/:state')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: '에셋 판매 변경', description: '에셋 판매 상태를 변경한다.' })
+  @ApiOperation({ summary: '에셋 판매 상태 변경', description: '에셋 판매 상태를 변경한다.' })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
