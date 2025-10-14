@@ -817,6 +817,39 @@ export class MarketService {
     }
   }
 
+  /**
+   * 마켓 판매 상태 변경
+   *
+   * @param user
+   * @param marketNo
+   */
+  async updateState(user: User, marketNo: number, state: number): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const userNo = user.userNo;
+      const marketInfo = await this.marketRepository.findOne({
+        where: { marketNo, saleAddr: user.nftWalletAccount },
+      });
+      if (!marketInfo) {
+        throw new NotFoundException('Data Not found. : 마켓 에셋 판매 정보');
+      }
+
+      // 마켓 판매 상태 정보 수정
+      let data = { state: 'S'+state };
+      await this.marketRepository.update(marketNo, data);
+
+      await queryRunner.commitTransaction();
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 
 /**
  *  사용자 JWT Token 삭제

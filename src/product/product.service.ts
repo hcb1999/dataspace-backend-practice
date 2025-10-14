@@ -423,12 +423,12 @@ export class ProductService {
   }
 
   /**
-   * 굿즈 게시 중지
+   * 굿즈 게시 상태 변경
    *
    * @param user
    * @param productNo
    */
-  async updateStop(user: User, productNo: number): Promise<void> {
+  async updateState(user: User, productNo: number, state: number): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -443,7 +443,7 @@ export class ProductService {
       }
 
       // 굿즈 상태 정보 수정
-      let data = { state: 'N3' };
+      let data = { state: 'N'+state };
       await this.productRepository.update(productNo, data);
 
       await queryRunner.commitTransaction();
@@ -455,6 +455,74 @@ export class ProductService {
       await queryRunner.release();
     }
   }
+
+  /**
+   * 굿즈 게시 초기화
+   *
+   * @param user
+   * @param productNo
+   */
+  // async updateReset(user: User, productNo: number): Promise<void> {
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+
+  //   try {
+  //     const userNo = user.userNo;
+  //     const productInfo = await this.productRepository.findOne({
+  //       where: { productNo, userNo },
+  //     });
+  //     if (!productInfo) {
+  //       throw new NotFoundException('Data Not found. : 굿즈');
+  //     }
+
+  //     // 굿즈 상태 정보 수정 - 게시초기화
+  //     let data = { state: 'N1' };
+  //     await this.productRepository.update(productNo, data);
+
+  //     await queryRunner.commitTransaction();
+
+  //   } catch (e) {
+  //     this.logger.error(e);
+  //     throw e;
+  //   } finally {
+  //     await queryRunner.release();
+  //   }
+  // }
+
+  /**
+   * 굿즈 게시 중지
+   *
+   * @param user
+   * @param productNo
+   */
+  // async updateStop(user: User, productNo: number): Promise<void> {
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+
+  //   try {
+  //     const userNo = user.userNo;
+  //     const productInfo = await this.productRepository.findOne({
+  //       where: { productNo, userNo },
+  //     });
+  //     if (!productInfo) {
+  //       throw new NotFoundException('Data Not found. : 굿즈');
+  //     }
+
+  //     // 굿즈 상태 정보 수정 - 게시중지
+  //     let data = { state: 'N3' };
+  //     await this.productRepository.update(productNo, data);
+
+  //     await queryRunner.commitTransaction();
+
+  //   } catch (e) {
+  //     this.logger.error(e);
+  //     throw e;
+  //   } finally {
+  //     await queryRunner.release();
+  //   }
+  // }
 
   /**
    * 굿즈 정보 조회

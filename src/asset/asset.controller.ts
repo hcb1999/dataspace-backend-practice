@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Put, Param, Query, Logger, Req, UseGuards, UseInterceptors, UploadedFile, HttpStatus, Delete, ValidationPipe, UploadedFiles } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Patch, Param, Query, Logger, Req, UseGuards, UseInterceptors, UploadedFile, HttpStatus, Delete, ValidationPipe, UploadedFiles } from '@nestjs/common';
 import { AssetService } from './asset.service';
-import { ApiBearerAuth, ApiConsumes, ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiParam, ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GetUser } from '../auth/get_user.decorator';
 import { User } from '../entities/user.entity';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -143,6 +143,38 @@ export class AssetController {
   }
 
     /**
+   * 에셋 판매 상태 변경
+   * 
+   * @param user 
+   * @param assetNo 
+   * @returns 
+   */
+  @Patch('/:assetNo/state/:state')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '에셋 판매 변경', description: '에셋 판매 상태를 변경한다.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
+  @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
+  @ApiParam({
+  name: 'state',
+  description: '에셋 판매 상태 (1: 판매전, 2: 판매중, 3: 판매중지, 4: 판매종료, 5: 판매완료)',
+  })
+  async modifyState(
+    @GetUser() user: User, 
+    @Param('assetNo') assetNo: number,
+    @Param('state') state: number
+  ): Promise<void> {
+    fileLogger.info('asset-update state');
+    fileLogger.info(user);
+    fileLogger.info(`assetNo: ${assetNo}`);
+    fileLogger.info(`state: ${state}`);
+    await this.assetService.updateState(user, assetNo, state);
+    return this.responseMessage.response(null);
+  }
+
+    /**
    * 에셋 판매중지하기
    * 
    * @param user 
@@ -150,21 +182,21 @@ export class AssetController {
    * @param modifyAssetS3Dto 
    * @returns 
    */
-    @Put('/stop/:assetNo')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth('access-token')
-    @ApiOperation({ summary: '에셋 판매중지하기', description: '에셋 판매중지를 한다.' })
-    @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
-    @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
-    @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
-    @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
-    async modifyStateS3(@GetUser() user: User, @Param('assetNo') assetNo: number): Promise<void> {
-      fileLogger.info('asset-update state');
-      fileLogger.info(user);
-      fileLogger.info(`assetNo: ${assetNo}`);
-      await this.assetService.updateStop(user, assetNo);
-      return this.responseMessage.response(null);
-    }
+    // @Put('/stop/:assetNo')
+    // @UseGuards(JwtAuthGuard)
+    // @ApiBearerAuth('access-token')
+    // @ApiOperation({ summary: '에셋 판매중지하기', description: '에셋 판매중지를 한다.' })
+    // @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+    // @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+    // @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
+    // @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
+    // async modifyStateS3(@GetUser() user: User, @Param('assetNo') assetNo: number): Promise<void> {
+    //   fileLogger.info('asset-update state');
+    //   fileLogger.info(user);
+    //   fileLogger.info(`assetNo: ${assetNo}`);
+    //   await this.assetService.updateStop(user, assetNo);
+    //   return this.responseMessage.response(null);
+    // }
 
   /**
    * 에셋 정보 삭제

@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Put, Param, Query, Logger, Req, UseGuards, UseInterceptors, UploadedFiles, HttpStatus, Delete, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Patch, Param, Query, Logger, Req, UseGuards, UseInterceptors, UploadedFiles, HttpStatus, Delete, ValidationPipe } from '@nestjs/common';
 import { MarketService } from './market.service';
-import { ApiBearerAuth, ApiConsumes, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiCreatedResponse, ApiParam, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GetUser } from '../auth/get_user.decorator';
 import { User } from '../entities/user.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -507,6 +507,38 @@ export class MarketController {
         regDttm: moment(market.regDttm).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss'),
       });  
 
+    }
+
+    /**
+     * 마켓 판매 상태 변경
+     * 
+     * @param user 
+     * @param marketNo 
+     * @returns 
+     */
+    @Patch('/:marketNo/state/:state')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('access-token')
+    @ApiOperation({ summary: '마켓 판매 변경', description: '마켓 판매 상태를 변경한다.' })
+    @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+    @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+    @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
+    @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
+    @ApiParam({
+    name: 'state',
+    description: '마켓 판매 상태 (1: 판매전, 2: 판매중, 3: 판매중지, 4: 판매종료, 5: 판매완료)',
+    })
+    async modifyState(
+      @GetUser() user: User, 
+      @Param('marketNo') marketNo: number,
+      @Param('state') state: number
+    ): Promise<void> {
+      fileLogger.info('market-update state');
+      fileLogger.info(user);
+      fileLogger.info(`marketNo: ${marketNo}`);
+      fileLogger.info(`state: ${state}`);
+      await this.marketService.updateState(user, marketNo, state);
+      return this.responseMessage.response(null);
     }
 
   /**

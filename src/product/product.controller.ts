@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Put, Param, Query, Logger, Req, UseGuards, UseInterceptors, UploadedFile, HttpStatus, Delete, ValidationPipe, UploadedFiles } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Patch, Param, Query, Logger, Req, UseGuards, UseInterceptors, UploadedFile, HttpStatus, Delete, ValidationPipe, UploadedFiles } from '@nestjs/common';
 import { ProductService } from './product.service';
-import { ApiBearerAuth, ApiConsumes, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiCreatedResponse, ApiParam, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GetUser } from '../auth/get_user.decorator';
 import { User } from '../entities/user.entity';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -119,27 +119,82 @@ export class ProductController {
   }
 
   /**
+   * 굿즈 게시 상태 변경
+   * 
+   * @param user 
+   * @param productNo 
+   * @returns 
+   */
+  @Patch('/:productNo/state/:state')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '굿즈 게시 상태 변경', description: '굿즈 게시 상태를 변경한다.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
+  @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
+  @ApiParam({
+  name: 'state',
+  description: '굿즈 게시 상태 (1: 게시전, 2: 게시중, 3: 게시중지, 4: 게시종료)',
+  })
+  async modifyState(
+    @GetUser() user: User, 
+    @Param('productNo') productNo: number,
+    @Param('state') state: number
+  ): Promise<void> {
+    fileLogger.info('product-update state');
+    fileLogger.info(user);
+    fileLogger.info(`productNo: ${productNo}`);
+    fileLogger.info(`state: ${state}`);
+    await this.productService.updateState(user, productNo, state);
+    return this.responseMessage.response(null);
+  }
+
+  /**
+   * 굿즈 게시 초기화
+   * 
+   * @param user 
+   * @param productNo 
+   * @returns 
+   */
+  // @Put('/reset/:productNo')
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth('access-token')
+  // @ApiOperation({ summary: '굿즈 게시 초기화', description: '굿즈 게시를 초기화한다.' })
+  // @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  // @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+  // @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
+  // @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
+  // async resetState(@GetUser() user: User, @Param('productNo') productNo: number): Promise<void> {
+  //   fileLogger.info('product-update reset');
+  //   fileLogger.info(user);
+  //   fileLogger.info(`productNo: ${productNo}`);
+  //   await this.productService.updateReset(user, productNo);
+  //   return this.responseMessage.response(null);
+  // }
+
+  /**
    * 굿즈 게시 중지
    * 
    * @param user 
    * @param productNo 
    * @returns 
    */
-  @Put('/stop/:productNo')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: '굿즈 게시 중지', description: '굿즈 게시를 중지한다.' })
-  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
-  @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
-  async modifyState(@GetUser() user: User, @Param('productNo') productNo: number): Promise<void> {
-    fileLogger.info('product-update stop');
-    fileLogger.info(user);
-    fileLogger.info(`productNo: ${productNo}`);
-    await this.productService.updateStop(user, productNo);
-    return this.responseMessage.response(null);
-  }
+  // @Put('/stop/:productNo')
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth('access-token')
+  // @ApiOperation({ summary: '굿즈 게시 중지', description: '굿즈 게시를 중지한다.' })
+  // @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  // @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+  // @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: '권한없은 사용자' })
+  // @ApiOkResponse({ description: '성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
+  // async modifyState(@GetUser() user: User, @Param('productNo') productNo: number): Promise<void> {
+  //   fileLogger.info('product-update stop');
+  //   fileLogger.info(user);
+  //   fileLogger.info(`productNo: ${productNo}`);
+  //   await this.productService.updateStop(user, productNo);
+  //   return this.responseMessage.response(null);
+  // }
 
   /**
    * 굿즈 목록 조회

@@ -659,31 +659,65 @@ export class AssetService {
   }
 
   /**
+   * 에셋 판매 상태 변경
+   *
+   * @param user
+   * @param assetNo
+   */
+  async updateState(user: User, assetNo: number, state: number): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const userNo = user.userNo;
+      const assetInfo = await this.assetRepository.findOne({
+        where: { assetNo, userNo },
+      });
+      if (!assetInfo) {
+        throw new NotFoundException('Data Not found. : 마켓 에셋 판매 정보');
+      }
+
+      // 에셋 판매 상태 정보 수정
+      let data = { state: 'S'+state };
+      await this.assetRepository.update(assetNo, data);
+
+      await queryRunner.commitTransaction();
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
    * 에셋 판매중지하기
    * 
    * @param user 
    * @param assetNo 
    */
-  async updateStop(user: User, assetNo: number): Promise<void> {
+  // async updateStop(user: User, assetNo: number): Promise<void> {
 
-    try {
+  //   try {
 
-      const userNo = user.userNo;
-      const assetInfo = await this.assetRepository.findOne({ where:{assetNo, userNo} });
+  //     const userNo = user.userNo;
+  //     const assetInfo = await this.assetRepository.findOne({ where:{assetNo, userNo} });
 
-      if (!assetInfo) {
-        throw new NotFoundException("Data Not found. : 에셋");
-      }
+  //     if (!assetInfo) {
+  //       throw new NotFoundException("Data Not found. : 에셋");
+  //     }
 
-      // 에셋 상태 정보 수정
-      const data = { state: 'S3' };
-      await this.assetRepository.update(assetNo, data);
+  //     // 에셋 상태 정보 수정
+  //     const data = { state: 'S3' };
+  //     await this.assetRepository.update(assetNo, data);
 
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }
-  }
+  //   } catch (e) {
+  //     this.logger.error(e);
+  //     throw e;
+  //   }
+  // }
 
   /**
    * 에셋 정보 조회 (마이페이지)
