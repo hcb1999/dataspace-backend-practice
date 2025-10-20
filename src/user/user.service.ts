@@ -136,13 +136,20 @@ export class UserService {
       const userNo = user.userNo;
       const userInfo = await this.userRepository.findOne({ where:{userNo} });
       if (!userInfo) {
-        throw new NotFoundException("Data Not found.");
+        throw new NotFoundException("Data Not found.: user");
+      }
+
+      const didWalletInfo = await this.didWalletRepository.findOne({ where:{userNo} });
+      if (!didWalletInfo) {
+        throw new NotFoundException("Data Not found.: didWallet");
       }
 
       userInfo['account'] = user.nftWalletAccount;
       userInfo['privateKey'] = user.nftWalletAccountPKey;
       userInfo['accountUrl'] = process.env.BC_EXPLORER+"accounts/"+user.nftWalletAccount;
-      
+      userInfo['didWalletUrl'] = process.env.DID_WALLET_LOGIN_URL;
+      userInfo['didWalletInfo'] = didWalletInfo.walletDid;
+
       return userInfo;
 
     } catch (e) {

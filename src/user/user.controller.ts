@@ -98,7 +98,9 @@ export class UserController {
           "updDttm": "2024-09-04 21:04:04",
           "account": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
           "privateKey": "0x123456abcdef123456abcdef123456abcdef123456abcdef123456abcdef1234",
-          "accountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906"
+          "accountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+          "didWalletUrl": "https://tmvwallet.dreamsecurity.com:28080/websafe/AvatarVirtualWalletList/www.avataroad.com",
+          "didWalletInfo": "did:tmvmeta:XJL8qkXjTf_Zauv6lU-Qh3nxMr09yH"
         }
       }
     }

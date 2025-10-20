@@ -324,6 +324,7 @@ export class PurchaseService {
                       .addSelect("market.price", 'price')                      
                       .addSelect("asset.metaverse_name", 'metaverseName')
                       .addSelect("asset.type_def", 'typeDef')
+                      .addSelect('purchase.state', 'state')      
                       .addSelect('state.state_desc', 'stateDesc')                      
                       .addSelect('purchase.pay_dttm', 'payDttm')     
                       .addSelect('purchase.purchase_cnt', 'purchaseCnt')                      

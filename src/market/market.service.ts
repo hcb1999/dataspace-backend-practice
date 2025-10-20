@@ -20,6 +20,7 @@ import { CreateMarketDto} from '../dtos/create_market.dto';
 import { ModifyMarketDto } from '../dtos/modify_market.dto';
 import { GetMarketDto } from '../dtos/get_market.dto';
 import { DeleteMarketSaleJwtDto} from '../dtos/delete_market_sale_jwt.dto';
+import { DeleteMarketSaleDto} from '../dtos/delete_market_sale.dto';
 import { CreateMintDto } from '../dtos/create_mint.dto';
 import { CreateMarketSaleDto} from '../dtos/create_market_sale.dto';
 import { CreateProductDto } from '../dtos/create_product.dto';
@@ -27,6 +28,7 @@ import { CreateUserDto } from '../dtos/create_user.dto';
 import { CreateDidUserDto } from '../dtos/create_did_user.dto';
 import { CreateDidWalletDto } from '../dtos/create_did_wallet.dto';
 import { CreateAssetDto } from '../dtos/create_asset.dto';
+import { CreateBurnDto } from '../dtos/create_burn.dto';
 import { CreateContractDto } from '../dtos/create_contract.dto';
 import { NftWallet } from '../entities/nft_wallet.entity';
 import { NftMint } from "../entities/nft_mint.entity";
@@ -36,6 +38,7 @@ import { CreateDidAciDto } from '../dtos/create_did_aci.dto';
 import { CreateDidAcrDto } from '../dtos/create_did_acr.dto';
 import { createVC, parseVC } from 'src/common/vc-utils';
 import { PageResponse } from 'src/common/page.response';
+import { token } from 'src/nft/typechain-types/@openzeppelin/contracts';
 
 @Injectable()
 export class MarketService {
@@ -468,12 +471,15 @@ export class MarketService {
         const sql = this.marketRepository.createQueryBuilder('market')
                       .leftJoin(Asset, 'asset', 'asset.asset_no = market.asset_no')
                       .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                      .leftJoin(State, 'state', 'state.state = market.state')
                       .select('market.market_no', 'marketNo')
                       .addSelect('market.contract_no', 'contractNo')
                       .addSelect('market.market_asset_name', 'marketAssetName')
                       .addSelect('market.sale_addr', 'saleAccount')
                       .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || market.sale_addr`, 'saleAccountUrl')
                       .addSelect('market.sale_user_name', 'saleUserName')
+                      .addSelect('market.state', 'state')
+                      .addSelect('state.state_desc', 'stateDesc')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
                       .addSelect("asset.asset_url", 'assetUrl')
@@ -503,7 +509,7 @@ export class MarketService {
                                 asset.asset_desc, market.market_asset_name, asset.asset_url, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
                                 fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
                                 fileAsset.file_path_second, fileAsset.thumbnail_second, fileAsset.file_name_third,
-                                fileAsset.file_path_third, fileAsset.thumbnail_third, asset.vc_id`)
+                                fileAsset.file_path_third, fileAsset.thumbnail_third, state.state_desc, asset.vc_id`)
                               .getRawMany();
 
         const totalCount = await sql.getCount(); 
@@ -714,7 +720,7 @@ export class MarketService {
                       .addSelect('market.market_asset_name', 'marketAssetName')
                       .addSelect('market.sale_addr', 'saleAccount')
                       .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || market.sale_addr`, 'saleAccountUrl')
-                      .addSelect('market.sale_user_name', 'saleUserName')                      
+                      .addSelect('market.sale_user_name', 'saleUserName')                     
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
                       .addSelect("asset.asset_url", 'assetUrl')
@@ -854,7 +860,7 @@ export class MarketService {
 /**
  *  사용자 JWT Token 삭제
  * 
- * @param createMarketSaleDto 
+ * @param deleteMarketSaleJwtDto 
  */
   async delJwt(deleteMarketSaleJwtDto: DeleteMarketSaleJwtDto): Promise<any> {
     
@@ -868,7 +874,7 @@ export class MarketService {
       }
       console.log("user: "+JSON.stringify(user));
    
-      // 1. 사용자의 didWallet 체크
+      // 2. 사용자의 didWallet 체크
       let didWallet = await this.userService.getDidWallet(user.userNo);
       if (didWallet) {
           await this.didWalletRepository.update({ userNo: user.userNo}, {jwt: null});
@@ -879,7 +885,6 @@ export class MarketService {
     } 
 
   }
-
 
 /**
  *  사용자 에셋 판매 등록
@@ -1258,6 +1263,100 @@ export class MarketService {
       // throw new GatewayTimeoutException;
       throw e;
     }finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 사용자 에셋 판매 삭제
+   * 
+   * @param deleteMarketSaleDto 
+   */
+  async deleteAll(deleteMarketSaleDto: DeleteMarketSaleDto): Promise<any> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const email = deleteMarketSaleDto.email;
+      const marketNo = deleteMarketSaleDto.marketNo;
+   
+      // 1. 사용자 체크
+      let user = await this.userService.getOneByEmail(email);
+      if (!user) {
+        throw new NotFoundException('Data Not found. : 사용자 정보');
+      }
+      console.log("user: "+JSON.stringify(user));
+
+      // 1. 마켓 판매 삭제
+      const marketInfo = await this.marketRepository.findOne({
+          where: { marketNo, saleAddr: user.nftWalletAccount },
+      });
+      if (!marketInfo) {
+        throw new Error('❌ 마켓 정보를 찾을 수 없습니다.');
+      }else{
+         await queryRunner.manager.update(Market, {marketNo}, {state: 'S6'});
+      }
+      const productNo = marketInfo.productNo;
+      const assetNo = marketInfo.assetNo;
+      user.nftWalletAccount = marketInfo.saleAddr;
+
+      // 2. 에셋 게시 삭제
+      const assetInfo = await this.assetRepository.findOne({
+          where: { assetNo},
+      });
+      if (!assetInfo) {
+        throw new Error('❌ 에셋 정보를 찾을 수 없습니다.');
+      }else{
+         await queryRunner.manager.update(Asset, {assetNo}, {state: 'S6'});
+      }
+
+      // 3. 굿즈 게시 삭제
+      const productInfo = await this.productRepository.findOne({
+          where: { productNo},
+      });
+      if (!productInfo) {
+        throw new Error('❌ 굿즈 정보를 찾을 수 없습니다.');
+      }else{
+         await queryRunner.manager.update(Product, {productNo}, {state: 'N5'});
+      }
+
+      // 4. 소각시킬 tokenId 찾기
+      let tokenIds: string[] = [];
+
+      if (marketInfo.issueCnt === marketInfo.saleCnt) {
+        console.log("소각시킬 token이 없어요.");
+      } else {
+        const from = Number(marketInfo.fromTokenId);
+        const to = Number(marketInfo.toTokenId);
+        const inventoryCnt = Number(marketInfo.inventoryCnt);
+
+        console.log(`from: ${from}, to: ${to}`);
+
+        // Array.from으로 한 줄 생성 (to부터 내려가면서 inventoryCnt 개수)
+        // tokenIds = Array.from({ length: inventoryCnt }, (_, i) => to - i);
+        tokenIds = Array.from({ length: inventoryCnt }, (_, i) => (to - i).toString());
+      }
+
+      console.log("===========   tokenIds:", tokenIds);
+      console.log("===========   user:", user);
+
+      await queryRunner.commitTransaction();
+
+      if(tokenIds.length > 0){
+        // nftService.createBurns 호출
+        const createBurnDto: CreateBurnDto = {
+          assetNo,
+          productNo,
+          tokenIds
+        };
+        this.nftService.createBurns(user, createBurnDto);
+      }   
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    } finally {
       await queryRunner.release();
     }
   }

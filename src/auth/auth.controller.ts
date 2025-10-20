@@ -55,8 +55,8 @@ export class AuthController {
    * @returns accessToken
    */
   @Post('/bio')
-  @ApiOperation({ summary: '사용자 등록 조회 및 등록된 사용자에게 accessToken 재발행', 
-    description: '사용자를 등록을 조회하고 등록된 사용자에게는 access-Token을 재발행한다.' })
+  @ApiOperation({ summary: '사용자 등록 조회 및 등록된 사용자에게 DID 만들고 accessToken 재발행', 
+    description: '사용자를 등록을 조회하고 등록된 사용자에게는 DID 및 access-Token을 재발행한다.' })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
   // @ApiCreatedResponse({ description: '로그인 성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })

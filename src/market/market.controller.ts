@@ -12,6 +12,7 @@ import { CreateMarketDto} from '../dtos/create_market.dto';
 import { ModifyMarketDto } from '../dtos/modify_market.dto';
 import { GetMarketDto } from '../dtos/get_market.dto';
 import { CreateMarketSaleDto} from '../dtos/create_market_sale.dto';
+import { DeleteMarketSaleDto} from '../dtos/delete_market_sale.dto';
 import { DeleteMarketSaleJwtDto} from '../dtos/delete_market_sale_jwt.dto';
 import fileLogger from '../common/logger';
 import * as moment from 'moment-timezone';
@@ -554,18 +555,18 @@ export class MarketController {
   @ApiResponse({status:HttpStatus.BAD_REQUEST, description:'입력값 오류'})
   // @ApiResponse({status:HttpStatus.NOT_FOUND, description:'등록된 엔터사 에셋 미존재'})
   @ApiCreatedResponse({description: '성공', schema: {example: {resultCode: HttpStatus.CREATED,resultMessage: 'SUCCESS'}}})
-  @ApiOkResponse({
-    description: '성공',
-    schema: {
-      example: {
-        "resultCode": 200,
-        "resultMessage": "SUCCESS",
-        "data": {
-          "marketNo": 28
-        }
-      }
-    }
-  })
+  // @ApiOkResponse({
+  //   description: '성공',
+  //   schema: {
+  //     example: {
+  //       "resultCode": 200,
+  //       "resultMessage": "SUCCESS",
+  //       "data": {
+  //         "marketNo": 28
+  //       }
+  //     }
+  //   }
+  // })
   async delJwt( @Body(ValidationPipe) deleteMarketSaleJwtDto: DeleteMarketSaleJwtDto): Promise<any> {
     fileLogger.info('market-delJwt');
     fileLogger.info(deleteMarketSaleJwtDto);
@@ -614,8 +615,7 @@ export class MarketController {
    * 에셋 NFT MINT & VC 발급
    * 
    * @param user 
-   * @param files 
-   * @param createAssetDto 
+   * @param marketNo 
    * @returns 
    */
   @Post("/sale/:marketNo")
@@ -629,6 +629,27 @@ export class MarketController {
     fileLogger.info('market-createNft');
     fileLogger.info(`marketNo: ${marketNo}`);
     await this.marketService.createNftVc(marketNo);
+    return this.responseMessage.response(null);
+  }
+
+/**
+   *사용자 에셋 판매 삭제
+   * 
+   * @param user 
+   * @param DeleteMarketSaleDto 
+   * @returns 
+   */
+  @Post("/delSale")
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '사용자 에셋 판매 삭제', description: '사용자 에셋 판매 정보를 삭제한다.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음 또는 등록된 제품 없음' })
+  async deleteAll( @Body(ValidationPipe) deleteMarketSaleDto: DeleteMarketSaleDto): Promise<any> {
+    console.log("++++++++++++++++++++++");
+    fileLogger.info('market-deleteAll');
+    fileLogger.info(deleteMarketSaleDto);
+    await this.marketService.deleteAll(deleteMarketSaleDto);
     return this.responseMessage.response(null);
   }
 

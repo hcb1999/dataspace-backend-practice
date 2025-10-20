@@ -515,9 +515,12 @@ export class NftService {
         //  비즈니스 로직 처리 
 
         // 원래는 asset에서 처리하는 부분인데, 여기서는 NFT Controller 때문에 사용.
+        if (!createBurnDto.tokenId) {
+          throw new BadRequestException('토큰 ID(tokenId)가 누락되었습니다.');
+        }  
         const assetNo = createBurnDto.assetNo;
         const productNo = createBurnDto.productNo;
-        const tokenId = createBurnDto.tokenId;
+        const tokenId = createBurnDto.tokenId;      
         const ownerAddress = user.nftWalletAccount;
         let nftBurnNo = 0;
         let nftMintNo = 0;
@@ -553,6 +556,101 @@ export class NftService {
     } finally {    
       await queryRunner.release();
     }
+  } 
+
+  /**
+   * NFT 소각(Nft Mint 정보 삭제 수정 및 NftBurn 저장)
+   * @param user
+   * @param createBurnDto 
+   * @returns 
+   */
+  async createBurns(user: User, createBurnDto: CreateBurnDto): Promise<void> {
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+
+        if (!createBurnDto.tokenIds || createBurnDto.tokenIds.length === 0) {
+          throw new BadRequestException('토큰 ID 목록(tokenIds)이 비어 있거나 누락되었습니다.');
+        }
+        const assetNo = createBurnDto.assetNo;
+        const productNo = createBurnDto.productNo;
+        const tokenIds = createBurnDto.tokenIds;
+        const ownerAddress = user.nftWalletAccount;
+        const nftBurnNos: number[] = [];
+        const nftMintNos: number[] = [];
+
+        // 🔹 각 tokenId마다 Burn + Mint 매핑
+        for (const tokenId of tokenIds) {
+          let nftBurnNo = 0;
+          let nftMintNo = 0;
+
+          // 🔸 Burn 정보 확인 (assetNo + productNo + tokenId 기준)
+          const burn = await this.nftBurnRepository.findOne({
+            where: { assetNo, productNo, tokenId },
+          });
+
+          if (!burn) {
+            const burnInfo = {
+              productNo,
+              assetNo,
+              issuedTo: ownerAddress,
+              tokenId,
+              state: 'B13',
+            };
+            const newBurn = queryRunner.manager.create(NftBurn, burnInfo);
+            const result = await queryRunner.manager.save<NftBurn>(newBurn);
+            nftBurnNo = result.nftBurnNo;
+          } else {
+            nftBurnNo = burn.nftBurnNo;
+          }
+
+          // 🔸 Mint 정보 확인
+          const mint = await this.nftMintRepository.findOne({
+            where: { assetNo, productNo, tokenId },
+          });
+
+          if (mint) {
+            nftMintNo = mint.nftMintNo;
+          }
+
+          nftBurnNos.push(nftBurnNo);
+          nftMintNos.push(nftMintNo);
+        }
+
+        await queryRunner.commitTransaction();
+
+        // 🔹 MQ로 Burn 트랜잭션 처리 요청
+        const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
+        let ownerPKey: string;
+        if (wallet) {
+          ownerPKey = wallet.pkey;
+        }
+
+        const data = {
+          nftBurnNos,
+          nftMintNos,
+          assetNo,
+          productNo,
+          tokenIds, // 그대로 배열로 전송
+          ownerAddress,
+          ownerPKey,
+        };
+
+        console.log("===========   ownerAddress:", user.nftWalletAccount);
+        console.log('Sending burns data to MQ:', data);
+        this.client.emit('burns', data);
+
+    } catch (e) {
+      this.logger.error(e);
+      await queryRunner.rollbackTransaction();
+      throw e;
+    } finally {    
+      await queryRunner.release();
+    }
+
   } 
 
 /*  

@@ -981,6 +981,7 @@ export class NftController {
       
       await queryRunner.commitTransaction();
       
+      this.logger.log(`Transfer transaction 완료를 client에게 전송`);
       this.nftGateway.sendTransactionResult(ownerAddress, {
         status: 'success',
         type: 'Transfer',
@@ -1899,6 +1900,7 @@ export class NftController {
       
       await queryRunner.commitTransaction();
       
+      this.logger.log(`Transfer transaction 완료를 client에게 전송`);
       this.nftGateway.sendTransactionResult(ownerAddress, {
         status: 'success',
         type: 'Transfer',
@@ -2377,7 +2379,7 @@ export class NftController {
         try {
           const parsedLog = contract.interface.parseLog(log);
           
-          if (parsedLog.name === "NewTransferEther") {
+          if (parsedLog.name === "NewBurnNFT") {
             const owner = parsedLog.args[0];  
             const tokenId = parsedLog.args[1];  
             this.logger.log(`NewBurnNFT Event: Owner: ${owner}, tokenId: ${tokenId}`);          
@@ -2438,6 +2440,138 @@ export class NftController {
         tokenId,
         error: errorMsg,
       });     
+      
+      channel.ack(message);
+    
+    }finally {
+      await queryRunner.release();
+    }
+  }  
+
+  @MessagePattern('burns')
+  async handleBurns(@Payload()
+    data: { nftBurnNos: number[], nftMintNos: number[], assetNo: number, productNo: number, tokenIds: number[], ownerAddress: string, ownerPKey: string }
+    ,
+    @Ctx() context: RmqContext
+  ) {
+
+    console.log(`handleBurns started...`);
+
+    const channel: Channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    const message = originalMsg as Message; 
+
+    // const nftBurnNos = data.nftBurnNos;
+    // const nftMintNos = data.nftMintNos;
+    // const assetNo = data.assetNo;
+    // const productNo = data.productNo;
+    // const tokenId = data.tokenId;
+    // const ownerAddress = data.ownerAddress;
+    // const ownerPKey = data.ownerPKey;
+    const { nftBurnNos, nftMintNos, assetNo, productNo, tokenIds, ownerAddress, ownerPKey } = data;
+
+    const fromWallet = new ethers.Wallet(ownerPKey).connect(this.provider);
+  
+    let contract: Contract;
+    try {
+
+      // NFT 계약 인스턴스 생성
+      contract = this.createContractInstance(fromWallet);
+      this.logger.log(`Contract instance created successfully: ${contract.address}`);
+    } catch (error) {
+      this.logger.error(`Error creating contract instance: ${error.message}`);
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    // // 이벤트 리스너 추가 
+    // contract.on('NewBurnNFT', (owner: any, tokenId: any, event: any) => {
+    //   this.logger.log(`NewBurnNFT Event: Owner: ${owner}, tokenId: ${tokenId}`);
+    // });
+
+    try {
+      console.log(`tokenIds to burn: ${tokenIds}`);
+      const burnTx = await contract.burnNFTs(tokenIds);
+      this.logger.log(`Burns transaction sent: ${burnTx.hash}`);
+
+      const receipt = await burnTx.wait();
+
+      for (const log of receipt.logs) {
+        try {
+          const parsedLog = contract.interface.parseLog(log);
+          
+          if (parsedLog.name === "NewBurnNFTs") {
+            const owner = parsedLog.args[0];  
+            const tokenId = parsedLog.args[1];  
+            this.logger.log(`NewBurnNFTs Event: Owner: ${owner}, tokenId: ${tokenId}`);          
+            break;
+          }
+        } catch (err) {
+          this.logger.log("Error parsing log:", err);
+        }
+      }
+
+      // 🔹 DB 업데이트 (배열 순회)
+      for (let i = 0; i < tokenIds.length; i++) {
+        const nftMintNo = nftMintNos[i];
+        const nftBurnNo = nftBurnNos[i];
+
+        const nftMintInfo = { state: 'B16', burnYn: 'Y' };
+        await queryRunner.manager.update(NftMint, nftMintNo, nftMintInfo);
+
+        const nftBurnInfo = { state: 'B16', txId: burnTx.hash };
+        await queryRunner.manager.update(NftBurn, nftBurnNo, nftBurnInfo);
+      }
+
+      // 원래는 이게 맞음. 지금은 ETRI용으로만 사용하므로 불필요(tokenId도 assetNo용 1개 없음)
+      // const nftAssetInfo = {useYn: 'N', state: 'S4'};
+      // await queryRunner.manager.update(Asset, assetNo, nftAssetInfo);
+
+      await queryRunner.commitTransaction();
+
+      // this.nftGateway.sendTransactionResult(ownerAddress, {
+      //   status: 'success',
+      //   type: 'Burn',
+      //   assetNo,
+      //   productNo,
+      //   tokenIds,
+      // });
+
+      // 성공적으로 처리되면 메시지를 확인
+      channel.ack(message); 
+
+    } catch (error) {
+      // this.logger.error(`Error in handleBurnTransaction: ${error.message}`);
+      this.logger.error(`Error in handleBurn`);
+      // let nftBurnInfo = {};
+      let errorMsg = '';
+
+      if (error.code === 'NETWORK_ERROR') {
+        // 블록체인에 문제가 발생한 경우
+        // this.logger.error(`Blockchain network error: ${error.message}`);
+        errorMsg = 'Blockchain is unreachable';
+        // nftBurnInfo = { state: 'B99' };
+      } else {
+        // 다른 일반적인 오류 처리
+        // this.logger.error(`Transaction Or Unexpected error in handleBurn: ${error.message}`);
+        errorMsg = 'Transaction failed due to invalid input Or data';
+        // nftBurnInfo = { state: 'B15' };
+      }
+
+      for (const nftBurnNo of data.nftBurnNos) {
+        await queryRunner.manager.delete(NftBurn, nftBurnNo);
+      }
+
+      // this.nftGateway.sendTransactionResult(ownerAddress, {
+      //   status: 'failed',
+      //   type: 'Burn',
+      //   assetNo,
+      //   productNo,
+      //   tokenIds,
+      //   error: errorMsg,
+      // });     
       
       channel.ack(message);
     

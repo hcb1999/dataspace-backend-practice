@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString, Length, IsNumber, IsBoolean, IsObject } from "class-validator";
+import { IsNotEmpty, IsOptional, IsArray, IsString, Length, IsNumber, IsBoolean, IsObject } from "class-validator";
 import { Type, Transform } from 'class-transformer';  
 
 export class CreateBurnDto {   
@@ -29,18 +29,31 @@ export class CreateBurnDto {
   @IsString()
   @Length(1, 80)
   @ApiProperty({ description: 'issuedTo(NFT 지갑 주소)', required: false})
-  readonly issuedTo: string;
+  readonly issuedTo?: string;
   
+  @IsOptional()
   @IsString()
   @Length(1, 40)
-  @ApiProperty({ description: '토큰 ID'})
-  tokenId: string;
+  @ApiProperty({ description: '토큰 ID', required: false})
+  tokenId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Length(1, 40, { each: true })
+  @ApiProperty({
+    description: '토큰 ID 배열',
+    type: [String],
+    required: false,
+    example: ['1001', '1002', '1003'],
+  })
+  tokenIds?: string[];
 
   @IsOptional()
   @IsString()
   @Length(1, 10)
   @ApiProperty({ description: '버닝 상태', required: false })
-  readonly state: string;
+  readonly state?: string;
 
   // @IsString()
   // @Length(1, 256)

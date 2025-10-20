@@ -928,6 +928,7 @@ export class ProductService {
           'metaverseThird',
           'product.ad_target_third = metaverseThird.metaverse_no',
         )
+        .leftJoin(State, 'state', 'state.state = product.state')
         .leftJoin(File, 'file', 'product.file_no = file.file_no')
         .select('product.product_no', 'productNo')
         .addSelect('product.product_name', 'productName')
@@ -940,6 +941,7 @@ export class ProductService {
         .addSelect('metaverseSecond.metaverse_name', 'adTargetSecondName')
         .addSelect('metaverseThird.metaverse_name', 'adTargetThirdName')
         .addSelect('product.state', 'state')
+        .addSelect('state.state_desc', 'stateDesc')
         .addSelect('product.start_dttm', 'startDttm')
         .addSelect('product.end_dttm', 'endDttm')
         .addSelect('file.file_name_first', 'fileNameFirst')
@@ -979,7 +981,7 @@ export class ProductService {
         .offset(skip)
         .limit(take)
         .groupBy(
-          `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name, metaverseThird.metaverse_name, file.file_no`,
+          `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name, metaverseThird.metaverse_name, state.state_desc, file.file_no`,
         )
         .getRawMany();
 
