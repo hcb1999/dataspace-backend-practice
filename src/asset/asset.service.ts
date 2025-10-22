@@ -840,7 +840,7 @@ export class AssetService {
       let assetInfo = null;
       
       const sql = this.assetRepository.createQueryBuilder('asset')
-                      // .leftJoin(State, 'state', 'asset.state = state.state')
+                      .leftJoin(State, 'state', 'asset.state = state.state')
                       .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
                       .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
                       .leftJoin(NftMint, 'mint', 'asset.token_id = mint.token_id')
@@ -861,6 +861,8 @@ export class AssetService {
                       .addSelect('product.reg_name', 'productRegName')
                       .addSelect('product.product_name', 'productName')
                       .addSelect('asset.price', 'price')
+                      .addSelect('asset.state', 'state')
+                      .addSelect('state.state_desc', 'stateDesc')
                       .addSelect('asset.asset_desc', 'assetDesc')
                       .addSelect('asset.asset_desc_kor', 'assetDescKor')
                       .addSelect('asset.start_dttm', 'startDttm')
@@ -902,7 +904,7 @@ export class AssetService {
       //                        .getRawOne();
       // }else{
         assetInfo = await sql.groupBy(`asset.asset_no, product.product_no, product.reg_addr, product.reg_name,
-           product.product_name, fileAsset.file_no, mint.token_id, mint.tx_id, transfer.from_addr, transfer.to_addr`)
+           product.product_name, state.state_desc, fileAsset.file_no, mint.token_id, mint.tx_id, transfer.from_addr, transfer.to_addr`)
                            .getRawOne();
 
       // }
