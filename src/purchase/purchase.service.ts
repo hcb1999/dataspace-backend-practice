@@ -160,6 +160,7 @@ export class PurchaseService {
                       .addSelect('purchase.purchase_addr', 'purchaseAccount')
                       .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || purchase.purchase_addr`, 'purchaseAccountUrl')
                       .addSelect('purchase.purchase_user_name', 'purchaseUserName')
+                      .addSelect("asset.asset_no", 'assetNo')
                       .addSelect("asset.asset_name", 'assetName')
                       .addSelect("asset.asset_desc", 'assetDesc')
                       .addSelect("asset.asset_url", 'assetUrl')

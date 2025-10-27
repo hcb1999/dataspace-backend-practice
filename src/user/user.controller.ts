@@ -32,6 +32,18 @@ export class UserController {
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: '필수입력 오류' })
+  @ApiOkResponse({
+    description: '성공',
+    schema: {
+      example: {
+        resultCode: 200,
+        resultMessage: 'SUCCESS',
+        "data": {
+          "dupResult": true
+        }
+      }
+    }
+  })
   async nicknameChk(@Body(ValidationPipe) userNickChkDto: UserNickChkDto): Promise<any> {
     fileLogger.info('user-nickchk');
     fileLogger.info(userNickChkDto);

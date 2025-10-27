@@ -645,6 +645,7 @@ export class MarketController {
   @ApiOperation({ summary: '사용자 에셋 판매 삭제', description: '사용자 에셋 판매 정보를 삭제한다.' })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음 또는 등록된 제품 없음' })
+  @ApiCreatedResponse({description: '성공', schema: {example: {resultCode: HttpStatus.CREATED,resultMessage: 'SUCCESS'}}})
   async deleteAll( @Body(ValidationPipe) deleteMarketSaleDto: DeleteMarketSaleDto): Promise<any> {
     console.log("++++++++++++++++++++++");
     fileLogger.info('market-deleteAll');
