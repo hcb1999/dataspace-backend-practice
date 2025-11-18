@@ -1124,6 +1124,11 @@ export class ProductService {
           'metaverseThird',
           'product.ad_target_third = metaverseThird.metaverse_no',
         )
+        .leftJoin(
+          Metaverse,
+          'metaverseFourth',
+          'product.ad_target_fourth = metaverseFourth.metaverse_no',
+        )
         .leftJoin(State, 'state', 'state.state = product.state')
         .leftJoin(File, 'file', 'product.file_no = file.file_no')
         .select('product.product_no', 'productNo')
@@ -1133,9 +1138,11 @@ export class ProductService {
         .addSelect('product.ad_target_first', 'adTargetFirst')
         .addSelect('product.ad_target_second', 'adTargetSecond')
         .addSelect('product.ad_target_third', 'adTargetThird')
+        .addSelect('product.ad_target_fourth', 'adTargetFourth')
         .addSelect('metaverseFirst.metaverse_name', 'adTargetFirstName')
         .addSelect('metaverseSecond.metaverse_name', 'adTargetSecondName')
         .addSelect('metaverseThird.metaverse_name', 'adTargetThirdName')
+        .addSelect('metaverseFourth.metaverse_name', 'adTargetFourthName')
         .addSelect('product.state', 'state')
         .addSelect('state.state_desc', 'stateDesc')
         .addSelect('product.start_dttm', 'startDttm')
@@ -1269,6 +1276,11 @@ export class ProductService {
           'metaverseThird',
           'product.ad_target_third = metaverseThird.metaverse_no',
         )
+        .leftJoin(
+          Metaverse,
+          'metaverseFourth',
+          'product.ad_target_fourth = metaverseFourth.metaverse_no',
+        )
         .leftJoin(State, 'state', 'state.state = product.state')
         .leftJoin(File, 'file', 'product.file_no = file.file_no')
         .select('product.product_no', 'productNo')
@@ -1278,9 +1290,11 @@ export class ProductService {
         .addSelect('product.ad_target_first', 'adTargetFirst')
         .addSelect('product.ad_target_second', 'adTargetSecond')
         .addSelect('product.ad_target_third', 'adTargetThird')
+        .addSelect('product.ad_target_fourth', 'adTargetFourth')
         .addSelect('metaverseFirst.metaverse_name', 'adTargetFirstName')
         .addSelect('metaverseSecond.metaverse_name', 'adTargetSecondName')
         .addSelect('metaverseThird.metaverse_name', 'adTargetThirdName')
+        .addSelect('metaverseFourth.metaverse_name', 'adTargetFourthName')
         .addSelect('product.state', 'state')
         .addSelect('state.state_desc', 'stateDesc')
         .addSelect('product.start_dttm', 'startDttm')
@@ -1325,7 +1339,7 @@ export class ProductService {
         .limit(take)
         .groupBy(
           `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name,
-                                   metaverseThird.metaverse_name, state.state_desc, file.file_no`,
+                                   metaverseThird.metaverse_name, metaverseFourth.metaverse_name, state.state_desc, file.file_no`,
         )
         .getRawMany();
 
