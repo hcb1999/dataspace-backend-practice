@@ -186,6 +186,9 @@ export class ProductService {
       const adTypesArray3 = createProductDto.adTypesThird
         ? createProductDto.adTypesThird.split(',').map(Number)
         : [];
+      const adTypesArray4 = createProductDto.adTypesFourth
+        ? createProductDto.adTypesFourth.split(',').map(Number)
+        : [];
 
       // console.log("adTypesArray1 : "+adTypesArray1);
 
@@ -195,6 +198,7 @@ export class ProductService {
         adTypesFirst: adTypesArray1,
         adTypesSecond: adTypesArray2,
         adTypesThird: adTypesArray3,
+        adTypesFourth: adTypesArray4,
       };
 
       console.log("transformedDto : "+JSON.stringify(transformedDto));
@@ -495,6 +499,9 @@ export class ProductService {
       const adTypesArray3 = modifyProductDto.adTypesThird
         ? modifyProductDto.adTypesThird.split(',').map(Number)
         : [];
+      const adTypesArray4 = modifyProductDto.adTypesFourth
+        ? modifyProductDto.adTypesFourth.split(',').map(Number)
+        : [];
 
       // console.log("adTypesArray1 : "+adTypesArray1);
       // 변환된 배열을 DTO에 할당
@@ -503,6 +510,7 @@ export class ProductService {
         adTypesFirst: adTypesArray1,
         adTypesSecond: adTypesArray2,
         adTypesThird: adTypesArray3,
+        adTypesFourth: adTypesArray4,
       };
 
       await queryRunner.manager.update(Product, productNo, transformedDto);

@@ -1009,7 +1009,9 @@ export class MarketService {
         adTargetSecond: undefined,  
         adTypesSecond: undefined,   
         adTargetThird: undefined,  
-        adTypesThird: undefined,  
+        adTypesThird: undefined,
+        adTargetFourth: undefined,
+        adTypesFourth: undefined,
         files: undefined,      
       };
 
