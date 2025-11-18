@@ -52,6 +52,18 @@ declare module "hardhat/types/runtime" {
       name: "ARODEVNFTCollection",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ARODEVNFTCollection__factory>;
+    getContractFactory(
+      name: "KNFTCollection",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.KNFTCollection__factory>;
+    getContractFactory(
+      name: "KNFTCollectionOrg",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.KNFTCollectionOrg__factory>;
+    getContractFactory(
+      name: "NFTCollectible",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.NFTCollectible__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -103,6 +115,21 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.ARODEVNFTCollection>;
+    getContractAt(
+      name: "KNFTCollection",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.KNFTCollection>;
+    getContractAt(
+      name: "KNFTCollectionOrg",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.KNFTCollectionOrg>;
+    getContractAt(
+      name: "NFTCollectible",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.NFTCollectible>;
 
     // default types
     getContractFactory(

@@ -36,14 +36,26 @@ export class ModifyProductDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  @ApiProperty({ description: '굿즈 메타버스 업체3 : 3', required: false })
+  @ApiProperty({ description: '굿즈 메타버스 업체3 : 3', required: false})
   readonly adTargetThird: number;
 
   @IsOptional()
   @IsString()
   @Length(1, 256)
-  @ApiProperty({ description: '굿즈 메타버스 업체3 에셋 분류 : 1, 2, 3, 5', required: false })
-  readonly adTypesThird: string;
+  @ApiProperty({ description: '굿즈 메타버스 업체3 에셋 분류 : 1, 2, 3', required: false })
+  adTypesThird: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ description: '굿즈 메타버스 업첵4 (인천월드) : 4', required: false})
+  readonly adTargetFourth: number;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 256)
+  @ApiProperty({ description: '굿즈 메타버스 업첵4 에셋 분류 : 1, 2, 3', required: false })
+  adTypesFourth: string;
 
   @IsOptional()
   @IsString()

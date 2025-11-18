@@ -2,3 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { ARODEVNFTCollection } from "./ARODEVNFTCollection";
+export type { KNFTCollection } from "./KNFTCollection";
+export type { KNFTCollectionOrg } from "./KNFTCollectionOrg";
+export type { NFTCollectible } from "./NFTCollectible";

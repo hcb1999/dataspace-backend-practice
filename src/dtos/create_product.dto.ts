@@ -51,6 +51,18 @@ export class CreateProductDto {
   adTypesThird: string;
 
   @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ description: '굿즈 메타버스 업첵4 (인천월드) : 4' , required: false, default: 4 })
+  adTargetFourth: number;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 256)
+  @ApiProperty({ description: '굿즈 메타버스 업첵4 에셋 분류 : 1, 2, 3, 5', required: false })
+  adTypesFourth: string;
+
+  @IsOptional()
   @IsString()
   // @Length(1, 256)
   @ApiProperty({ description: '굿즈 설명' , required: false})

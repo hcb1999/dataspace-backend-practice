@@ -64,7 +64,7 @@ export class CreateMarketSaleDto {
 
   // 굿즈(.png), 에셋(.제페토)
   @IsOptional()
-  @ApiProperty({ type: 'array', items: { type: 'string', format: 'binary' }, maxItems: 2, required: false, description: '에셋 이미지 파일들' })
+  @ApiProperty({ type: 'array', items: { type: 'string', format: 'binary' }, maxItems: 3, required: false, description: '에셋 이미지 파일들' })
   files: Express.Multer.File[];
 
   // constructor() {

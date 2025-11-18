@@ -2,3 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export { ARODEVNFTCollection__factory } from "./ARODEVNFTCollection__factory";
+export { KNFTCollection__factory } from "./KNFTCollection__factory";
+export { KNFTCollectionOrg__factory } from "./KNFTCollectionOrg__factory";
+export { NFTCollectible__factory } from "./NFTCollectible__factory";

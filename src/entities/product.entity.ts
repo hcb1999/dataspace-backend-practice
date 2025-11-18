@@ -36,6 +36,12 @@ export class Product extends BaseEntity {
   @Column({ name: "ad_types_third", type: "int4", array: true, comment: "광고 메타버스 업체별 에셋 분류", nullable: true })
   adTypesThird: number[];
 
+  @Column({ name: "ad_target_fourth", type: "int4", comment: "광고 메타버스 업체", nullable: true })
+  adTargetFourth: number;
+
+  @Column({ name: "ad_types_fourth", type: "int4", array: true, comment: "광고 메타버스 업체별 에셋 분류", nullable: true })
+  adTypesFourth: number[];
+
   // @Column({ name: "product_desc", type: "varchar", length: 200, comment: "광고상품 설명", nullable: true })
   // productDesc: string;
 

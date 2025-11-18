@@ -214,6 +214,154 @@ export class ProductService {
   }
 
   /**
+   * 사용자 에셋 판매 등록용 굿즈 정보 등록
+   *
+   * @param user
+   * @param files
+   * @param createProductDto
+   */
+  /*
+  async createSale(
+    user: User,
+    files: any,
+    createProductDto: CreateProductDto,
+  ): Promise<any> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const userNo = user.userNo;
+      const advertiserInfo = await this.advertiserRepository.findOne({
+        where: { userNo },
+      });
+      if (!advertiserInfo) {
+        const advertiserInfo1 = { userNo, advName: user.nickName };
+
+        // console.log("===== creatorInfo : "+ creatorInfo);
+        const newAdvertiser = queryRunner.manager.create(
+          Advertiser,
+          advertiserInfo1,
+        );
+        const result =
+          await queryRunner.manager.save<Advertiser>(newAdvertiser);
+      }
+
+      // if (!files) {
+      //   throw new BadRequestException("파일 미입력");
+      // }
+
+      if (files) {
+        let fileNameFirst = '';
+        let fileTypeFirst = '';
+        let filePathFirst = '';
+        let fileSizeFirst = 0;
+        let fileHashFirst = '';
+        let thumbnailFirst = '';
+        let fileNameSecond = '';
+        let fileTypeSecond = '';
+        let filePathSecond = '';
+        let fileSizeSecond = 0;
+        let fileHashSecond = '';
+        let thumbnailSecond = '';
+        let fileNameThird = '';
+        let fileTypeThird = '';
+        let filePathThird = '';
+        let fileSizeThird = 0;
+        let fileHashThird = '';
+        let thumbnailThird = '';
+        // 파일 정보 저장
+        const promises = files.map(async (file: any, index: any) => {
+          // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+          if (index == 3) {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameFirst = file.fileName;
+            fileTypeFirst = file.fileType;
+            filePathFirst = file.filePath;
+            fileSizeFirst = file.fileSize;
+            fileHashFirst = file.fileHash;
+            if (file.thumbnail) {
+              thumbnailFirst = file.thumbnail;
+            }
+          } 
+
+          // Hash값 체크
+          // const fileRepo = await this.fileRepository.find({ where:{fileHash} });
+          // if(fileRepo && fileRepo.length){
+          //   throw new ConflictException("동일한 파일 존재");
+          // }
+        });
+
+        let fileInfo = {
+          fileNameFirst,
+          filePathFirst,
+          fileSizeFirst,
+          fileTypeFirst,
+          fileHashFirst,
+          thumbnailFirst,
+          fileNameSecond,
+          filePathSecond,
+          fileSizeSecond,
+          fileTypeSecond,
+          fileHashSecond,
+          thumbnailSecond,
+          fileNameThird,
+          filePathThird,
+          fileSizeThird,
+          fileTypeThird,
+          fileHashThird,
+          thumbnailThird
+        };
+
+        const newFile = queryRunner.manager.create(File, fileInfo);
+        await queryRunner.manager.save<File>(newFile);
+        createProductDto['fileNo'] = newFile.fileNo;
+      }
+
+      // 굿즈 정보 저장
+      // const userNo = user.userNo;
+      createProductDto['userNo'] = user.userNo;
+      createProductDto['regName'] = user.nickName;
+      createProductDto['regAddr'] = user.nftWalletAccount;
+
+      const adTypesArray1 = createProductDto.adTypesFirst
+        ? createProductDto.adTypesFirst.split(',').map(Number)
+        : [];
+      const adTypesArray2 = createProductDto.adTypesSecond
+        ? createProductDto.adTypesSecond.split(',').map(Number)
+        : [];
+      const adTypesArray3 = createProductDto.adTypesThird
+        ? createProductDto.adTypesThird.split(',').map(Number)
+        : [];
+
+      // console.log("adTypesArray1 : "+adTypesArray1);
+
+      // 변환된 배열을 DTO에 할당
+      const transformedDto = {
+        ...createProductDto,
+        adTypesFirst: adTypesArray1,
+        adTypesSecond: adTypesArray2,
+        adTypesThird: adTypesArray3,
+      };
+
+      console.log("transformedDto : "+JSON.stringify(transformedDto));
+      const newProduct = queryRunner.manager.create(Product, transformedDto);
+      const result = await queryRunner.manager.save<Product>(newProduct);
+
+      await queryRunner.commitTransaction();
+
+      return { productNo: result.productNo };
+    } catch (e) {
+      // await queryRunner.rollbackTransaction();
+      this.logger.error(e);
+      throw e;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+*/
+
+  /**
    * 굿즈 정보 수정
    *
    * @param user
@@ -562,6 +710,11 @@ export class ProductService {
           'product.ad_target_third = metaverseThird.metaverse_no',
         )
         .leftJoin(
+          Metaverse,
+          'metaverseFourth',
+          'product.ad_target_fourth = metaverseFourth.metaverse_no',
+        )
+        .leftJoin(
           AssetType,
           'assetTypeFirst',
           'assetTypeFirst.metaverse_no = product.ad_target_first AND (product.ad_types_first IS NULL OR assetTypeFirst.metaverse_asset_type_no = ANY(product.ad_types_first))',
@@ -576,6 +729,11 @@ export class ProductService {
           'assetTypeThird',
           'assetTypeThird.metaverse_no = product.ad_target_third AND (product.ad_types_third IS NULL OR assetTypeThird.metaverse_asset_type_no = ANY(product.ad_types_third))',
         )
+        .leftJoin(
+          AssetType,
+          'assetTypeFourth',
+          'assetTypeFourth.metaverse_no = product.ad_target_fourth AND (product.ad_types_fourth IS NULL OR assetTypeFourth.metaverse_asset_type_no = ANY(product.ad_types_fourth))',
+        )
         .leftJoin(File, 'file', 'product.file_no = file.file_no')
         .select('product.product_no', 'productNo')
         .addSelect('product.reg_name', 'regName')
@@ -584,9 +742,11 @@ export class ProductService {
         .addSelect('product.ad_target_first', 'adTargetFirst')
         .addSelect('product.ad_target_second', 'adTargetSecond')
         .addSelect('product.ad_target_third', 'adTargetThird')
+        .addSelect('product.ad_target_fourth', 'adTargetFourth')
         .addSelect('metaverseFirst.metaverse_name', 'adTargetFirstName')
         .addSelect('metaverseSecond.metaverse_name', 'adTargetSecondName')
         .addSelect('metaverseThird.metaverse_name', 'adTargetThirdName')
+        .addSelect('metaverseFourth.metaverse_name', 'adTargetFourthName')
         .addSelect(
           "array_to_string(product.ad_types_first, ', ')",
           'adTypesFirst',
@@ -600,6 +760,10 @@ export class ProductService {
           'adTypesThird',
         )
         .addSelect(
+          "array_to_string(product.ad_types_fourth, ', ')",
+          'adTypesFourth',
+        )
+        .addSelect(
           "string_agg(DISTINCT assetTypeFirst.type_def, ', ')",
           'adTypesFirstName',
         )
@@ -610,6 +774,10 @@ export class ProductService {
         .addSelect(
           "string_agg(DISTINCT assetTypeThird.type_def, ', ')",
           'adTypesThirdName',
+        )
+        .addSelect(
+          "string_agg(DISTINCT assetTypeFourth.type_def, ', ')",
+          'adTypesFourthName',
         )
         .addSelect('product.product_desc', 'productDesc')
         .addSelect('product.start_dttm', 'startDttm')
@@ -647,7 +815,7 @@ export class ProductService {
       productInfo = await sql
         .groupBy(
           `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name,
-            metaverseThird.metaverse_name, file.file_name_first, file.file_path_first, file.thumbnail_first,
+            metaverseThird.metaverse_name, metaverseFourth.metaverse_name, file.file_name_first, file.file_path_first, file.thumbnail_first,
             file.file_name_second, file.file_path_second, file.thumbnail_second,
             file.file_name_third, file.file_path_third, file.thumbnail_third`,
         )
@@ -703,6 +871,11 @@ export class ProductService {
           'product.ad_target_third = metaverseThird.metaverse_no',
         )
         .leftJoin(
+          Metaverse,
+          'metaverseFourth',
+          'product.ad_target_fourth = metaverseFourth.metaverse_no',
+        )
+        .leftJoin(
           AssetType,
           'assetTypeFirst',
           'assetTypeFirst.metaverse_no = product.ad_target_first AND (product.ad_types_first IS NULL OR assetTypeFirst.metaverse_asset_type_no = ANY(product.ad_types_first))',
@@ -717,6 +890,11 @@ export class ProductService {
           'assetTypeThird',
           'assetTypeThird.metaverse_no = product.ad_target_third AND (product.ad_types_third IS NULL OR assetTypeThird.metaverse_asset_type_no = ANY(product.ad_types_third))',
         )
+        .leftJoin(
+          AssetType,
+          'assetTypeFourth',
+          'assetTypeFourth.metaverse_no = product.ad_target_fourth AND (product.ad_types_fourth IS NULL OR assetTypeFourth.metaverse_asset_type_no = ANY(product.ad_types_fourth))',
+        )
         .leftJoin(State, 'state', 'state.state = product.state')
         .leftJoin(File, 'file', 'product.file_no = file.file_no')
         .select('product.product_no', 'productNo')
@@ -726,9 +904,11 @@ export class ProductService {
         .addSelect('product.ad_target_first', 'adTargetFirst')
         .addSelect('product.ad_target_second', 'adTargetSecond')
         .addSelect('product.ad_target_third', 'adTargetThird')
+        .addSelect('product.ad_target_fourth', 'adTargetFourth')
         .addSelect('metaverseFirst.metaverse_name', 'adTargetFirstName')
         .addSelect('metaverseSecond.metaverse_name', 'adTargetSecondName')
         .addSelect('metaverseThird.metaverse_name', 'adTargetThirdName')
+        .addSelect('metaverseFourth.metaverse_name', 'adTargetFourthName')
         .addSelect(
           "array_to_string(product.ad_types_first, ', ')",
           'adTypesFirst',
@@ -742,6 +922,10 @@ export class ProductService {
           'adTypesThird',
         )
         .addSelect(
+          "array_to_string(product.ad_types_fourth, ', ')",
+          'adTypesFourth',
+        )
+        .addSelect(
           "string_agg(DISTINCT assetTypeFirst.type_def, ', ')",
           'adTypesFirstName',
         )
@@ -752,6 +936,10 @@ export class ProductService {
         .addSelect(
           "string_agg(DISTINCT assetTypeThird.type_def, ', ')",
           'adTypesThirdName',
+        )
+        .addSelect(
+          "string_agg(DISTINCT assetTypeFourth.type_def, ', ')",
+          'adTypesFourthName',
         )
         .addSelect('product.product_desc', 'productDesc')
         .addSelect('product.start_dttm', 'startDttm')
@@ -791,7 +979,7 @@ export class ProductService {
       productInfo = await sql
         .groupBy(
           `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name,
-            metaverseThird.metaverse_name, state.state_desc, file.file_name_first, file.file_path_first, file.thumbnail_first,
+            metaverseThird.metaverse_name, metaverseFourth.metaverse_name, state.state_desc, file.file_name_first, file.file_path_first, file.thumbnail_first,
              file.file_name_second, file.file_path_second, file.thumbnail_second,
              file.file_name_third, file.file_path_third, file.thumbnail_third`,
         )
@@ -981,7 +1169,7 @@ export class ProductService {
         .offset(skip)
         .limit(take)
         .groupBy(
-          `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name, metaverseThird.metaverse_name, state.state_desc, file.file_no`,
+          `product.product_no, metaverseFirst.metaverse_name, metaverseSecond.metaverse_name, metaverseThird.metaverse_name, metaverseFourth.metaverse_name, state.state_desc, file.file_no`,
         )
         .getRawMany();
 
