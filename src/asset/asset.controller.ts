@@ -266,7 +266,7 @@ export class AssetController {
     schema: {
       example: {
         "resultCode": 200,
-        "resultMessage": "SUCESS",
+        "resultMessage": "SUCCESS",
         "data": {
           "pageSize": 10,
           "totalCount": 2,
@@ -347,7 +347,7 @@ export class AssetController {
     schema: {
       example: {
         "resultCode": 200,
-        "resultMessage": "SUCESS",
+        "resultMessage": "SUCCESS",
         "data": {
           "pageSize": 10,
           "totalCount": 2,
@@ -430,7 +430,7 @@ export class AssetController {
       schema: {
         example: {
           "resultCode": 200,
-          "resultMessage": "SUCESS",
+          "resultMessage": "SUCCESS",
           "data": {
             "pageSize": 10,
             "totalCount": 3,
@@ -539,7 +539,7 @@ export class AssetController {
     schema: {
       example: {
         "resultCode": 200,
-        "resultMessage": "SUCESS",
+        "resultMessage": "SUCCESS",
         "data": {
           "price": 0.3,
           "state": "S5",
@@ -615,7 +615,7 @@ export class AssetController {
       schema: {
         example: {
           "resultCode": 200,
-          "resultMessage": "SUCESS",
+          "resultMessage": "SUCCESS",
           "data": {
             "price": 0.3,
             "assetNo": 80,

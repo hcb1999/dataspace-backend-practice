@@ -95,7 +95,7 @@ export class ContractController {
   // @ApiOkResponse({ description: '성공',
   //   schema: {example: { 
   //     "resultCode": 200,
-  //     "resultMessage": "SUCESS",
+  //     "resultMessage": "SUCCESS",
   //     "data": {
   //       "pageSize": 10,
   //       "totalCount": 2,
@@ -177,7 +177,7 @@ export class ContractController {
     @ApiOkResponse({ description: '성공',
       schema: {example: { 
         "resultCode": 200,
-        "resultMessage": "SUCESS",
+        "resultMessage": "SUCCESS",
         "data": {
           "pageSize": 10,
           "totalCount": 2,
@@ -282,7 +282,7 @@ export class ContractController {
   //         resultMessage: 'SUCCESS',
   //         data: {
   //           "resultCode": 200,
-  //           "resultMessage": "SUCESS",
+  //           "resultMessage": "SUCCESS",
   //           "data": {
   //             "price": 7000,
   //             "contractNo": 3,
@@ -339,7 +339,7 @@ export class ContractController {
           resultMessage: 'SUCCESS',
           data: {
             "resultCode": 200,
-            "resultMessage": "SUCESS",
+            "resultMessage": "SUCCESS",
             "data": {
               "state": "P3",
               "price": 0.3,

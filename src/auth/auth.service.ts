@@ -8,6 +8,7 @@ import { CreateUserDto } from '../dtos/create_user.dto';
 import { User } from '../entities/user.entity';
 import { NftWallet } from "../entities/nft_wallet.entity";
 import { PageResponse } from '../common/page.response';
+import { GetUserNicknameDto } from '../dtos/get_user_nickname.dto';
 
 @Injectable()
 export class AuthService {
@@ -73,6 +74,33 @@ export class AuthService {
 
       // 토큰생성
       // const payload = { userNo };
+      const payload = { userNo: userInfo.userNo };
+      const accessToken = this.jwtService.sign(payload);
+
+      return { accessToken };
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    }
+  }
+
+  
+  /**
+   * 사용자 등록 조회 및 등록된 사용자에게 accessToken 재발행
+   * 
+   * @param getUserDto
+   * @returns 
+   */
+  async getNicknameAccessToken(getUserNicknameDto: GetUserNicknameDto): Promise<any> {
+
+    try {
+      const nickName = getUserNicknameDto.nickName;
+      const userInfo = await this.userService.getOneByNickname(nickName);
+      if (!userInfo) {
+        throw new NotFoundException('User(nickName) not found.');
+      }
+
       const payload = { userNo: userInfo.userNo };
       const accessToken = this.jwtService.sign(payload);
 

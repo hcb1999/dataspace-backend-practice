@@ -213,7 +213,7 @@ export class ProductController {
     schema: {
       example: {
         "resultCode": 200,
-        "resultMessage": "SUCESS",
+        "resultMessage": "SUCCESS",
         "data": {
           "pageSize": 10,
           "totalCount": 2,
@@ -307,7 +307,7 @@ export class ProductController {
       schema: {
         example: {
           "resultCode": 200,
-          "resultMessage": "SUCESS",
+          "resultMessage": "SUCCESS",
           "data": {
             "pageSize": 10,
             "totalCount": 4,
@@ -455,7 +455,7 @@ export class ProductController {
       schema: {
         example: {
           "resultCode": 200,
-          "resultMessage": "SUCESS",
+          "resultMessage": "SUCCESS",
           "data": {
             "productInfo": {
               "state": "N2",
@@ -572,7 +572,7 @@ export class ProductController {
         schema: {
           example: {
             "resultCode": 200,
-            "resultMessage": "SUCESS",
+            "resultMessage": "SUCCESS",
             "data": {
               "productNo": 26,
               "regName": "엔터사 1",

@@ -5,7 +5,7 @@ export class ResponseMessage {
     
     response(data: any): any{
         const resultCode = 200;
-        const resultMessage = 'SUCESS';
+        const resultMessage = 'SUCCESS';
 
         console.log(data);
 

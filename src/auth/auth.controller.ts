@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { GetUserDto } from '../dtos/get_user.dto';
 import { CreateUserDto } from '../dtos/create_user.dto';
 import fileLogger from '../common/logger';
+import { GetUserNicknameDto } from '../dtos/get_user_nickname.dto';
 
 @Controller('auth')
 @ApiTags('인증 API') 
@@ -23,8 +24,8 @@ export class AuthController {
    * @returns accessToken
    */
   @Post('/')
-  @ApiOperation({ summary: '사용자 등록 조회 및 등록된 사용자에게 accessToken 재발행', 
-    description: '사용자를 등록을 조회하고 등록된 사용자에게는 access-Token을 재발행한다.' })
+  @ApiOperation({ summary: '이메일로 사용자 등록 조회 및 등록된 사용자에게 accessToken 재발행', 
+    description: '이메일로 사용자를 등록을 조회하고 등록된 사용자에게는 access-Token을 재발행한다.' })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
   // @ApiCreatedResponse({ description: '로그인 성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
@@ -34,7 +35,7 @@ export class AuthController {
     schema: {
       example: {
         "resultCode": 200,
-        "resultMessage": "SUCESS",
+        "resultMessage": "SUCCESS",
         "data": {
           "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTm8iOjEsImlhdCI6MTcyNDY0NDUzMiwiZXhwIjoxNzI0NjQ4MTMyfQ.-BFmJS6gVQJtAfeiBIeDnm8b8KjmdqqdbuzoJpHIvU4"
         }
@@ -45,6 +46,32 @@ export class AuthController {
     fileLogger.info('auth');
     fileLogger.info(getUserDto);
     const accessToken: any = await this.authService.getAccessToken(getUserDto);
+    return this.responseMessage.response(accessToken);
+  }
+
+  @Post('/nickname')
+  @ApiOperation({ summary: '닉네임으로 사용자 등록 조회 및 등록된 사용자에게 accessToken 재발행', 
+    description: '닉네임으로 사용자를 등록을 조회하고 등록된 사용자에게는 access-Token을 재발행한다.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: '서버 에러' })
+  // @ApiCreatedResponse({ description: '로그인 성공', schema: { example: { resultCode: 200, resultMessage: 'SUCCESS' } } })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '데이터 없음' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: '필수입력 오류' })
+  @ApiOkResponse({
+    description: '성공',
+    schema: {
+      example: {
+        "resultCode": 200,
+        "resultMessage": "SUCCESS",
+        "data": {
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTm8iOjEsImlhdCI6MTcyNDY0NDUzMiwiZXhwIjoxNzI0NjQ4MTMyfQ.-BFmJS6gVQJtAfeiBIeDnm8b8KjmdqqdbuzoJpHIvU4"
+        }
+      }
+    }
+  })
+  async getNicknameAccessToken(@Body(ValidationPipe) getUserNicknameDto: GetUserNicknameDto): Promise<any> {
+    fileLogger.info('auth');
+    fileLogger.info(getUserNicknameDto);
+    const accessToken: any = await this.authService.getNicknameAccessToken(getUserNicknameDto);
     return this.responseMessage.response(accessToken);
   }
 
@@ -66,7 +93,7 @@ export class AuthController {
     schema: {
       example: {
         "resultCode": 200,
-        "resultMessage": "SUCESS",
+        "resultMessage": "SUCCESS",
         "data": {
           "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTm8iOjEsImlhdCI6MTcyNDY0NDUzMiwiZXhwIjoxNzI0NjQ4MTMyfQ.-BFmJS6gVQJtAfeiBIeDnm8b8KjmdqqdbuzoJpHIvU4"
         }
@@ -99,7 +126,7 @@ export class AuthController {
     schema: {
       example: {
         "resultCode": 200,
-        "resultMessage": "SUCESS",
+        "resultMessage": "SUCCESS",
         "data": {
           "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTm8iOjEsImlhdCI6MTcyNDY0NDQ2NSwiZXhwIjoxNzI0NjQ4MDY1fQ.L-3fo1X9BTObnuH9jF6zXGv5qUR2LfTst4A53xIPy24"
         }

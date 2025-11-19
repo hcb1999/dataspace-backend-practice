@@ -164,7 +164,7 @@ export class NftController {
   // @ApiOkResponse({ description: '성공',
   //   schema: {example: { 
   //     "resultCode": 200,
-  //     "resultMessage": "SUCESS",
+  //     "resultMessage": "SUCCESS",
   //     "data": {
   //       "pageSize": 10,
   //       "totalCount": 1,
@@ -220,7 +220,7 @@ export class NftController {
   // @ApiOkResponse({ description: '성공',
   //   schema: {example: { 
   //     "resultCode": 200,
-  //     "resultMessage": "SUCESS",
+  //     "resultMessage": "SUCCESS",
   //     "data": {
   //       "pageSize": 10,
   //       "totalCount": 1,
@@ -276,7 +276,7 @@ export class NftController {
   // @ApiOkResponse({ description: '성공',
   //   schema: {example: { 
   //     "resultCode": 200,
-  //     "resultMessage": "SUCESS",
+  //     "resultMessage": "SUCCESS",
   //     "data": {
   //       "pageSize": 10,
   //       "totalCount": 1,

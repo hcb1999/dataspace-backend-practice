@@ -162,7 +162,7 @@ export class MarketController {
   @ApiOkResponse({ description: '성공',
     schema: {example: { 
       "resultCode": 200,
-      "resultMessage": "SUCESS",
+      "resultMessage": "SUCCESS",
       "data": {
         "pageSize": 10,
         "totalCount": 2,
@@ -253,7 +253,7 @@ export class MarketController {
     @ApiOkResponse({ description: '성공',
       schema: {example: { 
         "resultCode": 200,
-        "resultMessage": "SUCESS",
+        "resultMessage": "SUCCESS",
         "data": {
           "pageSize": 10,
           "totalCount": 2,
@@ -356,7 +356,7 @@ export class MarketController {
           resultMessage: 'SUCCESS',
           data: {
             "resultCode": 200,
-            "resultMessage": "SUCESS",
+            "resultMessage": "SUCCESS",
             "data": {
               "price": 0.3,
               "marketNo": 23,
