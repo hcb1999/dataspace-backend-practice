@@ -4,6 +4,7 @@ import { UserService } from '../user/user.service';
 import { NftService } from '../nft/nft.service';
 import { DidService } from '../did/did.service';
 import { GetUserDto } from '../dtos/get_user.dto';
+import { GetDidUserDto } from '../dtos/get_did_user.dto';
 import { CreateUserDto } from '../dtos/create_user.dto';
 import { User } from '../entities/user.entity';
 import { NftWallet } from "../entities/nft_wallet.entity";
@@ -65,12 +66,20 @@ export class AuthService {
       if (!userInfo) {
         throw new NotFoundException('User(email) not found.');
       }
+      const userDidInfo = await this.userService.getDidWallet(userInfo.userNo);
+      if (!userDidInfo) {
+        throw new NotFoundException('UserDid(email) not found.');
+      }
 
-      // let userNo = userWalletInfo.userNo;
-      // const userInfo = await this.userService.getOne(userNo);
-      // if (!userInfo) {
-      //   throw new NotFoundException("User not found.");
-      // }
+      // Authledger 사용자 DID verify 요청
+      // for TEST
+      const getDidUserDto: GetDidUserDto = {walletDid: userDidInfo.walletDid};
+      const user = await this.didService.verifyUser(getDidUserDto);
+      if (!user) {      
+        throw new NotFoundException('사용자 DID verify 요청 오류');
+      }
+      
+      console.log("verified user: "+JSON.stringify(user))      
 
       // 토큰생성
       // const payload = { userNo };
@@ -101,6 +110,21 @@ export class AuthService {
         throw new NotFoundException('User(nickName) not found.');
       }
 
+    const userDidInfo = await this.userService.getDidWallet(userInfo.userNo);
+      if (!userDidInfo) {
+        throw new NotFoundException('UserDid(email) not found.');
+      }
+
+      // Authledger 사용자 DID verify 요청
+      // for TEST
+      const getDidUserDto: GetDidUserDto = {walletDid: userDidInfo.walletDid};
+      const user = await this.didService.verifyUser(getDidUserDto);
+      if (!user) {      
+        throw new NotFoundException('사용자 DID verify 요청 오류');
+      }
+      
+      console.log("verified user: "+JSON.stringify(user))      
+
       const payload = { userNo: userInfo.userNo };
       const accessToken = this.jwtService.sign(payload);
 
@@ -118,32 +142,32 @@ export class AuthService {
    * @param getUserDto
    * @returns 
    */
-  async getBioAccessToken(getUserDto: GetUserDto): Promise<any> {
+  // async getBioAccessToken(getUserDto: GetUserDto): Promise<any> {
 
-    try {
-      const email = getUserDto.email;
-      const userInfo = await this.userService.getOneByEmail(email);
-      if (!userInfo) {
-        throw new NotFoundException('User(email) not found.');
-      }
+  //   try {
+  //     const email = getUserDto.email;
+  //     const userInfo = await this.userService.getOneByEmail(email);
+  //     if (!userInfo) {
+  //       throw new NotFoundException('User(email) not found.');
+  //     }
 
-      // DID 로긴 호출
-      const newJwt = await this.didService.createUser({ id: getUserDto.email, userNo: userInfo.userNo });
-      if(newJwt.jwt){
-        // 토큰생성
-        // const payload = { userNo };
-        const payload = { userNo: userInfo.userNo };
-        const accessToken = this.jwtService.sign(payload);
+  //     // DID 로긴 호출
+  //     const newJwt = await this.didService.createUser({ id: getUserDto.email, userNo: userInfo.userNo });
+  //     if(newJwt.jwt){
+  //       // 토큰생성
+  //       // const payload = { userNo };
+  //       const payload = { userNo: userInfo.userNo };
+  //       const accessToken = this.jwtService.sign(payload);
 
-        return { accessToken };
-      }else{
-        return null
-      }
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }
-  }
+  //       return { accessToken };
+  //     }else{
+  //       return null
+  //     }
+  //   } catch (e) {
+  //     this.logger.error(e);
+  //     throw e;
+  //   }
+  // }
 
   /**
    * 사용자 등록
@@ -192,48 +216,5 @@ export class AuthService {
     }
      
   }
-  /*
-  async register(createUserDto: CreateUserDto): Promise<any> {
-    // const userInfo = await this.userService.create(createUserDto);
-
-    try {
-      // const account = createUserDto.account;
-      // const nickName = createUserDto.nickName;
-      // const email = createUserDto.email;
-      // const nickUser = await this.userService.getOneByNickname(nickName);
-      // if(nickUser != null) {
-      //     throw new ConflictException('Aready registered Nickname.');
-      // }
-      // const emailUser = await this.userService.getOneByEmail(email);
-      // if(emailUser != null) {
-      //     throw new ConflictException('Aready registered Email.');
-      // }
-
-      const userInfo = await this.userService.create(createUserDto);
-      if (userInfo) {
-        let userNo = userInfo.userNo;
-        // 토큰생성
-        const payload = { userNo };
-        const accessToken = this.jwtService.sign(payload);
-        
-        return { accessToken };
-      }
-
-    } catch (e) {
-      this.logger.error(e);
-      // throw new ConflictException(e.message);
-      throw e;
-      // 예외 메시지 추출
-      // if (e instanceof ConflictException) {
-      //   console.log('ConflictException');
-      //   throw new ConflictException(e.message);
-      // } else {
-      //   console.log('Internal');
-      //   throw new InternalServerErrorException('internal Server Error');
-      // }
-    }
-     
-  }
-*/
 
 }

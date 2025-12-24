@@ -22,12 +22,12 @@ import { HttpModule } from '@nestjs/axios';
         transport: Transport.RMQ,
         options: {
           urls: ['amqp://avataroad:avataroad@localhost:5672'], // RabbitMQ 서버 URL 확인
-          queue: 'transaction_queue', // 큐 이름 확인
+          queue: 'transaction_dataspace_queue', // 큐 이름 확인
           // noAck: false,
           queueOptions: {
             durable: true,
-            'x-dead-letter-exchange': 'dlx_exchange1',
-            'x-dead-letter-routing-key': 'dlx_routing_key1',
+            'x-dead-letter-exchange': 'dlx_exchange2',
+            'x-dead-letter-routing-key': 'dlx_routing_key2',
             'x-message-ttl': 10000,
           },
         },

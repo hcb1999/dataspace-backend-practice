@@ -266,16 +266,6 @@ export class UserService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
-      const wallet = ethers.Wallet.createRandom();
-      const account = wallet.address.toLowerCase();
-      const pkey =  wallet.privateKey;
-
-      // 계정 생성 및 계정 중복 체크 
-      const walletInfo = await this.nftWalletRepository.findOne({ where:{account} });
-      if (walletInfo) {
-        throw new ConflictException('Aready registered Account.');
-      }
-
       const email = createUserDto.email;
       if(email != null) {
         const user = await this.userRepository.findOne({ where:{email} });
@@ -300,74 +290,49 @@ export class UserService {
       const newUser = queryRunner.manager.create(User, createUserDto);
       const regUser = await queryRunner.manager.save<User>(newUser);
       const userNo = regUser.userNo;
-      // const account = createUserDto.account;
 
-      // ETRI API 호출
-      // 1. 사용자 연결 인증 요청
-      const createDidUserDto: CreateDidUserDto = {id: email, userNo: userNo};
-      const userJwt = await this.didService.createUser(createDidUserDto);
-      if (!userJwt) {      
-        throw new NotFoundException('DID 등록 오류 - jwt');
+      // Authledger 사용자 DID issue 요청
+      const createDidUserDto: CreateDidUserDto = {email, nickName};
+      const userWallet = await this.didService.createUser(createDidUserDto);
+      if (!userWallet) {      
+        throw new NotFoundException('사용자 DID issue 요청 오류');
       }
-      console.log("userJwt: "+JSON.stringify(userJwt))
+      // for TEST
+      // const userWallet = {
+      //   did: 'data1_DID',
+      //   walletAddress: 'data1_walletAddress'
+      // };
+      console.log("userWallet: "+JSON.stringify(userWallet))
 
-      // 2. 아바타 가상자갑 생성 요청
-      const createDidWalletDto: CreateDidWalletDto = {nickName, imageUrl: '', id: email, jwt: userJwt.jwt};
-      const userDid = await this.didService.createWallet(createDidWalletDto);
-      if (!userDid) {
-        throw new NotFoundException('DID 등록 오류 - did');
-      }
-      console.log("userDid: "+JSON.stringify(userDid))
+      // User 정보 수정 (orgId)
+      // const data = {orgId: userWallet.orgId};
+      // console.log("data: "+JSON.stringify(data))
+      // await this.userRepository.update(userNo, data); 
+      await queryRunner.manager.update(User, userNo, {orgId: userWallet.orgId}); 
 
       // DidWallet 저장
-      let didWalletInfo = {userNo, jwt: userJwt.jwt, walletDid: userDid.did};
+      let didWalletInfo = {userNo, walletDid: userWallet.did};
       console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
       const newDidWallet = queryRunner.manager.create(DidWallet, didWalletInfo);
       await queryRunner.manager.save<DidWallet>(newDidWallet);
 
       // NftWallet 저장
-      let nftWalletInfo = {userNo, account, pkey};
+      let nftWalletInfo = {userNo, account: userWallet.walletAddress.toLowerCase()};
       console.log("nftWalletInfo : "+JSON.stringify(nftWalletInfo));
       const newNftWallet = queryRunner.manager.create(NftWallet, nftWalletInfo);
       await queryRunner.manager.save<NftWallet>(newNftWallet);
-      
-      // faucet userNo 찾기
-      // const faucetEmail =  this.configService.get<string>('FAUCET_EMAIL');
-      const faucetEmail =  this.configService.get<string>('FAUCET_ADDRESS');
-      const faucetAmount =  this.configService.get<number>('FAUCET_AMOUNT');
-      // console.log("===== faucetEmail : "+ JSON.stringify(faucetEmail)); 
-      // console.log("===== faucetAmount : "+ JSON.stringify(faucetAmount)+" type : " + typeof(faucetAmount)); 
-      const faucetInfo = await this.nftWalletRepository.findOne({ where:{account: faucetEmail } });
-      if (!faucetInfo) {
-        throw new NotFoundException("Data Not found. : faucet email");
-      }
+       
+      await queryRunner.commitTransaction();
+      return regUser;
 
-      // nftService.transferEth 호출      
-      console.log("===== toAddr : "+ account+" toPkey : " + pkey); 
-      const nftInfo = { userNo, faucetPKey: faucetInfo.pkey, faucetAmount, toAddr: account };
-      // console.log("===== nftInfo : "+ JSON.stringify(nftInfo)); 
-      const ret = await this.nftService.transferEth(nftInfo);
-      if(ret){
-        // console.log("TRUE"); 
-        await queryRunner.commitTransaction();
-        return regUser;
-      }else{
-        await queryRunner.rollbackTransaction();
-        throw new InternalServerErrorException('Transfer Ether Error');
-      } 
     } catch (e) {
-      await queryRunner.rollbackTransaction ();    
-      // console.log("111111111111111111");      
+      await queryRunner.rollbackTransaction ();          
       // console.log(e.message);      
       this.logger.error(e.message);
-      if (e.message.includes('Aready registered Account.')) {
-        throw new ConflictException('Aready registered Account.');
-      } else if (e.message.includes('Aready registered email.')) {
+      if (e.message.includes('Aready registered email.')) {
         throw new ConflictException('Aready registered email.');
       } else if (e.message.includes('Aready registered Nickname.')) {
         throw new ConflictException('Aready registered Nickname.');
-      } else if (e.message.includes('Data Not found. : faucet email')) {
-        throw new NotFoundException('Data Not found. : faucet email');
       } else {
         throw new InternalServerErrorException(e.message);
       }
@@ -376,124 +341,5 @@ export class UserService {
       await queryRunner.release();
     }
   }
-/*
-  async create(createUserDto: CreateUserDto): Promise<any> {
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    try {
-
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      // const wallet = ethers.Wallet.createRandom();
-      // const account = wallet.address.toLowerCase();
-      // const pkey =  wallet.privateKey;
-
-      // // 계정 생성 및 계정 중복 체크 
-      // const walletInfo = await this.nftWalletRepository.findOne({ where:{account} });
-      // if (walletInfo) {
-      //   throw new ConflictException('Aready registered Account.');
-      // }
-
-      // const email = createUserDto.email;
-      // if(email != null) {
-      //   const user = await this.userRepository.findOne({ where:{email} });
-      //   if (user) {
-      //     throw new ConflictException('Aready registered email.');
-      //   }
-      // }else{
-      //   // console.log("email is null")
-      // }
-      
-      // const nickName = createUserDto.nickName;
-      // if(nickName != null) {
-      //   const user = await this.userRepository.findOne({ where:{nickName} });
-      //   if (user) {
-      //     throw new ConflictException('Aready registered Nickname.');
-      //   }
-      // }else{
-      //   // console.log("nickname is null")
-      // }
-
-      // // User 저장
-      // const newUser = queryRunner.manager.create(User, createUserDto);
-      // const regUser = await queryRunner.manager.save<User>(newUser);
-      // const userNo = regUser.userNo;
-      // // const account = createUserDto.account;
-
-      const email = createUserDto.email;
-      const nickName = createUserDto.nickName;
-      const user = await this.userRepository.findOne({ where:{email} });
-      const userNo = user.userNo;
-
-      // ETRI API 호출
-      // 1. 사용자 연결 인증 요청
-      const createDidUserDto: CreateDidUserDto = {id: email, userNo};
-      const userJwt = await this.didService.createUser(createDidUserDto);
-      if (!userJwt) {      
-        throw new NotFoundException('DID 등록 오류 - jwt');
-      }
-      console.log("userJwt: "+JSON.stringify(userJwt))
-
-      // 2. 아바타 가상자갑 생성 요청
-      const createDidWalletDto: CreateDidWalletDto = {nickName, imageUrl: '', id: email, jwt: userJwt.jwt};
-      const userDid = await this.didService.createWallet(createDidWalletDto);
-      if (!userDid) {
-        throw new NotFoundException('DID 등록 오류 - did');
-      }
-      console.log("userDid: "+JSON.stringify(userDid))
-
-      // DidWallet 저장
-      let didWalletInfo = {userNo, jwt: userJwt.jwt, walletDid: userDid.did};
-      console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
-      const newDidWallet = queryRunner.manager.create(DidWallet, didWalletInfo);
-      await queryRunner.manager.save<DidWallet>(newDidWallet);
-
-      // // NftWallet 저장
-      // let nftWalletInfo = {userNo, account, pkey};
-      // // console.log("nftWalletInfo : "+JSON.stringify(nftWalletInfo));
-      // const newNftWallet = queryRunner.manager.create(NftWallet, nftWalletInfo);
-      // await queryRunner.manager.save<NftWallet>(newNftWallet);
-      
-      // // faucet userNo 찾기
-      // const faucetEmail =  this.configService.get<string>('FAUCET_EMAIL');
-      // const faucetAmount =  this.configService.get<number>('FAUCET_AMOUNT');
-      // // console.log("===== faucetEmail : "+ JSON.stringify(faucetEmail)); 
-      // // console.log("===== faucetAmount : "+ JSON.stringify(faucetAmount)+" type : " + typeof(faucetAmount)); 
-      // const faucetInfo = await this.nftWalletRepository.findOne({ where:{account: faucetEmail } });
-      // if (!faucetInfo) {
-      //   throw new NotFoundException("Data Not found. : faucet email");
-      // }
-
-      // // nftService.transferEth 호출      
-      // console.log("===== toAddr : "+ account+" toPkey : " + pkey); 
-      // const nftInfo = { userNo, faucetPKey: faucetInfo.pkey, faucetAmount, toAddr: account };
-      // // console.log("===== nftInfo : "+ JSON.stringify(nftInfo)); 
-      // const ret = await this.nftService.transferEth(nftInfo);
-      
-      await queryRunner.commitTransaction (); 
-      return;
-    } catch (e) {
-      await queryRunner.rollbackTransaction ();    
-      // console.log("111111111111111111");      
-      // console.log(e.message);      
-      this.logger.error(e.message);
-      if (e.message.includes('Aready registered Account.')) {
-        throw new ConflictException('Aready registered Account.');
-      } else if (e.message.includes('Aready registered email.')) {
-        throw new ConflictException('Aready registered email.');
-      } else if (e.message.includes('Aready registered Nickname.')) {
-        throw new ConflictException('Aready registered Nickname.');
-      } else if (e.message.includes('Data Not found. : faucet email')) {
-        throw new NotFoundException('Data Not found. : faucet email');
-      } else {
-        throw new InternalServerErrorException(e.message);
-      }
-      
-    }finally {
-      await queryRunner.release();
-    }
-  }  
-*/
 
 }

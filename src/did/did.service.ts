@@ -2,18 +2,15 @@ import { BadRequestException, ConflictException, Inject, Injectable, Logger, Not
 import { DataSource, Repository, UpdateResult, Like, MoreThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { CreateDidUserDto } from '../dtos/create_did_user.dto';
-import { CreateDidWalletDto } from '../dtos/create_did_wallet.dto';
-import { CreateDidAcdgDto } from '../dtos/create_did_acdg.dto';
-import { CreateDidAciDto } from '../dtos/create_did_aci.dto';
-import { CreateDidAcrDto } from '../dtos/create_did_acr.dto';
-import { GetDidAcmDto } from '../dtos/get_did_acm.dto';
-import { GetDidAcdDto } from '../dtos/get_did_acd.dto';
+import { CreateDidVcDto } from '../dtos/create_did_vc.dto';
+import { GetDidUserDto } from '../dtos/get_did_user.dto';
+import { GetDidVcDto } from '../dtos/get_did_vc.dto';
 import { DidWallet } from '../entities/did_wallet.entity';
 import { User } from "../entities/user.entity";
 import { createVC, parseVC } from 'src/common/vc-utils';
 import axios from 'axios';
 import { InternalServerErrorException } from '@nestjs/common';
-import { Console } from 'console';
+// import { Console } from 'console';
 
 @Injectable()
 export class DidService {
@@ -33,89 +30,64 @@ export class DidService {
   ) { }
 
   /**
-   * 사용자 연결인증
+   * 사용자 등록
    * 
    * @param createDidUserDto
    * @returns 
    */
   async createUser(createDidUserDto: CreateDidUserDto): Promise<any> {
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     try {
 
-      const serviceDomain = this.configService.get<string>('SERVICE_DOMAIN');
-      const url = this.configService.get<string>('DID_USER_URL');
+      const email = createDidUserDto.email;
+      const nickname = createDidUserDto.nickName;
+      const apiToken = this.configService.get<string>('AL_API_TOKEN');
+      const dataspace = this.configService.get<string>('DID_DATASPACE');
+      const url = this.configService.get<string>('DID_ISSUE_URL');
       const data = {
-        operation: "UserConnectingAuthentication",
-        id: createDidUserDto.id,
-        authType: "FACE",
-        serviceId: serviceDomain
+        "issuerDid": dataspace,
+        "sourceHolderDid": "", 
+        "targetHolderDid": "", 
+        "payload": {
+          "issueType": "1",
+          "vcType": "4",
+          "credential": {
+            email,
+            nickname
+            }
+          }
       };
+
       console.log("url: "+url);
       console.log("data: "+JSON.stringify(data));
+      // console.log("apiToken: "+apiToken);
 
       try {
         const response = await axios.post(url, data, {
-          headers: { "Content-Type": "application/json" },
+          timeout: 1000 * 60 * 5, // 5분
+          headers: { 
+            Authorization: `Bearer ${apiToken}` ,
+            'Content-Type': 'application/json',   
+          },
         });
-        // const response = await axios({
-        //   method: 'post',
-        //   url,
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   data: JSON.stringify({
-        //     operation: 'UserConnectingAuthentication',
-        //     id: 'aroseller@authrium.com',
-        //   }),
-        // });
+ 
         console.log("response.data: "+JSON.stringify(response.data));
         if(response.data){
-          if(response.data.result == 'Success'){           
-            // did_wallet_update 저장 필요 
-            let userNo = 0;
-            if(createDidUserDto.userNo){
-              userNo = createDidUserDto.userNo;
-              console.log("user: userNo"+userNo);
-            }else{
-              const user = await this.userRepository.findOne({ where: { email: createDidUserDto.id } });
-              userNo = user.userNo;
-              console.log("user: "+JSON.stringify(user));
-            }
-            
-            const didWallet = await this.didWalletRepository.findOne({ where: { userNo } });
-            if(didWallet){  
-              console.log("did-didWallet 있어요.");
-              await this.didWalletRepository.update({ userNo: userNo }, { jwt: response.data.jwt });
-            }
-            console.log("data === : "+JSON.stringify(response.data));
-            await queryRunner.commitTransaction();
-            return {jwt: response.data.jwt};
+          if(response.data.resultMessage == 'SUCCESS'){                       
+            return {did: response.data.data.did, 
+              walletAddress: response.data.data.smcWalletAddress,
+              orgId: response.data.data.orgId
+            };
           }
         }else {
-          console.error("POST(createUser) ERROR: "+response.data.failureReason);
+          console.error("POST(createUser) ERROR: "+response.data.resultMessage);
           return null;
         }
       } catch (error) {
-        // console.log(error.response.data.failureReason);
-        if(error.response.data.failureReason == 'FAILURE_REASON_NO_REGISTRATION'){
-          console.error("웹지갑에 등록되지 않은 사용자입니다.");
-          // error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
-          error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
-        }else if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_BIO_AUTHENTICATION'){
-          console.error("유효하지 않은 바이오 인증입니다.");
-          error.response.data.failureReason = '유효하지 않은 바이오 인증입니다.';
-        }else{
-          error.response.data.failureReason += " : "+error.response.data.failureMessage;
-        }
-  
-        // console.log("failureReason: "+failureReason);
+        console.log("POST(createUser) ERROR "+JSON.stringify(error.response.data));
         throw new InternalServerErrorException({
           statusCode: error.response.status,
-          message: error.response.data.failureReason,
+          message: "Internal Error",
           // error: error.response.data.error,
         });
       }
@@ -123,313 +95,126 @@ export class DidService {
     } catch (e) {
       this.logger.error(e);
       throw e;
-    }finally {
-      await queryRunner.release();
     }
   }
 
   /**
-   * 아바타 가상지갑 생성
+   * 사용자 검증 By email
    * 
-   * @param createDidWalletDto 
+   * @param getDidUserDto
    * @returns 
    */
-  async createWallet(createDidWalletDto: CreateDidWalletDto, retryCount = 0): Promise<any> {
-    if (retryCount > 1) {
-      throw new InternalServerErrorException('JWT 재발급 후에도 실패했습니다.');
-    }
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+  async verifyUser(getDidUserDto: GetDidUserDto): Promise<any> {
 
     try {
-      const serviceDomain = this.configService.get<string>('SERVICE_DOMAIN');
-      const server = this.configService.get<string>('SERVER_DOMAIN');
-      const url = this.configService.get<string>('DID_WALLET_URL');
+
+      const did = getDidUserDto.walletDid;
+      const apiToken = this.configService.get<string>('AL_API_TOKEN');
+      const dataspace = this.configService.get<string>('DID_DATASPACE');
+      const url = this.configService.get<string>('DID_VERIFY_URL');
       const data = {
-        operation: 'AvatarVirtualWalletCreate',
-        serviceId: serviceDomain,
-        serviceName: 'AvataroAD',
-        serviceImageUrl: server+'/k_top_logo.png',
-        avatarName: createDidWalletDto.nickName,
-        avatarImageUrl: createDidWalletDto.imageUrl,
-        id: createDidWalletDto.id,
-        jwt: createDidWalletDto.jwt,
+        "sourceHolderDid": did,
+        "verfierDid": dataspace, 
+        "payload": {
+          "proofs": [
+            {
+              "vcType": "4",
+               "proofItem": ["nickname", "email"]
+            }
+          ]
+        }
       };
+
       console.log("url: "+url);
       console.log("data: "+JSON.stringify(data));
 
       try {
         const response = await axios.post(url, data, {
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            Authorization: `Bearer ${apiToken}` 
+          },
         });
+ 
+        console.log("response.data: "+JSON.stringify(response.data));
+        console.log("response.data: "+JSON.stringify(response.data.data.proofs));
         if(response.data){
-          if(response.data.result == 'Success')
-            return {did: response.data.did};
+          if(response.data.resultMessage == 'SUCCESS'){                       
+            return {email: response.data.data.proofs[0].proof.email, nickname: response.data.data.proofs[0].proof.nickname};
+          }
         }else {
-          console.error("POST(createWallet) ERROR: "+response.data.failureReason);
+          console.error("POST(verifyUser) ERROR: "+response.data.resultMessage);
           return null;
         }
       } catch (error) {
-        console.log(error.response.data.failureReason);
-        console.log(error.response.data.failureMessage);
-        if(error.response.data.failureReason == 'FAILURE_REASEON_NO_REGISTRATION'){
-          console.error("웹지갑에 등록되지 않은 사용자입니다.");
-          error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
-        }else if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_BIO_AUTHENTICATION'){
-          console.error("유효하지 않은 바이오 인증입니다.");
-          error.response.data.failureReason = '유효하지 않은 바이오 인증입니다.';
-        }else{
-          // console.error('응답 데이터:', JSON.stringify(error.response.data.failureMessage));
-      //  if(error.response.data.failureMessage?.startsWith('io.jsonwebtoken.ExpiredJwtException')) {
-          if(error.response.data.failureMessage?.startsWith('io.jsonwebtoken.ExpiredJwtException') || error.response.data.failureMessage == 'JWT token is expired') {
-            console.error("토큰이 만료 되었습니다.");
-            const newJwt = await this.createUser({ id: createDidWalletDto.id });
-            createDidWalletDto.jwt = newJwt.jwt;
-              return await this.createWallet(createDidWalletDto, retryCount + 1);                       
-          }
-        }
-  
+        console.log("POST(verifyUser) ERROR: "+JSON.stringify(error.response.data));
         throw new InternalServerErrorException({
-          statusCode: error.response.status,
-          message: error.response.data.failureReason,
+          statusCode: error.response.resultCode,
+          message: "Internal Error",
           // error: error.response.data.error,
         });
       }
-
+      
     } catch (e) {
       this.logger.error(e);
       throw e;
-    }finally {
-      await queryRunner.release();
     }
-
   }
 
   /**
-   * 아바타 크리덴셜 DID 생성
+   * 데이터 스페이스 VC 등록
    * 
-   * @param createDidAcdgDto
+   * @param createDidVcDto
    * @returns 
    */
-  async createAcdg(createDidAcdgDto: CreateDidAcdgDto, retryCount = 0): Promise<any> {
-    if (retryCount > 1) {
-      throw new InternalServerErrorException('JWT 재발급 후에도 실패했습니다.');
-    }
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+  async createVC(createDidVcDto: CreateDidVcDto): Promise<any> {
 
     try {
 
-      const url = this.configService.get<string>('DID_ACDG_URL');
+      const walletDid = createDidVcDto.walletDid;
+      const vcType = createDidVcDto.vcType;
+      const apiToken = this.configService.get<string>('AL_API_TOKEN');
+      const dataspace = this.configService.get<string>('DID_DATASPACE');
+      const url = this.configService.get<string>('DID_ISSUE_URL');
+      delete createDidVcDto.walletDid;
+      delete createDidVcDto.vcType;
       const data = {
-        operation: 'AvatarCredentialDidGen',
-        jwt: createDidAcdgDto.jwt,
-        did: createDidAcdgDto.did,
-      };
-      console.log("===== 1. 아바타 크리덴셜 DID 생성 url: "+url);
-      console.log("===== 1. 아바타 크리덴셜 DID 생성 data: "+JSON.stringify(data));
-
-      try {
-        const response = await axios.post(url, data, {
-          headers: { "Content-Type": "application/json" },
-        });
-        if(response.data){
-          if(response.data.result == 'Success')
-            return {did: response.data.did};
-        }else {
-          console.error("POST(createAcdg) ERROR: "+response.data.failureReason);
-          return null;
-        }
-      } catch (error) {
-        console.error("error : "+JSON.stringify(error));
-        console.error("error : "+JSON.stringify(error.response.data.failureReason));
-        if(error.response.data.failureReason == 'FAILURE_REASEON_NO_REGISTRATION'){
-          console.error("웹지갑에 등록되지 않은 사용자입니다.");
-          error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
-        }else if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_BIO_AUTHENTICATION'){
-          console.error("유효하지 않은 바이오 인증입니다.");
-          error.response.data.failureReason = '유효하지 않은 바이오 인증입니다.';
-        }else{
-          // console.error('응답 데이터:', JSON.stringify(error.response.data.failureMessage));
-          if(error.response.data.failureMessage?.startsWith('io.jsonwebtoken.ExpiredJwtException') || error.response.data.failureMessage == 'JWT token is expired') {
-            console.error("토큰이 만료 되었습니다.");
-            const newJwt = await this.createUser({ id: createDidAcdgDto.id });
-            createDidAcdgDto.jwt = newJwt.jwt;
-            return await this.createAcdg(createDidAcdgDto, retryCount + 1);                       
+        "issuerDid": dataspace,
+        "sourceHolderDid": walletDid, 
+        "targetHolderDid": "", 
+        "payload": {
+        "issueType": "1",
+        "vcType": vcType,
+        "credential": {
+          ...createDidVcDto 
           }
         }
-  
-        throw new InternalServerErrorException({
-          statusCode: error.response.status,
-          message: error.response.data.failureReason,
-          // error: error.response.data.error,
-        });
-      }
-
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }finally {
-      await queryRunner.release();
-    }
-  }
-
-  /**
-   * 아바타 크리덴셜 발급
-   * 
-   * @param createDidAciDto 
-   * @returns 
-   */
-  async createAci(createDidAciDto: CreateDidAciDto): Promise<any> {
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-
-      const url = this.configService.get<string>('DID_ACI_URL');
-       const data = {
-        operation: 'AvatarCredentialIssue',
-        did: createDidAciDto.did,
-        // vcSubType: 'Daram_ConcertAttendance',
-        vcSubType: 'Avataroad_Kasset',
-        nickName: createDidAciDto.nickName,
-        attributes: createDidAciDto.attributes
       };
-      console.log("=====2. 아바타 크리덴셜 발급 url: "+url);
-      console.log("=====2. 아바타 크리덴셜 발급 data: "+JSON.stringify(data));
-  
-      /*
-      // 비동기 딜레이 유틸리티 함수
-      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-      console.log("5초 대기 시작...");
-      await delay(5000); // ✅ 여기서 5초간 대기합니다.
-      console.log("5초 대기 완료.");
-      */
+      console.log("createVC url: "+url);
+      console.log("createVC data: "+JSON.stringify(data));
+      // console.log("apiToken: "+apiToken);
 
       try {
         const response = await axios.post(url, data, {
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            Authorization: `Bearer ${apiToken}` 
+          },
         });
-        // console.log("response: "+JSON.stringify(response.data));
+ 
+        console.log("response.data: "+JSON.stringify(response.data));
         if(response.data){
-          if(response.data.result == 'Success')
-            console.log("response.data: "+JSON.stringify(response.data));
-            const parsed = parseVC(response.data.vc);
-            console.log("vc.id: "+parsed.credentialId);
-            console.log("vcIssuerName: "+response.data.vcIssuerName);
-            console.log("vcIssuerLogo: "+response.data.vcIssuerLogo);
-            console.log("vcTypeName: "+response.data.vcTypeName);
-            return {vc: response.data.vc,
-                    vcIssuerName: response.data.vcIssuerName,
-                    vcIssuerLogo: response.data.vcIssuerLogo,
-                    vcTypeName: response.data.vcTypeName};
-        }else {
-          console.error("POST(createAci) ERROR: "+response.data.failureReason);
-          return null;
-        }
-      } catch (error) {
-        console.log("createAci error : "+JSON.stringify(error));      
-        console.log("createAci error : "+error.response.data.failureReason);      
-        if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_VC_TYPE'){
-          console.error("유효하지 않은 VC TYPE 입니다.");
-          error.response.data.failureReason = '유효하지 않은 VC TYPE 입니다.';
-        }else if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_DID'){
-          console.error("유효하지 않은 DID 입니다.");
-          error.response.data.failureReason = '유효하지 않은 DID 입니다.';
-        }
-        
-        throw new InternalServerErrorException({
-          statusCode: error.response.status,
-          message: error.response.data.failureReason,
-          // error: error.response.data.error,
-        });
-      }
-
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }finally {
-      await queryRunner.release();
-    }
-  
-  }
-
-  /**
-   * 아바타 크리덴셜 등록
-   * 
-   * @param createDidAcrDto 
-   * @returns 
-   */
-  async createAcr(createDidAcrDto: CreateDidAcrDto, retryCount = 0): Promise<any> {
-    if (retryCount > 1) {
-      throw new InternalServerErrorException('JWT 재발급 후에도 실패했습니다.');
-    }
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-
-      const url = this.configService.get<string>('DID_ACR_URL');
-       const data = {
-        operation: 'AvatarCredentialRegister',
-        id: createDidAcrDto.id,
-        jwt: createDidAcrDto.jwt,
-        did: createDidAcrDto.did,
-        vc: createDidAcrDto.vc,
-        vcIssuerName: createDidAcrDto.vcIssuerName,
-        vcIssuerLogo: createDidAcrDto.vcIssuerLogo,
-        vcTypeName: createDidAcrDto.vcTypeName,
-        checkBusinessCard: false
-      };
-      console.log("=====3. 아바타 크리덴셜 등록 url: "+url);
-      console.log("=====3. 아바타 크리덴셜 등록 data: "+JSON.stringify(data));
-  
-      try {
-        const response = await axios.post(url, data, {
-          headers: { "Content-Type": "application/json" },
-        });
-        if(response.data){
-          if(response.data.result == 'Success')
-            return {result: response.data.result};
-        }else {
-          console.error("POST(createAcr) ERROR: "+response.data.failureReason);
-          return null;
-        }
-      } catch (error) {
-        console.error("error: "+JSON.stringify(error));
-        if(error.response.data.failureReason == 'FAILURE_REASEON_NO_REGISTRATION'){
-          console.error("웹지갑에 등록되지 않은 사용자입니다.");
-          error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
-        }else if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_BIO_AUTHENTICATION'){
-          console.error("유효하지 않은 바이오 인증입니다.");
-          error.response.data.failureReason = '유효하지 않은 바이오 인증입니다.';
-        }else{
-          // console.error('응답 데이터:', JSON.stringify(error.response.data.failureMessage));
-          if(error.response.data.failureMessage?.startsWith('io.jsonwebtoken.ExpiredJwtException') || error.response.data.failureMessage == 'JWT token is expired') {
-            console.error("토큰이 만료 되었습니다.");
-            const newJwt = await this.createUser({ id: createDidAcrDto.id });
-            createDidAcrDto.jwt = newJwt.jwt;
-              return await this.createAcr(createDidAcrDto, retryCount + 1);                       
-          }else if(error.response.data.failureMessage?.startsWith('org.springframework.dao.DuplicateKeyException')) {
-            console.error("이미 등록된 에셋입니다.");
-            error.response.data.failureReason = '이미 등록된 에셋입니다.';
-          }else{
-            error.response.data.failureReason += " : "+error.response.data.failureMessage;
+          if(response.data.resultMessage == 'SUCCESS'){                       
+            return {did: response.data.data.did, walletAddress: response.data.data.smcWalletAddress};
           }
+        }else {
+          console.error("POST(createVC) ERROR: "+response.data.resultMessage);
+          return null;
         }
-  
+      } catch (error) {
+        console.log("POST(createVC) ERROR "+JSON.stringify(error.response.data));
         throw new InternalServerErrorException({
           statusCode: error.response.status,
-          message: error.response.data.failureReason,
+          message: "Internal Error",
           // error: error.response.data.error,
         });
       }
@@ -437,130 +222,70 @@ export class DidService {
     } catch (e) {
       this.logger.error(e);
       throw e;
-    }finally {
-      await queryRunner.release();
     }
-  
   }
 
   /**
-   * 아바타 크리덴셜 메타정보 조회 ( 사용 ? )
+   * 데이터 스페이스 VC 조회
    * 
-   * @param getDidAcmDto 
+   * @param getDidVcDto
    * @returns 
    */
-  async getAcm(getDidAcmDto: GetDidAcmDto, retryCount = 0): Promise<any> {
-    if (retryCount > 1) {
-      throw new InternalServerErrorException('JWT 재발급 후에도 실패했습니다.');
-    }
-
-    const url = this.configService.get<string>('DID_ACM_URL');
-    const data = {
-      operation: 'AvatarCredentialMeta',
-      id: getDidAcmDto.id,
-      jwt: getDidAcmDto.jwt,
-      did: getDidAcmDto.did,
-      vcType: getDidAcmDto.vcType,
-    };
-    console.log("url: "+url);
-    console.log("data: "+JSON.stringify(data));
+  async verifyVC(getDidVcDto: GetDidVcDto): Promise<any> {
 
     try {
-      const response = await axios.post(url, data, {
-        headers: { "Content-Type": "application/json" },
-      });
-      if(response.data){
-        if(response.data.result == 'Success')
-          return {vcMetas: response.data.vcMetas, operation: response.data.operation};
-      }else {
-        console.error("POST(getAcm) ERROR: "+response.data.failureReason);
-        return null;
-      }
-    } catch (error) {
-      if(error.response.data.failureReason == 'FAILURE_REASEON_NO_REGISTRATION'){
-        console.error("웹지갑에 등록되지 않은 사용자입니다.");
-        error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
-      }else if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_BIO_AUTHENTICATION'){
-        console.error("유효하지 않은 바이오 인증입니다.");
-        error.response.data.failureReason = '유효하지 않은 바이오 인증입니다.';
-      }else{
-        // console.error('응답 데이터:', JSON.stringify(error.response.data.failureMessage));
-        if(error.response.data.failureMessage?.startsWith('io.jsonwebtoken.ExpiredJwtException') || error.response.data.failureMessage == 'JWT token is expired') {
-          console.error("토큰이 만료 되었습니다.");
-          const newJwt = await this.createUser({ id: getDidAcmDto.id });
-          getDidAcmDto.jwt = newJwt.jwt;
-            return await this.getAcm(getDidAcmDto, retryCount + 1);                       
+
+      const did = getDidVcDto.walletDid;
+      const apiToken = this.configService.get<string>('AL_API_TOKEN');
+      const dataspace = this.configService.get<string>('DID_DATASPACE');
+      const url = this.configService.get<string>('DID_VERIFY_URL');
+      const data = {
+        "sourceHolderDid": did,
+        "verfierDid": dataspace, 
+        "payload": {
+          "proofs": [
+            {
+              "vcType": getDidVcDto.vcType,
+               "proofItem": ["dataId", "issuerDid", "dataName", "dataDesc", "productType", "language", "keyWord",
+                "doi", "subject", "issuer", "doiUrl", "registrantEmail", "registrantWalletAddress",
+                "dataPrice", "txId", "contractAddress", "imageURL", "registrationDate"]
+            }
+          ]
         }
-      }
+      };
 
-      throw new InternalServerErrorException({
-        statusCode: error.response.status,
-        message: error.response.data.failureReason,
-        // error: error.response.data.error,
-      });
-    
-    }
+      console.log("url: "+url);
+      console.log("data: "+JSON.stringify(data));
 
-  }
-
-  /**
-   * 아바타 크리덴셜 상세정보 조회
-   * 
-   * @param getDidAcdDto
-   * @returns 
-   */
-  async getAcd(getDidAcdDto: GetDidAcdDto, retryCount = 0): Promise<any> {
-    if (retryCount > 1) {
-      throw new InternalServerErrorException('JWT 재발급 후에도 실패했습니다.');
-    }
-    const url = this.configService.get<string>('DID_ACD_URL');
-    const data = {
-      operation: 'AvatarCredentialDetail',
-      id: getDidAcdDto.id,
-      jwt: getDidAcdDto.jwt,
-      vcId: getDidAcdDto.vcId,
-    };
-    console.log("url: "+url);
-    console.log("data: "+JSON.stringify(data));
-
-    try {
-      const response = await axios.post(url, data, {
-        headers: { "Content-Type": "application/json" },
-      });
-      if(response.data){
-        if(response.data.result == 'Success')
-          return {vc: response.data.vc};
-      }else {
-        console.error("POST(getAcd) ERROR: "+response.data.failureReason);
-        return null;
-      }
-    } catch (error) {
-
-      if(error.response.data.failureReason == 'FAILURE_REASEON_NO_REGISTRATION'){
-        console.error("웹지갑에 등록되지 않은 사용자입니다.");
-        error.response.data.failureReason = '웹지갑에 등록되지 않은 사용자입니다.';
-      }else if(error.response.data.failureReason == 'FAILURE_REASEON_INVALID_BIO_AUTHENTICATION'){
-        console.error("유효하지 않은 바이오 인증입니다.");
-        error.response.data.failureReason = '유효하지 않은 바이오 인증입니다.';
-      }else{
-        // console.error('응답 데이터:', JSON.stringify(error.response.data.failureMessage));
-        if(error.response.data.failureMessage?.startsWith('io.jsonwebtoken.ExpiredJwtException') || error.response.data.failureMessage == 'JWT token is expired') {
-          console.error("토큰이 만료 되었습니다.");
-          const newJwt = await this.createUser({ id: getDidAcdDto.id });
-            getDidAcdDto.jwt = newJwt.jwt;
-            return await this.getAcd(getDidAcdDto, retryCount + 1);                       
-        }else if(error.response.data.failureMessage?.startsWith('java.lang.NullPointerException')) {
-          console.error("등록되지않은 에셋입니다.");
-          error.response.data.failureReason = '등록되지않은 에셋입니다.';
+      try {
+        const response = await axios.post(url, data, {
+          headers: { 
+            Authorization: `Bearer ${apiToken}` 
+          },
+        });
+ 
+        console.log("response.data: "+JSON.stringify(response.data));
+        if(response.data){
+          if(response.data.resultMessage == 'SUCCESS'){              
+            console.log("response.data vc : "+JSON.stringify(response.data.data.proofs[0].proof));         
+            return {vc: response.data.data.proofs[0].proof};
+          }
+        }else {
+          console.error("POST(verifyVC) ERROR: "+response.data.resultMessage);
+          return null;
         }
+      } catch (error) {
+        console.log("POST(verifyVC) ERROR: "+JSON.stringify(error.response.data));
+        throw new InternalServerErrorException({
+          statusCode: error.response.resultCode,
+          message: "Internal Error",
+          // error: error.response.data.error,
+        });
       }
-
-      throw new InternalServerErrorException({
-        statusCode: error.response.status,
-        message: error.response.data.failureReason,
-        // error: error.response.data.error,
-      });
-
+      
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
     }
   }
 

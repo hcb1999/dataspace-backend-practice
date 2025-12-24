@@ -1,44 +1,31 @@
 import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { DataSource, Repository, UpdateResult, Like, Between } from 'typeorm';
 import { Market } from '../entities/market.entity';
-import { EContract } from '../entities/contract.entity';
 import { Purchase } from '../entities/purchase.entity';
-import { Product } from "../entities/product.entity";
-import { Asset } from '../entities/asset.entity';
 import { State } from '../entities/state.entity';
-import { FileAsset } from '../entities/file_asset.entity';
+import { File } from '../entities/file.entity';
 import { User } from '../entities/user.entity';
 import { DidWallet } from '../entities/did_wallet.entity';
-import { ProductService } from '../product/product.service';
 import { UserService } from '../user/user.service';
-import { AssetService } from '../asset/asset.service';
-import { ContractService } from '../contract/contract.service';
 import { NftService } from '../nft/nft.service';
 import { DidService } from '../did/did.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateMarketDto} from '../dtos/create_market.dto';
 import { ModifyMarketDto } from '../dtos/modify_market.dto';
 import { GetMarketDto } from '../dtos/get_market.dto';
-import { DeleteMarketSaleJwtDto} from '../dtos/delete_market_sale_jwt.dto';
-import { DeleteMarketSaleDto} from '../dtos/delete_market_sale.dto';
+import { CreateMarketResaleDto} from '../dtos/create_market_resale.dto';
 import { CreateMintDto } from '../dtos/create_mint.dto';
-import { CreateMarketSaleDto} from '../dtos/create_market_sale.dto';
-import { CreateProductDto } from '../dtos/create_product.dto';
 import { CreateUserDto } from '../dtos/create_user.dto';
 import { CreateDidUserDto } from '../dtos/create_did_user.dto';
 import { CreateDidWalletDto } from '../dtos/create_did_wallet.dto';
-import { CreateAssetDto } from '../dtos/create_asset.dto';
 import { CreateBurnDto } from '../dtos/create_burn.dto';
-import { CreateContractDto } from '../dtos/create_contract.dto';
 import { NftWallet } from '../entities/nft_wallet.entity';
 import { NftMint } from "../entities/nft_mint.entity";
 import { NftTransfer } from "../entities/nft_transfer.entity";
-import { CreateDidAcdgDto } from '../dtos/create_did_acdg.dto';
-import { CreateDidAciDto } from '../dtos/create_did_aci.dto';
-import { CreateDidAcrDto } from '../dtos/create_did_acr.dto';
-import { createVC, parseVC } from 'src/common/vc-utils';
+// import { createVC, parseVC } from 'src/common/vc-utils';
 import { PageResponse } from 'src/common/page.response';
-import { token } from 'src/nft/typechain-types/@openzeppelin/contracts';
+import { CreateDidVcDto } from '../dtos/create_did_vc.dto';
+import { GetDidVcDto } from '../dtos/get_did_vc.dto';
 
 @Injectable()
 export class MarketService {
@@ -46,27 +33,15 @@ export class MarketService {
 
   constructor(
     private configService: ConfigService,
-    private productService: ProductService,
     private userService: UserService,
-    private assetService: AssetService,
-    private contractService: ContractService,
     private nftService: NftService,
     private didService: DidService,
 
     @Inject('MARKET_REPOSITORY')
     private marketRepository: Repository<Market>,
 
-    @Inject('CONTRACT_REPOSITORY')
-    private contractRepository: Repository<EContract>,
-
     @Inject('PURCHASE_REPOSITORY')
     private purchaseRepository: Repository<Purchase>,
-
-    @Inject('PRODUCT_REPOSITORY')
-    private productRepository: Repository<Product>,
-    
-    @Inject('ASSET_REPOSITORY')
-    private assetRepository: Repository<Asset>,
 
     @Inject('STATE_REPOSITORY')
     private stateRepository: Repository<State>,
@@ -87,13 +62,176 @@ export class MarketService {
     private dataSource: DataSource,
   ) {}
 
+
   /**
-   *  엔터사 에셋 판매 등록
+   *  마켓 데이터 판매 등록
+   * 
+   * @param user 
+   * @param files
+   * @param createMarketSaleDto 
+   */
+  async create(
+    user: User,
+    files: any,
+    createMarketDto: CreateMarketDto
+  ): Promise<any> {
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const marketVcType = await this.marketRepository.findOne({ where:{userNo: user.userNo, marketVcType: createMarketDto.marketVcType} });
+      if (marketVcType) {
+        throw new NotFoundException(`Data already founded. : 마켓 테이터 판매 정보 vcType ${createMarketDto.marketVcType}`);
+      }
+      // const userNo = user.userNo;
+      // const regName = user.nickName;
+      // const regAddr = user.nftWalletAccount;
+      // const marketDataName = createMarketDto.marketDataName;
+      // const marketDataDesc = createMarketDto.marketDataDesc;
+      // const marketProductType = createMarketDto.marketProductType;
+      // const marketLanguage = createMarketDto.marketLanguage;
+      // const marketKeyword = createMarketDto.marketKeyword;
+      // const marketDoi = createMarketDto.marketDoi;
+      // const marketSubject = createMarketDto.marketSubject;
+      // const marketIssuer = createMarketDto.marketIssuer;
+      // const marketDoiUrl = createMarketDto.marketDoiUrl;
+      // const saleUserName = user.nickName;
+      // const saleAddr = user.nftWalletAccount;
+      // const price = createMarketDto.price;
+      // const startDttm = createMarketDto.startDttm;
+      // const endDttm = createMarketDto.endDttm;
+      // const issueCnt = createMarketDto.issueCnt;
+  
+      if (files) {
+        let fileNameFirst = '';
+        let fileTypeFirst = '';
+        let filePathFirst = '';
+        let fileSizeFirst = 0;
+        let fileHashFirst = '';
+        let thumbnailFirst = '';
+        let fileNameSecond = '';
+        let fileTypeSecond = '';
+        let filePathSecond = '';
+        let fileSizeSecond = 0;
+        let fileHashSecond = '';
+        let thumbnailSecond = '';
+        let fileNameThird = '';
+        let fileTypeThird = '';
+        let filePathThird = '';
+        let fileSizeThird = 0;
+        let fileHashThird = '';
+        let thumbnailThird = '';
+        // 마켓 데이터 파일 정보 저장
+        const promises = files.map(async (file:any, index:any) => { 
+          // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+          if(index == 0){
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameFirst = file.fileName;
+            fileTypeFirst = file.fileType;
+            filePathFirst = file.filePath;
+            fileSizeFirst = file.fileSize;
+            fileHashFirst = file.fileHash;
+            if(file.thumbnail) {
+              thumbnailFirst = file.thumbnail;
+            }
+          } else if (index == 1) {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameSecond = file.fileName;
+            fileTypeSecond = file.fileType;
+            filePathSecond = file.filePath;
+            fileSizeSecond = file.fileSize;
+            fileHashSecond = file.fileHash;
+            if (file.thumbnail) {
+              thumbnailSecond = file.thumbnail;
+            }
+          } else {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameThird = file.fileName;
+            fileTypeThird = file.fileType;
+            filePathThird = file.filePath;
+            fileSizeThird = file.fileSize;
+            fileHashThird = file.fileHash;
+            if (file.thumbnail) {
+              thumbnailThird = file.thumbnail;
+            }
+          }
+
+        // Hash값 체크
+        // const fileRepo = await this.fileRepository.find({ where:{fileHash} });
+        // if(fileRepo && fileRepo.length){
+        //   throw new ConflictException("동일한 파일 존재");
+        // }
+        })
+
+        let fileInfo = {fileNameFirst, filePathFirst, fileSizeFirst, fileTypeFirst, fileHashFirst, thumbnailFirst,
+          fileNameSecond, filePathSecond, fileSizeSecond, fileTypeSecond, fileHashSecond, thumbnailSecond,
+          fileNameThird, filePathThird, fileSizeThird, fileTypeThird, fileHashThird, thumbnailThird};
+
+        const newFile = queryRunner.manager.create(File, fileInfo);
+        await queryRunner.manager.save<File>(newFile);
+        createMarketDto['fileNo'] = newFile.fileNo;
+        // console.log("===  fileNo : "+newFile.fileNo);
+        // console.log("modifyAssetDto : "+JSON.stringify(modifyAssetDto));
+      }
+
+      // 마켓 데이터 정보 저장
+      createMarketDto['userNo'] = user.userNo;
+      createMarketDto['regName'] = user.nickName;
+      createMarketDto['regAddr'] = user.nftWalletAccount;
+      createMarketDto['saleUserName'] = user.nickName;
+      createMarketDto['saleAddr'] = user.nftWalletAccount;
+      createMarketDto['inventoryCnt'] = createMarketDto.issueCnt;
+
+      console.log("createMarketDto: "+JSON.stringify(createMarketDto));
+      const market = await this.createSale(user, createMarketDto);
+      console.log("market: "+JSON.stringify(market));
+
+      const timeIntaval = this.configService.get<number>('TIME_INTERVAL_DB');
+      const maxRetries = this.configService.get<number>('MAX_RETRIES');    
+
+      let retries = 0;
+      let marketInfo = null;
+
+      while (!marketInfo && retries < maxRetries) {
+        marketInfo = await this.marketRepository.findOne({
+          where: { marketNo: market.marketNo },
+          // where: { marketNo: 7 },
+        });
+      
+        if (!marketInfo) {
+          retries++;
+          console.log(`⏳ 마켓 정보가 없음. ${retries}번째 재시도 중...`);
+          await new Promise((resolve) => setTimeout(resolve, timeIntaval));
+        }
+      }
+      
+      if (!marketInfo) {
+        throw new Error('❌ 마켓 정보를 찾을 수 없습니다.');
+      }
+
+      await queryRunner.commitTransaction();
+
+      return { marketNo: marketInfo.marketNo };
+
+      // return null;
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+    /**
+   *  사용자 에셋 판매 등록용 엔터사 에셋 판매 등록
    * 
    * @param user 
    * @param createMarketDto 
    */
-  async create(user: User, createMarketDto: CreateMarketDto): Promise<any> {
+  async createSale(user: User, createMarketDto: CreateMarketDto): Promise<any> {
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -101,43 +239,26 @@ export class MarketService {
 
     try {
 
-      const contractNo = createMarketDto.contractNo;
-      const price = createMarketDto.price;
-      const issueCnt = createMarketDto.issueCnt;
-      const startDttm = createMarketDto.startDttm;
-      const endDttm = createMarketDto.endDttm;
-      const marketAssetName = createMarketDto.marketAssetName;
-    
-      const contractInfo = await this.contractRepository.findOne({ where:{contractNo} });
-      if (!contractInfo) {
-        throw new NotFoundException('Data Not found. : 엔터사 구매 에셋 정보');
-      }
-
       // Market 저장
-      const assetNo = contractInfo.assetNo;
-      const productNo = contractInfo.productNo;
-      const creatroTokenId = contractInfo.tokenId;
-      let data = { contractNo, assetNo, productNo, marketAssetName, marketAssetDesc: createMarketDto.marketAssetDesc,
-        saleAddr: user.nftWalletAccount, saleUserName: user.nickName, 
-        creatroTokenId, price, issueCnt, inventoryCnt: issueCnt, startDttm, endDttm};
-
-      // console.log("===== data : "+ JSON.stringify(data));
-
-      const newMarket = queryRunner.manager.create(Market, data);
+      console.log("===== data : "+ JSON.stringify(createMarketDto));
+      delete createMarketDto.files;
+      const newMarket = queryRunner.manager.create(Market, createMarketDto);
       const result = await queryRunner.manager.save<Market>(newMarket);
       const marketNo = result.marketNo;
 
       await queryRunner.commitTransaction();
 
       // nftService.createMarketMint 호출
+      // for TEST comment
       const address = user.nftWalletAccount;
-      const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address, 
-        issueCnt, tokenId: null, state: 'B1', marketNo};
-      this.nftService.createMarketMint(user, nftMintInfo);
+      const nftMintInfo: CreateMintDto = {assetNo: 0, productNo: 0, issuedTo: address, 
+        issueCnt: createMarketDto.issueCnt, tokenId: null, state: 'B1', marketNo};
+      this.nftService.createMarketMintSale(user, nftMintInfo);
 
       return { marketNo };
 
     } catch (e) {
+      // await queryRunner.rollbackTransaction();
       this.logger.error(e);
       throw e;
     }finally {
@@ -146,12 +267,15 @@ export class MarketService {
   }
 
   /**
-   * 엔터사 에셋 판매 정보 수정(민트전)
+   * 마켓 데이터 판매 정보 수정(민트전)
    * 
    * @param user
    * @param marketNo 
+   * @param files
    * @param modifyMarketDto 
    */
+  //  async update(user: User, marketNo: number, files: any, modifyMarketDto: ModifyMarketDto): Promise<void> {
+
   async update(user: User, marketNo: number, modifyMarketDto: ModifyMarketDto): Promise<void> {
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -160,21 +284,97 @@ export class MarketService {
 
     try {
 
-        const marketInfo = await this.marketRepository.findOne({ where:{marketNo} });
-        if (!marketInfo) {
-          throw new NotFoundException("Data Not found. : 마켓 에셋 판매 정보");
+      const userNo = user.userNo;
+      const marketInfo = await this.marketRepository.findOne({ where:{marketNo, userNo} });
+      if (!marketInfo) {
+        throw new NotFoundException("Data Not found. : 마켓 테이터 판매 정보");
+      }
+/*
+      if (marketInfo.state !== "S1") {
+        const statetInfo = await this.stateRepository.findOne({ where:{state : marketInfo.state} });
+        if (statetInfo) {
+          throw new NotFoundException("Already on "+statetInfo.stateDesc+".");
         }
-
-        if (marketInfo.state !== "S1") {
-          const statetInfo = await this.stateRepository.findOne({ where:{state : marketInfo.state} });
-          if (statetInfo) {
-            throw new NotFoundException("Already on "+statetInfo.stateDesc+".");
+      }
+        */
+/*
+      if (files) {
+        let fileNameFirst = '';
+        let fileTypeFirst = '';
+        let filePathFirst = '';
+        let fileSizeFirst = 0;
+        let fileHashFirst = '';
+        let thumbnailFirst = '';
+        let fileNameSecond = '';
+        let fileTypeSecond = '';
+        let filePathSecond = '';
+        let fileSizeSecond = 0;
+        let fileHashSecond = '';
+        let thumbnailSecond = '';
+        let fileNameThird = '';
+        let fileTypeThird = '';
+        let filePathThird = '';
+        let fileSizeThird = 0;
+        let fileHashThird = '';
+        let thumbnailThird = '';
+        // 에셋 파일 정보 저장
+        const promises = files.map(async (file:any, index:any) => { 
+          // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+          if(index == 0){
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameFirst = file.fileName;
+            fileTypeFirst = file.fileType;
+            filePathFirst = file.filePath;
+            fileSizeFirst = file.fileSize;
+            fileHashFirst = file.fileHash;
+            if(file.thumbnail) {
+              thumbnailFirst = file.thumbnail;
+            }
+          } else if (index == 1) {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameSecond = file.fileName;
+            fileTypeSecond = file.fileType;
+            filePathSecond = file.filePath;
+            fileSizeSecond = file.fileSize;
+            fileHashSecond = file.fileHash;
+            if (file.thumbnail) {
+              thumbnailSecond = file.thumbnail;
+            }
+          } else {
+            // console.log("=== index : "+index+", file : "+JSON.stringify(file));
+            fileNameThird = file.fileName;
+            fileTypeThird = file.fileType;
+            filePathThird = file.filePath;
+            fileSizeThird = file.fileSize;
+            fileHashThird = file.fileHash;
+            if (file.thumbnail) {
+              thumbnailThird = file.thumbnail;
+            }
           }
-        }
 
-        await queryRunner.manager.update(Market, marketNo, modifyMarketDto);
+        // Hash값 체크
+        // const fileRepo = await this.fileRepository.find({ where:{fileHash} });
+        // if(fileRepo && fileRepo.length){
+        //   throw new ConflictException("동일한 파일 존재");
+        // }
+        })
 
-        await queryRunner.commitTransaction();
+        let fileInfo = {fileNameFirst, filePathFirst, fileSizeFirst, fileTypeFirst, fileHashFirst, thumbnailFirst,
+          fileNameSecond, filePathSecond, fileSizeSecond, fileTypeSecond, fileHashSecond, thumbnailSecond,
+          fileNameThird, filePathThird, fileSizeThird, fileTypeThird, fileHashThird, thumbnailThird};
+
+        const newFile = queryRunner.manager.create(File, fileInfo);
+        await queryRunner.manager.save<File>(newFile);
+        modifyMarketDto['fileNo'] = newFile.fileNo;
+        console.log("===  fileNo : "+newFile.fileNo);
+        console.log("modifyAssetDto : "+JSON.stringify(modifyMarketDto));
+      }
+*/
+      modifyMarketDto['inventoryCnt'] = modifyMarketDto.issueCnt;
+      delete modifyMarketDto.files;
+      await queryRunner.manager.update(Market, marketNo, modifyMarketDto);
+
+      await queryRunner.commitTransaction();
 
     } catch (e) {
       this.logger.error(e);
@@ -185,7 +385,7 @@ export class MarketService {
   }  
 
   /**
-   * 엔터사 에셋 판매 정보 삭제
+   * 마켓 데이터 판매 정보 삭제
    *
    * @param user
    * @param marketNo
@@ -229,9 +429,9 @@ export class MarketService {
    *  사용자 에셋 재판매 등록
    * 
    * @param user 
-   * @param createMarketDto 
+   * @param createMarketResaleDto 
    */
-  async recreate(user: User, createMarketDto: CreateMarketDto): Promise<any> {
+  async recreate(user: User, createMarketResaleDto: CreateMarketResaleDto): Promise<any> {
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -239,32 +439,39 @@ export class MarketService {
 
     try {
       
-      // 수정하기
-      const contractNo = createMarketDto.contractNo;
-      const purchaseNo = createMarketDto.purchaseNo;
-      const price = createMarketDto.price;
-      const issueCnt = createMarketDto.issueCnt;
-      const startDttm = createMarketDto.startDttm;
-      const endDttm = createMarketDto.endDttm;
-      const marketAssetName = createMarketDto.marketAssetName;
+      const purchaseNo = createMarketResaleDto.purchaseNo;
+      // const price = createMarketDto.price;
+      const issueCnt = createMarketResaleDto.issueCnt;
+      const startDttm = createMarketResaleDto.startDttm;
+      // const endDttm = createMarketDto.endDttm;
+      // const marketDataName = createMarketDto.marketDataName;
     
       const purchaseInfo = await this.purchaseRepository.findOne({ where:{purchaseNo} });
       if (!purchaseInfo) {
         throw new NotFoundException('Data Not found. : 사용자 에셋 구매 정보');
       }
-      const contractInfo = await this.contractRepository.findOne({ where:{contractNo} });
-      if (!contractInfo) {
+      const marketInfo = await this.marketRepository.findOne({ where:{marketNo: purchaseInfo.marketNo} });
+      if (!marketInfo) {
         throw new NotFoundException('Data Not found. : 엔터사 구매 에셋 정보');
       }
 
       // Market 저장
-      const assetNo = contractInfo.assetNo;
-      const productNo = contractInfo.productNo;
-      const creatroTokenId = contractInfo.tokenId;
       const fromTokenId = (parseInt(purchaseInfo.fromTokenId) + purchaseInfo.saleCnt).toString();
       // console.log("===== fromTokenId : "+ fromTokenId);
       const toTokenId = (parseInt(fromTokenId) + issueCnt-1).toString();
       // console.log("===== toTokenId : "+ toTokenId);
+      createMarketResaleDto['fromTokenId'] = fromTokenId;
+      createMarketResaleDto['toTokenId'] = toTokenId;
+      createMarketResaleDto['resaleYn'] = 'Y';
+      createMarketResaleDto['saleAddr'] = user.nftWalletAccount;
+      createMarketResaleDto['saleUserName'] = user.nickName;
+      createMarketResaleDto['inventoryCnt'] = issueCnt;
+      createMarketResaleDto['userNo'] = user.userNo;
+      createMarketResaleDto['regAddr'] = user.nftWalletAccount;
+      createMarketResaleDto['regName'] = user.nickName;
+      createMarketResaleDto['fileNo'] = marketInfo.fileNo;
+      createMarketResaleDto['marketVcType'] = marketInfo.marketVcType;
+      createMarketResaleDto['vcId'] = marketInfo.vcId;
 
       const todayKST = new Date();
       const year = todayKST.getFullYear();
@@ -278,14 +485,17 @@ export class MarketService {
         date1.getMonth() === date2.getMonth() &&
         date1.getDate() === date2.getDate();
       const state = isSameDate(startDttm, startDate) ? 'S2' : 'S1';  
+      createMarketResaleDto['state'] = state;
+      // delete createMarketResaleDto.files;
   
-      let data = { contractNo, assetNo, productNo, marketAssetName, marketAssetDesc: createMarketDto.marketAssetDesc,
-        saleAddr: user.nftWalletAccount, saleUserName: user.nickName, 
-        creatroTokenId, resaleYn: 'Y', fromTokenId, toTokenId, price, issueCnt, inventoryCnt: issueCnt, 
-        startDttm, endDttm, state, purchaseNo};
-
+      // let data = { marketDataName, marketAssetDesc: createMarketDto.marketAssetDesc,
+      //   saleAddr: user.nftWalletAccount, saleUserName: user.nickName, 
+      //   creatroTokenId, resaleYn: 'Y', fromTokenId, toTokenId, price, issueCnt, inventoryCnt: issueCnt, 
+      //   startDttm, endDttm, state, purchaseNo};
       // console.log("===== data : "+ JSON.stringify(data));
-      const newMarket = queryRunner.manager.create(Market, data);
+
+      console.log("===== createMarketDto : "+ JSON.stringify(createMarketResaleDto));
+      const newMarket = queryRunner.manager.create(Market, createMarketResaleDto);
       const result = await queryRunner.manager.save<Market>(newMarket);
       const marketNo = result.marketNo;
 
@@ -325,24 +535,24 @@ export class MarketService {
       }
 
       const sql = this.marketRepository.createQueryBuilder('market')
-                      .leftJoin(Asset, 'asset', 'asset.asset_no = market.asset_no')
-                      .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                      .leftJoin(File, 'file', 'file.file_no = market.file_no')
                       .leftJoin(NftTransfer, 'transfer', 'market.from_token_id = transfer.token_id')
+                      .leftJoin(State, 'state', 'market.state = state.state')
                       .select('market.market_no', 'marketNo')
-                      .addSelect('market.contract_no', 'contractNo')
-                      .addSelect('market.product_no', 'productNo')
-                      .addSelect('market.asset_no', 'assetNo')
-                      .addSelect('market.market_asset_name', 'marketAssetName')
-                      .addSelect('market.market_asset_desc', 'marketAssetDesc')
+                      .addSelect('market.market_vc_type', 'marketVcType')
+                      .addSelect("market.market_doi", 'marketDoi')
+                      .addSelect("market.market_data_name", 'marketDataName')
+                      .addSelect("market.market_data_desc", 'marketDataDesc')
+                      .addSelect("market.market_product_type", 'marketProductType')
+                      .addSelect("market.market_language", 'marketLanguage')
+                      .addSelect("market.market_keyword", 'marketKeyword')
+                      .addSelect("market.market_doi_url", 'marketDoiUrl')
+                      .addSelect("market.market_subject", 'marketSubject')
+                      .addSelect("market.market_issuer", 'marketIssuer')
                       .addSelect('market.sale_addr', 'saleAccount')
                       .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || market.sale_addr`, 'saleAccountUrl')
                       .addSelect('market.sale_user_name', 'saleUserName')
-                      .addSelect("asset.asset_name", 'assetName')
-                      .addSelect("asset.asset_desc", 'assetDesc')
-                      .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("market.price", 'price')
-                      .addSelect("asset.metaverse_name", 'metaverseName')
-                      .addSelect("asset.type_def", 'typeDef')
                       .addSelect('market.start_dttm', 'startDttm')
                       .addSelect('market.end_dttm', 'endDttm')
                       .addSelect('market.issue_cnt', 'issueCnt')                      
@@ -350,94 +560,91 @@ export class MarketService {
                       .addSelect('market.inventory_cnt', 'inventoryCnt') 
                       .addSelect('market.from_token_id', 'fromTokenId')     
                       .addSelect('market.to_token_id', 'toTokenId')    
-                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
-                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
-                      .addSelect("fileAsset.file_name_third", 'fileNameThird')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
-                      .addSelect('asset.vc_id', 'assetVcId')
-                      .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
-                      .addSelect(`'${process.env.BC_EXPLORER}address/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
+                      .addSelect("file.file_name_first", 'fileNameFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_first)", 'fileUrlFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_first)", 'thumbnailFirst')
+                      .addSelect("file.file_name_second", 'fileNameSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_second)", 'fileUrlSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect("file.file_name_third", 'fileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_third)", 'thumbnailThird')
+                      .addSelect('market.vc_id', 'marketVcId')
+                      .addSelect("transfer.contract_id", 'nftContractAddress')
+                      .addSelect(`'${process.env.BC_EXPLORER}address/' || transfer.contract_id`, 'nftContractAddressUrl')
                       .addSelect('transfer.tx_id', 'nftTxId')
+                      .addSelect('state.state', 'state')
                       .addSelect(`'${process.env.BC_EXPLORER}tx/'  || transfer.tx_id`, 'nftTxIdUrl')
-                      // .addSelect('transfer.token_id', 'nftTokenId')
-                      // .addSelect("market.sale_addr", 'nftSellerAddr')
-                      // .addSelect("market.purchase_addr", 'nftBuyerAddr')
                       .where("market.market_no = :marketNo", { marketNo })
-                    // .andWhere("nftMint.use_yn = 'N'")
-                    // .andWhere("nftMint.burn_yn = 'N'");
 
-      const marketInfo = await sql.groupBy(``)
-                                      .getRawOne();
+      const marketInfo = await sql.getRawOne();
 
-      const fromTokenId =  parseInt(marketInfo.fromTokenId);
-      const toTokenId =  parseInt(marketInfo.toTokenId);
-      // console.log(fromTokenId);
-      // console.log(toTokenId);
+      if(marketInfo.fromTokenId && marketInfo.toTokenId){
+        const fromTokenId =  parseInt(marketInfo.fromTokenId);
+        const toTokenId =  parseInt(marketInfo.toTokenId);
+        // console.log(fromTokenId);
+        // console.log(toTokenId);
 
-      const transferList = await this.nftTransferRepository.createQueryBuilder('transfer')
-      .select([
-        'transfer.token_id',
-        'transfer.to_addr',
-        'transfer.nft_transfer_no'
-      ])
-      .where(
-        fromTokenId === toTokenId
-          ? "CAST(transfer.token_id AS INTEGER) = :fromTokenId"
-          : "CAST(transfer.token_id AS INTEGER) BETWEEN :fromTokenId AND :toTokenId",
-        { fromTokenId: Number(fromTokenId), toTokenId: Number(toTokenId) }
-      )
-      .andWhere('transfer.nft_transfer_no IN (' + 
-        this.nftTransferRepository.createQueryBuilder('subTransfer')
-          .select('MAX(subTransfer.nft_transfer_no)')
-          .where('CAST(subTransfer.token_id AS INTEGER) = CAST(transfer.token_id AS INTEGER)')
-          .groupBy('subTransfer.token_id')
-          .getQuery() + 
-        ')'
-      )
-      .orderBy("transfer.token_id", "DESC") 
-      .getRawMany();
+        const transferList = await this.nftTransferRepository.createQueryBuilder('transfer')
+        .select([
+          'transfer.token_id',
+          'transfer.to_addr',
+          'transfer.nft_transfer_no'
+        ])
+        .where(
+          fromTokenId === toTokenId
+            ? "CAST(transfer.token_id AS INTEGER) = :fromTokenId"
+            : "CAST(transfer.token_id AS INTEGER) BETWEEN :fromTokenId AND :toTokenId",
+          { fromTokenId: Number(fromTokenId), toTokenId: Number(toTokenId) }
+        )
+        .andWhere('transfer.nft_transfer_no IN (' + 
+          this.nftTransferRepository.createQueryBuilder('subTransfer')
+            .select('MAX(subTransfer.nft_transfer_no)')
+            .where('CAST(subTransfer.token_id AS INTEGER) = CAST(transfer.token_id AS INTEGER)')
+            .groupBy('subTransfer.token_id')
+            .getQuery() + 
+          ')'
+        )
+        .orderBy("transfer.token_id", "DESC") 
+        .getRawMany();
 
-      // console.log(transferList);
+        // console.log(transferList);
 
-      const transferIds = transferList.map(item => item.token_id);
-      // console.log(transferIds);
-      const missingIds = [];
-      for (let id = fromTokenId; id <= toTokenId; id++) {
-        console.log(id);
-        if (!transferIds.includes(id.toString())) {
-          // console.log("추가 : "+id);
-          missingIds.push(id);
+        const transferIds = transferList.map(item => item.token_id);
+        // console.log(transferIds);
+        const missingIds = [];
+        for (let id = fromTokenId; id <= toTokenId; id++) {
+          console.log(id);
+          if (!transferIds.includes(id.toString())) {
+            // console.log("추가 : "+id);
+            missingIds.push(id);
+          }
         }
-      }
-      // console.log("missingIds : "+missingIds);
-    
-      let mintList: any[] = [];
-      if (missingIds.length > 0) {
-        mintList = await this.nftMintRepository.createQueryBuilder("mint")
-                                    .select(["mint.token_id", "mint.issued_to"])
-                                    .where("mint.token_id IN (:...missingIds)", { missingIds })
-                                    .getRawMany();
-      }
+        // console.log("missingIds : "+missingIds);
+      
+        let mintList: any[] = [];
+        if (missingIds.length > 0) {
+          mintList = await this.nftMintRepository.createQueryBuilder("mint")
+                                      .select(["mint.token_id", "mint.issued_to"])
+                                      .where("mint.token_id IN (:...missingIds)", { missingIds })
+                                      .getRawMany();
+        }
 
-      // console.log(mintList);
+        // console.log(mintList);
 
-      const combinedList = [
-        ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAccount: item.to_addr,
-           ownerAccountUrl: `${process.env.BC_EXPLORER}accounts/${item.to_addr}` })),
-        ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAccount: item.issued_to, 
-          ownerAccountUrl: `${process.env.BC_EXPLORER}accounts/${item.issued_to}` }))
-      ];
-    
-      const sortedCombinedList = combinedList.sort((a, b) => {
-        return a.tokenId - b.tokenId; 
-      });
-    
-      marketInfo.tokenInfo = sortedCombinedList;
+        const combinedList = [
+          ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAccount: item.to_addr,
+            ownerAccountUrl: `${process.env.BC_EXPLORER}accounts/${item.to_addr}` })),
+          ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAccount: item.issued_to, 
+            ownerAccountUrl: `${process.env.BC_EXPLORER}accounts/${item.issued_to}` }))
+        ];
+      
+        const sortedCombinedList = combinedList.sort((a, b) => {
+          return a.tokenId - b.tokenId; 
+        });
+      
+        marketInfo.tokenInfo = sortedCombinedList;
+      }
 
       return marketInfo;
 
@@ -456,62 +663,89 @@ export class MarketService {
     const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
     const skip = getMarketDto.getOffset();
     const take = getMarketDto.getLimit();
-    const word = getMarketDto.word;
+    const marketDataName = getMarketDto.marketDataName;
+    const marketDataDesc = getMarketDto.marketDataDesc;
+    const marketProductType = getMarketDto.marketProductType;
+    const marketLanguage = getMarketDto.marketLanguage;
+    const marketKeyword = getMarketDto.marketKeyword;
+    const marketDoi = getMarketDto.marketDoi;
+    const marketSubject = getMarketDto.marketSubject;
+    const marketIssuer = getMarketDto.marketIssuer;
+    const marketDoiUrl = getMarketDto.marketDoiUrl;
 
     let options = `market.use_yn='Y' and market.state='S2'`;
-    if (word) {
-        // options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
-        options += ` and ( market.market_asset_name like '%${word}%' or asset.asset_desc like '%${word}%'
-          or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
+    if (marketDataName) {
+        options += ` and ( market.market_data_name like '%${marketDataName}%' ) `;
     }
-  
+    if (marketDataDesc) {
+        options += ` and ( market.market_data_desc like '%${marketDataDesc}%' ) `;
+    }
+    if (marketProductType) {
+        options += ` and ( market.market_product_type like '%${marketProductType}%' ) `;
+    }
+    if (marketLanguage) {
+        options += ` and ( market.market_language like '%${marketLanguage}%' ) `;
+    }
+    if (marketKeyword) {
+        options += ` and ( market.market_keyword like '%${marketKeyword}%' ) `;
+    }
+    if (marketDoi) {
+        options += ` and ( market.market_doi like '%${marketDoi}%' ) `;
+    }
+    if (marketSubject) {
+        options += ` and ( market.market_subject like '%${marketSubject}%' ) `;
+    }
+    if (marketIssuer) {
+        options += ` and ( market.market_issuer like '%${marketIssuer}%' ) `;
+    }
+    if (marketDoiUrl) {
+        options += ` and ( market.market_doi_url like '%${marketDoiUrl}%' ) `;
+    }
+
     // console.log("options : "+options);
 
     try {
         const sql = this.marketRepository.createQueryBuilder('market')
-                      .leftJoin(Asset, 'asset', 'asset.asset_no = market.asset_no')
-                      .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                      .leftJoin(File, 'file', 'file.file_no = market.file_no')
                       .leftJoin(State, 'state', 'state.state = market.state')
                       .select('market.market_no', 'marketNo')
-                      .addSelect('market.contract_no', 'contractNo')
-                      .addSelect('market.market_asset_name', 'marketAssetName')
+                      .addSelect('market.market_vc_type', 'marketVcType')
+                      .addSelect("market.market_doi", 'marketDoi')
+                      .addSelect("market.market_data_name", 'marketDataName')
                       .addSelect('market.sale_addr', 'saleAccount')
                       .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || market.sale_addr`, 'saleAccountUrl')
                       .addSelect('market.sale_user_name', 'saleUserName')
                       .addSelect('market.state', 'state')
                       .addSelect('state.state_desc', 'stateDesc')
-                      .addSelect("asset.asset_name", 'assetName')
-                      .addSelect("asset.asset_desc", 'assetDesc')
-                      .addSelect("asset.asset_url", 'assetUrl')
                       .addSelect("market.price", 'price')
                       .addSelect('market.issue_cnt', 'issueCnt')                      
                       .addSelect('market.sale_cnt', 'saleCnt')                      
                       .addSelect('market.inventory_cnt', 'inventoryCnt')
-                      .addSelect("asset.metaverse_name", 'metaverseName')
-                      .addSelect("asset.type_def", 'typeDef')
                       .addSelect('market.start_dttm', 'startDttm')
                       .addSelect('market.end_dttm', 'endDttm')
-                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
-                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
-                      .addSelect("fileAsset.file_name_third", 'fileNameThird')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
-                      .addSelect('asset.vc_id', 'assetVcId')
+                      .addSelect("file.file_name_first", 'fileNameFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_first)", 'fileUrlFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_first)", 'thumbnailFirst')
+                      .addSelect("file.file_name_second", 'fileNameSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_second)", 'fileUrlSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect("file.file_name_third", 'fileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_third)", 'thumbnailThird')
+                      .addSelect('market.vc_id', 'marketVcId')
                       .where(options);
 
 
         const list = await sql.orderBy('market.market_no', getMarketDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
                               .offset(skip)
                               .limit(take)
-                              .groupBy(`market.market_no, market.contract_no, asset.price, asset.asset_name,
-                                asset.asset_desc, market.market_asset_name, asset.asset_url, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
-                                fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
-                                fileAsset.file_path_second, fileAsset.thumbnail_second, fileAsset.file_name_third,
-                                fileAsset.file_path_third, fileAsset.thumbnail_third, state.state_desc, asset.vc_id`)
+                              // .groupBy(`market.market_no, market.price, market.market_data_name, market.market_data_desc,
+                              //   market.market_product_type, market.market_language, market.market_keyword, 
+                              //   market.market_doi, market.market_subject, market.market_issuer,
+                              //   state.state_desc, market.vc_id, file.file_name_first,
+                              //   file.file_path_first, file.thumbnail_first, file.file_name_second,
+                              //   file.file_path_second, file.thumbnail_second, file.file_name_third,
+                              //   file.file_path_third, file.thumbnail_third`)
                               .getRawMany();
 
         const totalCount = await sql.getCount(); 
@@ -543,27 +777,25 @@ export class MarketService {
         }
   
         const sql = this.marketRepository.createQueryBuilder('market')
-                        .leftJoin(Asset, 'asset', 'asset.asset_no = market.asset_no')
-                        .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                        .leftJoin(File, 'file', 'file.file_no = market.file_no')
                         .leftJoin(State, 'state', 'state.state = market.state')
                         .leftJoin(NftTransfer, 'transfer', 'market.from_token_id = transfer.token_id')
                         // .leftJoin(Purchase, 'purchase', 'market.contract_no = ANY(market.contract_no)')
                         .select('market.market_no', 'marketNo')
-                        .addSelect('market.contract_no', 'contractNo')
-                        .addSelect('market.purchase_no', 'purchaseNo')
-                        .addSelect('market.product_no', 'productNo')
-                        .addSelect('market.asset_no', 'assetNo')
-                        .addSelect('market.market_asset_name', 'marketAssetName')
-                        .addSelect('market.market_asset_desc', 'marketAssetDesc')
+                        .addSelect('market.market_vc_type', 'marketVcType')
+                        .addSelect("market.market_doi", 'marketDoi')
+                        .addSelect("market.market_data_name", 'marketDataName')
+                        .addSelect("market.market_data_desc", 'marketDataDesc')
+                        .addSelect("market.market_product_type", 'marketProductType')
+                        .addSelect("market.market_language", 'marketLanguage')
+                        .addSelect("market.market_keyword", 'marketKeyword')
+                        .addSelect("market.market_subject", 'marketSubject')
+                        .addSelect("market.market_issuer", 'marketIssuer')
+                        .addSelect("market.market_doi_url", 'marketDoiUrl')
                         .addSelect('market.sale_addr', 'saleAccount')
                         .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || market.sale_addr`, 'saleAccountUrl')
                         .addSelect('market.sale_user_name', 'saleUserName')
-                        .addSelect("asset.asset_name", 'assetName')
-                        .addSelect("asset.asset_desc", 'assetDesc')
-                        .addSelect("asset.asset_url", 'assetUrl')
                         .addSelect("market.price", 'price')
-                        .addSelect("asset.metaverse_name", 'metaverseName')
-                        .addSelect("asset.type_def", 'typeDef')
                         .addSelect('market.start_dttm', 'startDttm')
                         .addSelect('market.end_dttm', 'endDttm')
                         .addSelect('market.reg_dttm', 'regDttm')
@@ -575,92 +807,87 @@ export class MarketService {
                         .addSelect('market.inventory_cnt', 'inventoryCnt') 
                         .addSelect('market.from_token_id', 'fromTokenId')     
                         .addSelect('market.to_token_id', 'toTokenId')     
-                        .addSelect("fileAsset.file_name_first", 'fileNameFirst')
-                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
-                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
-                        .addSelect("fileAsset.file_name_second", 'fileNameSecond')
-                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
-                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
-                        .addSelect("fileAsset.file_name_third", 'fileNameThird')
-                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
-                        .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')  
-                        .addSelect('asset.vc_id', 'assetVcId')
-                        .addSelect(`'${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddress')
-                        .addSelect(`'${process.env.BC_EXPLORER}address/${process.env.CONTRACT_ADDRESS}'`, 'nftContractAddressUrl')
+                        .addSelect("file.file_name_first", 'fileNameFirst')
+                        .addSelect("concat('"  + serverDomain  + "/', file.file_path_first)", 'fileUrlFirst')
+                        .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_first)", 'thumbnailFirst')
+                        .addSelect("file.file_name_second", 'fileNameSecond')
+                        .addSelect("concat('"  + serverDomain  + "/', file.file_path_second)", 'fileUrlSecond')
+                        .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_second)", 'thumbnailSecond')
+                        .addSelect("file.file_name_third", 'fileNameThird')
+                        .addSelect("concat('"  + serverDomain  + "/', file.file_path_third)", 'fileUrlThird')
+                        .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_third)", 'thumbnailThird')
+                        .addSelect('market.vc_id', 'marketVcId')
+                        .addSelect("transfer.contract_id", 'nftContractAddress')
+                        .addSelect(`'${process.env.BC_EXPLORER}address/' || transfer.contract_id`, 'nftContractAddressUrl')
                         .addSelect('transfer.tx_id', 'nftTxId')
                         .addSelect(`'${process.env.BC_EXPLORER}tx/'  || transfer.tx_id`, 'nftTxIdUrl')
-                        // .addSelect('transfer.token_id', 'nftTokenId')
-                        // .addSelect("ARRAY_AGG(purchase.token_id)", 'nftTokenIdAry')
-                        // .addSelect("market.sale_addr", 'nftSellerAddr')
-                        // .addSelect("market.purchase_addr", 'nftBuyerAddr')
                         .where("market.market_no = :marketNo", { marketNo })
-                      // .andWhere("nftMint.use_yn = 'N'")
-                      // .andWhere("nftMint.burn_yn = 'N'");
   
-        const marketInfo = await sql.groupBy(``)
-                                        .getRawOne();
+        const marketInfo = await sql.getRawOne();
 
-        const fromTokenId =  parseInt(marketInfo.fromTokenId);
-        const toTokenId =  parseInt(marketInfo.toTokenId);
-        const transferList = await this.nftTransferRepository.createQueryBuilder('transfer')
-        .select([
-          'transfer.token_id',
-          'transfer.to_addr',
-          'transfer.nft_transfer_no'
-        ])
-        .where(
-          fromTokenId === toTokenId
-            ? "CAST(transfer.token_id AS INTEGER) = :fromTokenId"
-            : "CAST(transfer.token_id AS INTEGER) BETWEEN :fromTokenId AND :toTokenId",
-          { fromTokenId: Number(fromTokenId), toTokenId: Number(toTokenId) }
-        )
-        .andWhere('transfer.nft_transfer_no IN (' + 
-          this.nftTransferRepository.createQueryBuilder('subTransfer')
-            .select('MAX(subTransfer.nft_transfer_no)')
-            .where('CAST(subTransfer.token_id AS INTEGER) = CAST(transfer.token_id AS INTEGER)')
-            .groupBy('subTransfer.token_id')
-            .getQuery() + 
-          ')'
-        )
-        .orderBy("transfer.token_id", "DESC") 
-        .getRawMany();
-  
-        // console.log(transferList);
-  
-        const transferIds = transferList.map(item => item.token_id);
-        console.log(transferIds);
-        const missingIds = [];
-        for (let id = fromTokenId; id <= toTokenId; id++) {
-          console.log(id);
-          if (!transferIds.includes(id.toString())) {
-            // console.log("추가 : "+id);
-            missingIds.push(id);
+        if(marketInfo.fromTokenId && marketInfo.toTokenId){
+          const fromTokenId =  parseInt(marketInfo.fromTokenId);
+          const toTokenId =  parseInt(marketInfo.toTokenId);
+          const transferList = await this.nftTransferRepository.createQueryBuilder('transfer')
+          .select([
+            'transfer.token_id',
+            'transfer.to_addr',
+            'transfer.nft_transfer_no'
+          ])
+          .where(
+            fromTokenId === toTokenId
+              ? "CAST(transfer.token_id AS INTEGER) = :fromTokenId"
+              : "CAST(transfer.token_id AS INTEGER) BETWEEN :fromTokenId AND :toTokenId",
+            { fromTokenId: Number(fromTokenId), toTokenId: Number(toTokenId) }
+          )
+          .andWhere('transfer.nft_transfer_no IN (' + 
+            this.nftTransferRepository.createQueryBuilder('subTransfer')
+              .select('MAX(subTransfer.nft_transfer_no)')
+              .where('CAST(subTransfer.token_id AS INTEGER) = CAST(transfer.token_id AS INTEGER)')
+              .groupBy('subTransfer.token_id')
+              .getQuery() + 
+            ')'
+          )
+          .orderBy("transfer.token_id", "DESC") 
+          .getRawMany();
+    
+          // console.log(transferList);
+    
+          const transferIds = transferList.map(item => item.token_id);
+          console.log(transferIds);
+          const missingIds = [];
+          for (let id = fromTokenId; id <= toTokenId; id++) {
+            console.log(id);
+            if (!transferIds.includes(id.toString())) {
+              // console.log("추가 : "+id);
+              missingIds.push(id);
+            }
           }
-        }
-        // console.log("missingIds : "+missingIds);
-      
-        let mintList: any[] = [];
-        if (missingIds.length > 0) {
-          mintList = await this.nftMintRepository.createQueryBuilder("mint")
-                                      .select(["mint.token_id", "mint.issued_to"])
-                                      .where("mint.token_id IN (:...missingIds)", { missingIds })
-                                      .getRawMany();
-        }
-
-        // console.log(mintList);
-
-        const combinedList = [
-          ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAccount: item.to_addr,
-            ownerAccountUrl: `${process.env.BC_EXPLORER}accounts/${item.to_addr}` })),
-          ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAccount: item.issued_to,
-            ownerAccountUrl: `${process.env.BC_EXPLORER}accounts/${item.issued_to}` }))
-        ];
-      
-        const sortedCombinedList = combinedList.sort((a, b) => {
-          return a.tokenId - b.tokenId; 
-        });
+          // console.log("missingIds : "+missingIds);
         
-        marketInfo.tokenInfo = sortedCombinedList;
+          let mintList: any[] = [];
+          if (missingIds.length > 0) {
+            mintList = await this.nftMintRepository.createQueryBuilder("mint")
+                                        .select(["mint.token_id", "mint.issued_to"])
+                                        .where("mint.token_id IN (:...missingIds)", { missingIds })
+                                        .getRawMany();
+          }
+
+          // console.log(mintList);
+
+          const combinedList = [
+            ...(transferList || []).map(item => ({ tokenId: item.token_id, ownerAccount: item.to_addr,
+              ownerAccountUrl: `${process.env.BC_EXPLORER}accounts/${item.to_addr}` })),
+            ...(mintList || []).map(item => ({ tokenId: item.token_id, ownerAccount: item.issued_to,
+              ownerAccountUrl: `${process.env.BC_EXPLORER}accounts/${item.issued_to}` }))
+          ];
+        
+          const sortedCombinedList = combinedList.sort((a, b) => {
+            return a.tokenId - b.tokenId; 
+          });
+          
+          marketInfo.tokenInfo = sortedCombinedList;
+        }
                                                                           
         return marketInfo;
   
@@ -680,17 +907,47 @@ export class MarketService {
     const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
     const skip = getMarketDto.getOffset();
     const take = getMarketDto.getLimit();
-    const word = getMarketDto.word;
+    const marketDataName = getMarketDto.marketDataName;
+    const marketDataDesc = getMarketDto.marketDataDesc;
+    const marketProductType = getMarketDto.marketProductType;
+    const marketLanguage = getMarketDto.marketLanguage;
+    const marketKeyword = getMarketDto.marketKeyword;
+    const marketSubject = getMarketDto.marketSubject;
+    const marketDoi = getMarketDto.marketDoi;
+    const marketIssuer = getMarketDto.marketIssuer;
+    const marketDoiUrl = getMarketDto.marketDoiUrl;
     const purchaseAddr = user.nftWalletAccount;
     const startDttm = getMarketDto.startDttm;
     const endDttm = getMarketDto.endDttm;
     const state = getMarketDto.state;
 
     let options = `market.sale_addr = '${purchaseAddr}'`;
-    if (word) {
-        // options += ` and (asset.asset_desc like '%${word}%' or (asset.type_def like '%${word}%') ) `;
-        options += ` and ( market.market_asset_name like '%${word}%' or asset.asset_desc like '%${word}%'
-         or asset.asset_name like '%${word}%' or asset.type_def like '%${word}%' ) `;
+    if (marketDataName) {
+        options += ` and ( market.market_data_name like '%${marketDataName}%' ) `;
+    }
+    if (marketDataDesc) {
+        options += ` and ( market.market_data_desc like '%${marketDataDesc}%' ) `;
+    }
+    if (marketProductType) {
+        options += ` and ( market.market_product_type like '%${marketProductType}%' ) `;
+    }
+    if (marketLanguage) {
+        options += ` and ( market.market_language like '%${marketLanguage}%' ) `;
+    }
+    if (marketKeyword) {
+        options += ` and ( market.market_keyword like '%${marketKeyword}%' ) `;
+    }
+    if (marketSubject) {
+        options += ` and ( market.market_subject like '%${marketSubject}%' ) `;
+    }
+    if (marketDoi) {
+        options += ` and ( market.market_doi like '%${marketDoi}%' ) `;
+    }
+    if (marketIssuer) {
+        options += ` and ( market.market_issuer like '%${marketIssuer}%' ) `;
+    }
+    if (marketDoiUrl) {
+        options += ` and ( market.market_doi_url like '%${marketDoiUrl}%' ) `;
     }
     if (state) {
       options += ` and market.state = '${state}'`;
@@ -714,49 +971,46 @@ export class MarketService {
 
     try {
         const sql = this.marketRepository.createQueryBuilder('market')
-                      .leftJoin(Asset, 'asset', 'asset.asset_no = market.asset_no')
-                      .leftJoin(FileAsset, 'fileAsset', 'fileAsset.file_no = asset.file_no')
+                      .leftJoin(File, 'file', 'file.file_no = market.file_no')
                       .leftJoin(State, 'state', 'state.state = market.state')
                       .select('market.market_no', 'marketNo')
-                      .addSelect('market.contract_no', 'contractNo')
-                      .addSelect('market.market_asset_name', 'marketAssetName')
+                      .addSelect("market.market_doi", 'marketDoi')
+                      .addSelect("market.market_vc_type", 'marketVcType')
+                      .addSelect('market.market_data_name', 'marketDatatName')
                       .addSelect('market.sale_addr', 'saleAccount')
                       .addSelect(`'${process.env.BC_EXPLORER}accounts/'  || market.sale_addr`, 'saleAccountUrl')
                       .addSelect('market.sale_user_name', 'saleUserName')                     
-                      .addSelect("asset.asset_name", 'assetName')
-                      .addSelect("asset.asset_desc", 'assetDesc')
-                      .addSelect("asset.asset_url", 'assetUrl')
+                      .addSelect("market.market_data_desc", 'marketDataDesc')
                       .addSelect("market.price", 'price')
                       .addSelect('market.issue_cnt', 'issueCnt')                      
                       .addSelect('market.sale_cnt', 'saleCnt')                      
                       .addSelect('market.inventory_cnt', 'inventoryCnt')                       
-                      .addSelect("asset.metaverse_name", 'metaverseName')
-                      .addSelect("asset.type_def", 'typeDef')
                       .addSelect('market.start_dttm', 'startDttm')
                       .addSelect('market.end_dttm', 'endDttm')
                       .addSelect('market.state', 'state')
                       .addSelect('state.state_desc', 'stateDesc')
-                      .addSelect("fileAsset.file_name_first", 'fileNameFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_first)", 'fileUrlFirst')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'thumbnailFirst')
-                      .addSelect("fileAsset.file_name_second", 'fileNameSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_second)", 'fileUrlSecond')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_second)", 'thumbnailSecond')
-                      .addSelect("fileAsset.file_name_third", 'fileNameThird')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.file_path_third)", 'fileUrlThird')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_third)", 'thumbnailThird')
-                      .addSelect('asset.vc_id', 'assetVcId')
+                      .addSelect("file.file_name_first", 'fileNameFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_first)", 'fileUrlFirst')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_first)", 'thumbnailFirst')
+                      .addSelect("file.file_name_second", 'fileNameSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_second)", 'fileUrlSecond')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_second)", 'thumbnailSecond')
+                      .addSelect("file.file_name_third", 'fileNameThird')
+                      .addSelect("concat('"  + serverDomain  + "/', file.file_path_third)", 'fileUrlThird')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_third)", 'thumbnailThird')
+                      .addSelect('market.vc_id', 'marketVcId')
                       .where(options);
-
 
         const list = await sql.orderBy('market.market_no', getMarketDto['sortOrd'] == 'asc' ? 'ASC' : 'DESC')
                               .offset(skip)
                               .limit(take)
-                              .groupBy(`market.market_no, market.contract_no, asset.price, asset.asset_name,
-                                asset.asset_desc, market.market_asset_name, asset.asset_url, asset.metaverse_name, asset.type_def, fileAsset.file_name_first,
-                                fileAsset.file_path_first, fileAsset.thumbnail_first, fileAsset.file_name_second,
-                                fileAsset.file_path_second, fileAsset.thumbnail_second, fileAsset.file_name_third,
-                                fileAsset.file_path_third, fileAsset.thumbnail_third, state.state_desc, asset.vc_id`)
+                              // .groupBy(`market.market_no, market.price, market.market_data_name, market.market_data_desc,
+                              //   market.market_product_type, market.market_language, market.market_keyword, 
+                              //   market.market_doi, market.market_subject, market.market_issuer,
+                              //   state.state_desc, market.vc_id, file.file_name_first,
+                              //   file.file_path_first, file.thumbnail_first, file.file_name_second,
+                              //   file.file_path_second, file.thumbnail_second, file.file_name_third,
+                              //   file.file_path_third, file.thumbnail_third`)
                               .getRawMany();
 
         const totalCount = await sql.getCount(); 
@@ -768,65 +1022,6 @@ export class MarketService {
       throw e;
     }
   }  
-
-  /**
-   *  사용자 에셋 판매 등록용 엔터사 에셋 판매 등록
-   * 
-   * @param user 
-   * @param createMarketDto 
-   */
-  async createSale(user: User, createMarketDto: CreateMarketDto): Promise<any> {
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-
-      const contractNo = createMarketDto.contractNo;
-      const price = createMarketDto.price;
-      const issueCnt = createMarketDto.issueCnt;
-      const startDttm = createMarketDto.startDttm;
-      const endDttm = createMarketDto.endDttm;
-      const marketAssetName = createMarketDto.marketAssetName;
-    
-      const contractInfo = await this.contractRepository.findOne({ where:{contractNo} });
-      if (!contractInfo) {
-        throw new NotFoundException('Data Not found. : 엔터사 구매 에셋 정보');
-      }
-
-      // Market 저장
-      const assetNo = contractInfo.assetNo;
-      const productNo = contractInfo.productNo;
-      const creatroTokenId = contractInfo.tokenId;
-      let data = { contractNo, assetNo, productNo, marketAssetName, marketAssetDesc: createMarketDto.marketAssetDesc,
-        saleAddr: user.nftWalletAccount, saleUserName: user.nickName, 
-        creatroTokenId, price, issueCnt, inventoryCnt: issueCnt, startDttm, endDttm};
-
-      // console.log("===== data : "+ JSON.stringify(data));
-
-      const newMarket = queryRunner.manager.create(Market, data);
-      const result = await queryRunner.manager.save<Market>(newMarket);
-      const marketNo = result.marketNo;
-
-      await queryRunner.commitTransaction();
-
-      // nftService.createMarketMint 호출
-      const address = user.nftWalletAccount;
-      const nftMintInfo: CreateMintDto = {assetNo, productNo, issuedTo: address, 
-        issueCnt, tokenId: null, state: 'B1', marketNo};
-      this.nftService.createMarketMintSale(user, nftMintInfo);
-
-      return { marketNo };
-
-    } catch (e) {
-      // await queryRunner.rollbackTransaction();
-      this.logger.error(e);
-      throw e;
-    }finally {
-      await queryRunner.release();
-    }
-  }
 
   /**
    * 마켓 판매 상태 변경
@@ -862,270 +1057,8 @@ export class MarketService {
     }
   }
 
-/**
- *  사용자 JWT Token 삭제
- * 
- * @param deleteMarketSaleJwtDto 
- */
-  async delJwt(deleteMarketSaleJwtDto: DeleteMarketSaleJwtDto): Promise<any> {
-    
-    try {
-      const email = deleteMarketSaleJwtDto.email;
-   
-      // 1. 사용자 체크
-      let user = await this.userService.getOneByEmail(email);
-      if (!user) {
-        throw new NotFoundException('Data Not found. : 사용자 정보');
-      }
-      console.log("user: "+JSON.stringify(user));
-   
-      // 2. 사용자의 didWallet 체크
-      let didWallet = await this.userService.getDidWallet(user.userNo);
-      if (didWallet) {
-          await this.didWalletRepository.update({ userNo: user.userNo}, {jwt: null});
-      }
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    } 
-
-  }
-
-/**
- *  사용자 에셋 판매 등록
- * 
- * @param user 
- * @param createMarketSaleDto 
- */
-  async createAll(files: any,
-    createMarketSaleDto: CreateMarketSaleDto): Promise<any> {
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const email = createMarketSaleDto.email;
-      const nickName = createMarketSaleDto.nickName;
-      const assetName = createMarketSaleDto.assetName;
-      const assetDesc = createMarketSaleDto.assetDesc;
-      const assetUrl = createMarketSaleDto.assetUrl;
-      const adTarget = createMarketSaleDto.adTarget;
-      const adType = createMarketSaleDto.adType;
-      const price = createMarketSaleDto.price;
-      const startDttm = createMarketSaleDto.startDttm;
-      const endDttm = createMarketSaleDto.endDttm;
-      const issueCnt = createMarketSaleDto.issueCnt;
-   
-      // 1. 사용자 체크
-      let user = await this.userService.getOneByEmail(email);
-      if (user) {
-        user.nftWalletAccount = (await this.userService.getWalletAddress(user.userNo)).account;          
-      }else{
-        const createUserDto: CreateUserDto = {
-          email,
-          nickName
-        }
-        user = await this.userService.create(createUserDto);
-        user.nftWalletAccount = (await this.userService.getWalletAddress(user.userNo)).account;          
-      }
-      console.log("user: "+JSON.stringify(user));
-   
-      let didWallet = await this.userService.getDidWallet(user.userNo);
-      if (!didWallet) {
-        console.log("market-didWallet이 없어요.");
-        // 1.1. 사용자 연결 인증 요청
-        const createDidUserDto: CreateDidUserDto = {id: email};
-              const userJwt = await this.didService.createUser(createDidUserDto);
-              if (!userJwt) {      
-                throw new NotFoundException('DID 등록 오류 - jwt');
-              }
-              console.log("userJwt: "+JSON.stringify(userJwt))
-
-        // 1.2. 아바타 가상자갑 생성 요청
-        const createDidWalletDto: CreateDidWalletDto = {nickName, imageUrl: '', id: email, jwt: userJwt.jwt};
-        const userDid = await this.didService.createWallet(createDidWalletDto);
-        if (!userDid) {
-          throw new NotFoundException('DID 등록 오류 - did');
-        }      
-        console.log("userDid: "+JSON.stringify(userDid))
-
-        // DidWallet 저장
-        let didWalletInfo = {userNo: user.userNo, jwt: userJwt.jwt, walletDid: userDid.did};
-        // console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
-        const newDidWallet = queryRunner.manager.create(DidWallet, didWalletInfo);
-        await queryRunner.manager.save<DidWallet>(newDidWallet);
-
-      }else{
-        console.log("market-didWallet이 있어요.");
-        if(didWallet.jwt === null || didWallet.jwt === undefined) {
-            // 1.1. 사용자 연결 인증 요청
-            const createDidUserDto: CreateDidUserDto = {id: email};
-              const userJwt = await this.didService.createUser(createDidUserDto);
-              if (!userJwt) {      
-                throw new NotFoundException('DID 등록 오류 - jwt');
-              }
-              console.log("userJwt: "+JSON.stringify(userJwt))
-
-          // DidWallet에 JWT수정
-          let didWalletInfo = {jwt: userJwt.jwt};
-          // console.log("didWalletInfo : "+JSON.stringify(didWalletInfo));
-          await queryRunner.manager.update(DidWallet, {userNo: user.userNo}, didWalletInfo);
-        }
-
-      }
-
-
-      // 2. charged 체크
-      // Charged 상태 업데이트 될 때까지 대기
-
-      // const timeIntaval = this.configService.get<number>('TIME_INTERVAL_DB');
-      // const maxRetries = this.configService.get<number>('MAX_RETRIES');      
-       
-      // let cRetries = 0;
-      // let nftWallet = null;
-      // while (cRetries < maxRetries) {
-      //   const nftWallet = await this.nftWalletRepository.findOne({ where:{userNo: user.userNo} });
-      //   console.log(`⏳ nftWallet. ${JSON.stringify(nftWallet)}`);
-      //   if (nftWallet.chargedYn !== 'Y') {
-      //     cRetries++;
-      //     console.log(`⏳ nftWallet 정보가 없음. ${cRetries}번째 재시도 중...`);
-      //     await new Promise((resolve) => setTimeout(resolve, timeIntaval));
-      //   }
-      // }
-      // if (nftWallet.chargedYn !== 'Y') {
-      //   throw new NotFoundException('Data Not found. : 계좌의 충전 정보');
-      // }
-
-      // 3. 굿즈 등록
-      const createProductDto: CreateProductDto = {
-        productName: assetName,
-        productDesc: assetDesc || assetName,
-        state: 'N2',
-        startDttm,
-        endDttm,
-        adTargetFirst: undefined,  
-        adTypesFirst: undefined,   
-        adTargetSecond: undefined,  
-        adTypesSecond: undefined,   
-        adTargetThird: undefined,  
-        adTypesThird: undefined,
-        adTargetFourth: undefined,
-        adTypesFourth: undefined,
-        files: undefined,      
-      };
-
-      // adTarget 값에 따라 설정
-      switch (adTarget) {
-        case 1:
-            createProductDto.adTargetFirst = adTarget;
-            createProductDto.adTypesFirst = String(adType);
-            break;
-        case 2:
-            createProductDto.adTargetSecond = adTarget;
-            createProductDto.adTypesSecond = String(adType);
-            break;
-        case 3:
-              createProductDto.adTargetThird = adTarget;
-              createProductDto.adTypesThird = String(adType);
-              break;
-        default:
-            createProductDto.adTargetSecond = adTarget || 2;
-            createProductDto.adTypesSecond = String(adType);
-            break;
-      }
-
-      console.log("createProductDto: "+JSON.stringify(createProductDto));
-      const product = await this.productService.create(user, files, createProductDto);
-      console.log("product: "+JSON.stringify(product));
-
-      // 4. 에셋 등록
-      const createAssetDto: CreateAssetDto = {
-        productNo: product.productNo,
-        assetName,
-        assetDesc: assetDesc || assetName,
-        assetUrl: assetUrl || undefined,
-        adTarget: adTarget || 2,
-        adType,
-        price,
-        state: 'S2',
-        startDttm,
-        endDttm,
-        files: undefined,  
-      };
-
-      console.log("createAssetDto: "+JSON.stringify(createAssetDto));
-      const asset = await this.assetService.createSale(user, files, createAssetDto);
-      console.log("asset: "+JSON.stringify(asset));
-
-      // 5. 엔터사 구매 등록
-      const createContractDto: CreateContractDto = {
-        productNo: product.productNo,
-        assetNo: asset.assetNo,
-        // productNo: 1,
-        // assetNo: 1,
-      };
-
-      console.log("createContractDto: "+JSON.stringify(createContractDto));
-      const contract = await this.contractService.purchaseSale(user, createContractDto);
-      console.log("contract: "+JSON.stringify(contract));
-   
-      // 6. 엔터사 판매 등록
-      const createMarketDto: CreateMarketDto = {
-        contractNo: contract.contractNo,
-        // contractNo: 4,
-        purchaseNo: undefined,
-        marketAssetName: assetName,
-        marketAssetDesc: assetDesc,
-        price,
-        issueCnt: issueCnt || 1,
-        startDttm,
-        endDttm,
-      };
-
-      console.log("createMarketDto: "+JSON.stringify(createMarketDto));
-      const market = await this.createSale(user, createMarketDto);
-      console.log("market: "+JSON.stringify(market));
-
-      const timeIntaval = this.configService.get<number>('TIME_INTERVAL_DB');
-      const maxRetries = this.configService.get<number>('MAX_RETRIES');    
-
-      let retries = 0;
-      let marketInfo = null;
-
-      while (!marketInfo && retries < maxRetries) {
-        marketInfo = await this.marketRepository.findOne({
-          where: { marketNo: market.marketNo },
-          // where: { marketNo: 7 },
-        });
-      
-        if (!marketInfo) {
-          retries++;
-          console.log(`⏳ 마켓 정보가 없음. ${retries}번째 재시도 중...`);
-          await new Promise((resolve) => setTimeout(resolve, timeIntaval));
-        }
-      }
-      
-      if (!marketInfo) {
-        throw new Error('❌ 마켓 정보를 찾을 수 없습니다.');
-      }
-
-      await queryRunner.commitTransaction();
-
-      return { marketNo: marketInfo.marketNo };
-
-      // return null;
-
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
   /**
-   * 에셋 NFT MINT & VC 발급
+   * 데이터 NFT MINT & VC 발급
    * 
    * @param marketNo 
    */
@@ -1146,13 +1079,13 @@ export class MarketService {
         // nftService.createMarketMint 호출
         const address = user.nftWalletAccount;
         console.log("user : "+JSON.stringify(user));
-        const nftMintInfo: CreateMintDto = {assetNo: marketInfo.assetNo, productNo: marketInfo.productNo,
+        const nftMintInfo: CreateMintDto = {assetNo: marketNo, productNo: marketNo,
           issuedTo: marketInfo.saleAddr, issueCnt: marketInfo.issueCnt, tokenId: null, state: 'B1', marketNo};
         this.nftService.createMarketMintSale(user, nftMintInfo);
       }else{
         // VC 발급
         console.log("VC 발급");
-        await this.createVc(user, marketInfo.assetNo);
+        await this.createVc(user, marketInfo.marketNo);
       }
 
     } catch (e) {
@@ -1162,11 +1095,11 @@ export class MarketService {
   } 
   
   /**
-   * 에셋등록증명 VC 발급 & 등록
+   * 데이터 등록증명 VC 발급 & 등록
    * 
    * @param assetNo 
    */
-  async createVc(user: User, assetNo: number): Promise<any> {
+  async createVc(user: User, marketNo: number): Promise<any> {
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -1174,94 +1107,82 @@ export class MarketService {
 
     try {
       const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
-
+      const dataspace = this.configService.get<string>('DID_DATASPACE');
+      
        // ETRI API 호출
       // 1. 아바타 크리덴셜 DID 생성 요청
-      const sql = this.assetRepository.createQueryBuilder('asset')
-                  // .leftJoin(State, 'state', 'asset.state = state.state')
-                      .leftJoin(Product, 'product', 'asset.product_no = product.product_no')
-                      .leftJoin(FileAsset, 'fileAsset', 'asset.file_no = fileAsset.file_no')
-                      .leftJoin(NftMint, 'nftMint', 'asset.token_id = nftMint.token_id')
-                      .leftJoin(DidWallet, 'didWallet', 'asset.user_no = didWallet.user_no')
-                      .leftJoin(User, 'user', 'asset.user_no = user.user_no')
-                      .select('asset.asset_no', 'assetNo')
-                      .addSelect('asset.reg_name', 'nickName')
-                      .addSelect('asset.asset_name', 'assetName')
-                      .addSelect('asset.asset_desc', 'assetDesc')
-                      .addSelect('asset.asset_desc_kor', 'assetDescKor')
-                      .addSelect('asset.metaverse_name', 'metaverseName')
-                      .addSelect('asset.type_def', 'typeDef')
-                      .addSelect('asset.price', 'price')
-                      .addSelect('asset.reg_addr', 'regAddr')
-                      .addSelect('asset.asset_url', 'assetUrl')
-                      .addSelect('asset.reg_dttm', 'regDttm')
-                      .addSelect("didWallet.jwt", 'jwt')
-                      .addSelect("didWallet.wallet_did", 'did')
-                      .addSelect("user.email", 'email')
-                      .addSelect("nftMint.tx_id", 'txId')
-                      .addSelect("product.reg_name", 'regName')
-                      .addSelect("product.product_name", 'productName')
-                      .addSelect("concat('"  + serverDomain  + "/', fileAsset.thumbnail_first)", 'assetUrl')
-                      .where("asset.asset_no = :assetNo", { assetNo });
+      const sql = this.marketRepository.createQueryBuilder('market')
+                      .leftJoin(File, 'file', 'file.file_no = market.file_no')
+                      .leftJoin(NftMint, 'mint', 'market.from_token_id = mint.token_id')
+                      .leftJoin(User, 'user', 'market.user_no = user.user_no')
+                      .leftJoin(DidWallet, 'didWallet', 'didWallet.user_no = user.user_no')                    
+                      .select('market.market_no', 'marketNo')
+                      .addSelect('didWallet.wallet_did', 'walletDid')
+                      .addSelect('market.market_data_name', 'marketDatatName')
+                      .addSelect('market.market_data_desc', 'marketDatatDesc')
+                      .addSelect("market.market_product_type", 'marketProductType')
+                      .addSelect("market.market_language", 'marketLanguage')
+                      .addSelect("market.market_keyword", 'marketKeyword')
+                      .addSelect("market.market_doi", 'marketDoi')
+                      .addSelect("market.market_subject", 'marketSubject')
+                      .addSelect("market.market_issuer", 'marketIssuer')
+                      .addSelect("market.market_doi_url", 'marketDoiUrl')
+                      .addSelect('market.reg_addr', 'regAddr')
+                      .addSelect('user.email', 'regEmail')
+                      .addSelect("market.price", 'price')
+                      .addSelect("market.price", 'price')
+                      .addSelect('market.reg_dttm', 'regDttm')
+                      .addSelect("mint.contract_id", 'contractId')
+                      .addSelect("mint.tx_id", 'txId')
+                      .addSelect("concat('"  + serverDomain  + "/', file.thumbnail_first)", 'imageUrl')
+                      .where("market.market_no = :marketNo", { marketNo });
 
-      const didInfo = await sql.groupBy(`asset.asset_no, didWallet.user_no, user.user_no, nftMint.token_id, 
-        nftMint.tx_id, product.product_no, fileAsset.thumbnail_first`)
+      const didInfo = await sql
+                          // .groupBy(`market.market_no, user.user_no, mint.token_id, 
+                          //           mint.tx_id, file.thumbnail_first`)
                           .getRawOne();
       
-      const createDidAcdgDto: CreateDidAcdgDto = {jwt: didInfo.jwt, id: didInfo.email, did: didInfo.did};
-      const vcDid = await this.didService.createAcdg(createDidAcdgDto);
-      if (!vcDid) {
-        throw new Error('Data Not found.');
-      }
-      console.log("vcDid: "+JSON.stringify(vcDid))
-
-      // 2. 아바타 크리덴셜 발급 요청
-      const contractAddress = this.configService.get<string>('CONTRACT_ADDRESS');
-      const attributes = {
-        "assetId": "ARONFT-"+assetNo,
-        "registrantNickName": didInfo.nickName,
-        "assetName": didInfo.assetName,
-        "EntertainmentCorp": didInfo.regName,
-        "goodsName": didInfo.productName,
-        "metaverseName": didInfo.metaverseName,
-        "assetType": didInfo.typeDef,
-        "assetDescription": didInfo.assetDesc,
-        "assetPrice": String(didInfo.price),
+      // 데이터 크리덴셜 발급 요청
+      const createDidVcDto: CreateDidVcDto = {
+        "walletDid": didInfo.walletDid,
+        "issuerDid": dataspace,
+        "vcType": didInfo.marketVcType,
+        "dataId": "AL_DS_NFT-"+marketNo,
+        "dataName": didInfo.marketDataName,
+        "dataDesc": didInfo.marketDataDesc,
+        "productType": didInfo.marketProductType,
+        "language": didInfo.marketLanguage,
+        "keyWord": didInfo.marketKeyword,
+        "doi": didInfo.doi,
+        "subject": didInfo.marketSubject,
+        "issuer": didInfo.marketIssuer,
+        "doiUrl": didInfo.marketDoiUrl,
+        "dataPrice": String(didInfo.price),
         "registrantEmail": didInfo.email,
         "registrantWalletAddress": didInfo.regAddr,
         "txId": didInfo.txId,
-        "contractAddress": contractAddress,
-        "imageURL": didInfo.assetUrl,
+        "contractAddress": didInfo.contractId,
+        "imageURL": didInfo.imageUrl,
         "registrationDate": didInfo.regDttm.toISOString().split('.')[0] + 'Z'
       };
-      const createDidAciDto: CreateDidAciDto = {did: vcDid.did, attributes, nickName: didInfo.nickName};
-      const issueVcInfo = await this.didService.createAci(createDidAciDto);
+
+      let issueVcInfo = null;
+      issueVcInfo = await this.didService.createVC(createDidVcDto);
       if (!issueVcInfo) {
         throw new Error('VC 등록 오류 - vc');
       }
-      console.log("issueVcInfo: "+JSON.stringify(issueVcInfo))
-      const parsed = parseVC(issueVcInfo.vc);    
-      const modifyAsset = {vcIssuerName: issueVcInfo.vcIssuerName,
-        vcIssuerLogo: issueVcInfo.vcIssuerLogo, vcTypeName: issueVcInfo.vcTypeName, vcId: parsed.credentialId}
-      console.log("===== modifyAsset : "+JSON.stringify(modifyAsset));
-      await queryRunner.manager.update(Asset, assetNo, modifyAsset);
 
-      // 3. 아바타 크리덴셜 등록  
-      const createDidAcrDto: CreateDidAcrDto = 
-        {
-          id: didInfo.email,
-          jwt: didInfo.jwt,
-          did: didInfo.did,
-          vc: issueVcInfo.vc,
-          vcIssuerName: issueVcInfo.vcIssuerName,
-          vcIssuerLogo: issueVcInfo.vcIssuerLogo,
-          vcTypeName: issueVcInfo.vcTypeName
-        };
-      const vcInfo = await this.didService.createAcr(createDidAcrDto);
-      if (!vcInfo) {
-        throw new Error('VC 등록 오류 - vc');
+      console.log("issueVcInfo: "+JSON.stringify(issueVcInfo))
+      // const parsed = parseVC(issueVcInfo);    
+      const modifyMarket = {
+        state: 'S2', 
+        vcId: createDidVcDto.dataId,
+        // vcIssuerName: issueVcInfo.did,
+        // vcIssuerLogo: issueVcInfo.vcIssuerLogo, 
+        // vcTypeName: issueVcInfo.vcTypeName,         
       }
-      console.log("vcInfo: "+JSON.stringify(vcInfo))
+      console.log("===== modifyMarket : "+JSON.stringify(modifyMarket));
+      await queryRunner.manager.update(Market, marketNo, modifyMarket);
       
       await queryRunner.commitTransaction();
 
@@ -1275,97 +1196,89 @@ export class MarketService {
   }
 
   /**
-   * 사용자 에셋 판매 삭제
-   * 
-   * @param deleteMarketSaleDto 
+   * 마켓 데이터 VC 정보 조회
+   * @param user
+   * @param marketNo 
+   * @returns 
    */
-  async deleteAll(deleteMarketSaleDto: DeleteMarketSaleDto): Promise<any> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
+  async getVcInfo(user: User, marketNo: number): Promise<any> {
     try {
-      const email = deleteMarketSaleDto.email;
-      const marketNo = deleteMarketSaleDto.marketNo;
-   
-      // 1. 사용자 체크
-      let user = await this.userService.getOneByEmail(email);
-      if (!user) {
-        throw new NotFoundException('Data Not found. : 사용자 정보');
+      const sql = this.marketRepository.createQueryBuilder('market')
+                .leftJoin(NftMint, 'mint', 'mint.token_id = market.from_token_id')
+                .leftJoin(NftWallet, 'nftWallet', 'nftWallet.account = mint.issued_to')
+                .leftJoin(DidWallet, 'didWallet', 'didWallet.user_no = nftWallet.user_no')
+                .select('market.market_no', 'marketNo')
+                .addSelect('market.market_vc_type', 'marketVcType')
+                .addSelect('didWallet.wallet_did', 'walletDid')
+                .where("market.market_no = :marketNo", { marketNo });
+
+      const marketInfo = await sql
+                          // .groupBy(`market.market_no, user.user_no, mint.token_id, 
+                          //           mint.tx_id, file.thumbnail_first`)
+                          .getRawOne();
+      console.log("===== getVcInfo marketInfo: "+JSON.stringify(marketInfo));
+
+      // Authledger VC DID verify 요청
+      // for TEST
+      const getDidVcDto: GetDidVcDto = {walletDid: marketInfo.walletDid, vcType: marketInfo.marketVcType,};
+      console.log("===== getVcInfo getDidVcDto: "+JSON.stringify(getDidVcDto));
+      const vc = await this.didService.verifyVC(getDidVcDto);
+      if (!vc) {      
+        throw new NotFoundException('사용자 DID verify 요청 오류');
       }
-      console.log("user: "+JSON.stringify(user));
-
-      // 1. 마켓 판매 삭제
-      const marketInfo = await this.marketRepository.findOne({
-          where: { marketNo, saleAddr: user.nftWalletAccount },
-      });
-      if (!marketInfo) {
-        throw new Error('❌ 마켓 정보를 찾을 수 없습니다.');
-      }else{
-         await queryRunner.manager.update(Market, {marketNo}, {state: 'S6'});
-      }
-      const productNo = marketInfo.productNo;
-      const assetNo = marketInfo.assetNo;
-      user.nftWalletAccount = marketInfo.saleAddr;
-
-      // 2. 에셋 게시 삭제
-      const assetInfo = await this.assetRepository.findOne({
-          where: { assetNo},
-      });
-      if (!assetInfo) {
-        throw new Error('❌ 에셋 정보를 찾을 수 없습니다.');
-      }else{
-         await queryRunner.manager.update(Asset, {assetNo}, {state: 'S6'});
-      }
-
-      // 3. 굿즈 게시 삭제
-      const productInfo = await this.productRepository.findOne({
-          where: { productNo},
-      });
-      if (!productInfo) {
-        throw new Error('❌ 굿즈 정보를 찾을 수 없습니다.');
-      }else{
-         await queryRunner.manager.update(Product, {productNo}, {state: 'N5'});
-      }
-
-      // 4. 소각시킬 tokenId 찾기
-      let tokenIds: string[] = [];
-
-      if (marketInfo.issueCnt === marketInfo.saleCnt) {
-        console.log("소각시킬 token이 없어요.");
-      } else {
-        const from = Number(marketInfo.fromTokenId);
-        const to = Number(marketInfo.toTokenId);
-        const inventoryCnt = Number(marketInfo.inventoryCnt);
-
-        console.log(`from: ${from}, to: ${to}`);
-
-        // Array.from으로 한 줄 생성 (to부터 내려가면서 inventoryCnt 개수)
-        // tokenIds = Array.from({ length: inventoryCnt }, (_, i) => to - i);
-        tokenIds = Array.from({ length: inventoryCnt }, (_, i) => (to - i).toString());
-      }
-
-      console.log("===========   tokenIds:", tokenIds);
-      console.log("===========   user:", user);
-
-      await queryRunner.commitTransaction();
-
-      if(tokenIds.length > 0){
-        // nftService.createBurns 호출
-        const createBurnDto: CreateBurnDto = {
-          assetNo,
-          productNo,
-          tokenIds
-        };
-        this.nftService.createBurns(user, createBurnDto);
-      }   
-
+      return vc;
+      
     } catch (e) {
       this.logger.error(e);
       throw e;
-    } finally {
-      await queryRunner.release();
-    }
+    }  
+    
   }
+  // async getVcInfo(user: User, marketNo: number): Promise<any> {
+
+  //   const serverDomain = this.configService.get<string>('SERVER_DOMAIN');
+
+  //   try {
+  //     // console.log("marketNo: "+marketNo);
+  //     const saleAddr = user.nftWalletAccount;
+  //     const market = await this.marketRepository.findOne({ where:{marketNo, saleAddr} });
+  //     if (!market) {                         
+  //       throw new NotFoundException("Data Not found. : 마켓 에셋 판매 정보");
+  //     }
+
+  //     const sql = this.marketRepository.createQueryBuilder('market')
+  //                     .leftJoin(File, 'file', 'file.file_no = market.file_no')
+  //                     .leftJoin(NftMint, 'mint', 'market.from_token_id = mint.token_id')
+  //                     .leftJoin(User, 'user', 'market.user_no = user.user_no')
+
+  //                     .select(`CONCAT('AL_DS_NFT-', market.market_no)`, 'dataId')
+  //                     .addSelect("market.market_data_name", 'dataName')
+  //                     .addSelect("market.market_data_desc", 'dataDesc')
+  //                     .addSelect("market.market_product_type", 'productType')
+  //                     .addSelect("market.market_language", 'language')
+  //                     .addSelect("market.market_keyword", 'keyWord')
+  //                     .addSelect("market.market_doi", 'doi')
+  //                     .addSelect("market.market_subject", 'subject')
+  //                     .addSelect("market.market_issuer", 'issuer')
+  //                     .addSelect("market.market_doi_url", 'doiUrl')
+  //                     .addSelect("market.price", 'dataPrice')
+  //                     .addSelect('user.email', 'registrantEmail')
+  //                     .addSelect('mint.issued_to', 'registrantWalletAddress')
+  //                     .addSelect('mint.tx_id', 'txId')
+  //                     .addSelect('mint.contract_id', 'contractAddress')
+  //                     .addSelect("concat('"  + serverDomain  + "/', file.file_path_first)", 'imageURL')
+  //                     .addSelect('market.reg_dttm', 'registrationDate')
+
+  //                     .where("market.market_no = :marketNo", { marketNo })
+                   
+  //     const vcInfo = await sql.getRawOne();
+                                                                        
+  //     return vcInfo;
+
+  //   } catch (e) {
+  //     this.logger.error(e);
+  //     throw e;
+  //   }
+  // }
 
 }

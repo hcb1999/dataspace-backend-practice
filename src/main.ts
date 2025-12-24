@@ -8,19 +8,15 @@ import * as express from 'express';
 import { join } from 'path';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ClientsModule, Transport, MicroserviceOptions} from '@nestjs/microservices';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  // const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-  //   transport: Transport.RMQ,
-  //   options: {
-  //     urls: ['amqp://localhost:5672'],
-  //     queue: 'cats_queue',
-  //     queueOptions: {
-  //       durable: false
-  //     },
-  //   },
-  // });
+  // const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  const server = app.getHttpServer();
+  server.setTimeout(1000 * 60 * 5); // 5분까지 기다림
+  server.keepAliveTimeout = 1000 * 60 * 5;
 
   app.useWebSocketAdapter(new IoAdapter(app));  // WebSocket 어댑터 사용
   // CORS 설정
@@ -45,22 +41,42 @@ async function bootstrap() {
     })
   )
 
+  // 🔥🔥🔥 URL decode 미들웨어 추가 (괄호, 한글, 공백 모두 정상 처리)
+  app.use((req, res, next) => {
+    try {
+      req.url = decodeURI(req.url); // 핵심 코드
+    } catch (e) {
+      // decode 오류 발생 시 원본 유지
+    }
+    next();
+  });
+
+  // 따로 도메인이 없을 때 사용 URL prefix
+  app.setGlobalPrefix('api');
+
   setupSwagger(app);
 
   //추가 html 페이지 경로 설정
-  app.use(express.static(join(__dirname, '..', 'public')));
+  // app.use(express.static(join(__dirname, '..', 'public')));
+  // 실제 파일 저장 경로
+  const staticPath = join(__dirname, '..', 'public');
+  // /api → /public 매핑
+  app.useStaticAssets(staticPath, {
+    prefix: '/api',
+  });
+
 
   // 마이크로서비스 생성
   const microservice = app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
       urls: ['amqp://avataroad:avataroad@localhost:5672'],
-      queue: 'transaction_queue', // 큐 이름
+      queue: 'transaction_dataspace_queue', // 큐 이름
       noAck: false,
       queueOptions: {
         durable: true,
-        'x-dead-letter-exchange': 'dlx_exchange1',
-        'x-dead-letter-routing-key': 'dlx_routing_key1',
+        'x-dead-letter-exchange': 'dlx_exchange2',
+        'x-dead-letter-routing-key': 'dlx_routing_key2',
       },
     },
   });

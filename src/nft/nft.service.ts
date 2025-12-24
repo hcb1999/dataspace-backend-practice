@@ -2,13 +2,15 @@ import { BadRequestException, ConflictException, Inject, Injectable, Logger, Not
 import { DataSource, Repository, UpdateResult, Like, Between, In } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../entities/user.entity';
-import { Asset } from '../entities/asset.entity';
 import { Market } from '../entities/market.entity';
 import { State } from '../entities/state.entity';
+import { DidWallet } from '../entities/did_wallet.entity';
 import { NftWallet } from '../entities/nft_wallet.entity';
 import { NftMint } from '../entities/nft_mint.entity';
 import { NftTransfer } from '../entities/nft_transfer.entity';
 import { NftBurn } from '../entities/nft_burn.entity';
+import { CreateAlMintDto } from '../dtos/create_al_mint.dto';
+import { CreateAlTransferDto } from '../dtos/create_al_transfer.dto';
 import { CreateMintDto } from '../dtos/create_mint.dto';
 import { GetMintBurnDto } from '../dtos/get_mint_burn.dto';
 import { CreateTransferDto } from '../dtos/create_transfer.dto';
@@ -18,27 +20,27 @@ import { PageResponse } from 'src/common/page.response';
 // import { InjectQueue } from '@nestjs/bull';
 // import { Queue } from 'bull';
 import { ClientProxy } from '@nestjs/microservices'
-import { HttpService } from '@nestjs/axios'; 
-import { Contract , Wallet, ethers, providers } from "ethers";
-import { ARODEVNFTCollection, ARODEVNFTCollection__factory } from './typechain-types';
+// import { HttpService } from '@nestjs/axios'; 
+import axios from 'axios';
+import { InternalServerErrorException } from '@nestjs/common';
 
 
 @Injectable()
 export class NftService {
   private logger = new Logger('NftService');
-  private provider: providers.JsonRpcProvider;
-  private contractAddress: string;
+  // private provider: providers.JsonRpcProvider;
+  // private contractAddress: string;
 
   constructor(
     private configService: ConfigService,
-    private readonly httpService: HttpService,
+    // private readonly httpService: HttpService,
     // private readonly amqpConnection: AmqpConnection
-
-    @Inject('ASSET_REPOSITORY')
-    private assetRepository: Repository<Asset>,
 
     @Inject('MARKET_REPOSITORY')
     private marketRepository: Repository<Market>,
+
+    @Inject('DID_WALLET_REPOSITORY')
+    private didWalletRepository: Repository<DidWallet>,
 
     @Inject('NFT_MINT_REPOSITORY')
     private nftMintRepository: Repository<NftMint>,
@@ -62,9 +64,9 @@ export class NftService {
     private client: ClientProxy,
 
   ){
-    // 이더리움 네트워크에 연결
-    this.provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
-    this.contractAddress = process.env.CONTRACT_ADDRESS;
+    // // 이더리움 네트워크에 연결
+    // this.provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
+    // this.contractAddress = process.env.CONTRACT_ADDRESS;
 
     // // ClientProxy 초기화
     // this.client = ClientProxyFactory.create({
@@ -83,11 +85,11 @@ export class NftService {
     
   }
 
-  // Starting Source
-  // TypeChain을 이용하여 Contract 인스턴스 생성
-  createContractInstance(wallet: Wallet): ARODEVNFTCollection {
-    return ARODEVNFTCollection__factory.connect(this.contractAddress, wallet.connect(this.provider));
-  }  
+  // // Starting Source
+  // // TypeChain을 이용하여 Contract 인스턴스 생성
+  // createContractInstance(wallet: Wallet): ARODEVNFTCollection {
+  //   return ARODEVNFTCollection__factory.connect(this.contractAddress, wallet.connect(this.provider));
+  // }  
 
   /**
    * Ether Transfer 생성
@@ -95,73 +97,73 @@ export class NftService {
    * @param createMintDto 
    * @returns 
    */
-  async transferEth(nftInfo: {userNo: number, faucetPKey:string, faucetAmount:number, toAddr:string}): Promise<Boolean> {  
+  // async transferEth(nftInfo: {userNo: number, faucetPKey:string, faucetAmount:number, toAddr:string}): Promise<Boolean> {  
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
 
-    const userNo = nftInfo.userNo;
-    const faucetPKey = nftInfo.faucetPKey;
-    const amount = nftInfo.faucetAmount;
-    const toAddr = nftInfo.toAddr;
+  //   const userNo = nftInfo.userNo;
+  //   const faucetPKey = nftInfo.faucetPKey;
+  //   const amount = nftInfo.faucetAmount;
+  //   const toAddr = nftInfo.toAddr;
 
   
-    const fromWallet = new ethers.Wallet(faucetPKey).connect(this.provider);
-    // console.log(`processMintTransaction started... fromWallet : ${JSON.stringify(fromWallet, null, 2)}`);
+  //   const fromWallet = new ethers.Wallet(faucetPKey).connect(this.provider);
+  //   // console.log(`processMintTransaction started... fromWallet : ${JSON.stringify(fromWallet, null, 2)}`);
         
-    let contract: any;
-    try {
+  //   let contract: any;
+  //   try {
 
-      // NFT 계약 인스턴스 생성
-      contract = this.createContractInstance(fromWallet);
-      // this.knftCollection = this.createContractInstance(fromWallet);
-      this.logger.log(`Contract instance created successfully`);
-    } catch (error) {
-      this.logger.error(`Error creating contract instance: ${error.message}`);
-      return false;
-    }
+  //     // NFT 계약 인스턴스 생성
+  //     contract = this.createContractInstance(fromWallet);
+  //     // this.knftCollection = this.createContractInstance(fromWallet);
+  //     this.logger.log(`Contract instance created successfully`);
+  //   } catch (error) {
+  //     this.logger.error(`Error creating contract instance: ${error.message}`);
+  //     return false;
+  //   }
 
-    try {
-      const amountInWei = ethers.utils.parseEther(amount.toString());
-      const ethTransferTx = await contract.transferOnlyEther(amountInWei, toAddr, {
-        value: amountInWei // 여기에서 value가 보내는 이더 값
-      });
-      // this.logger.log(`ETH Transfer sent: ${ethTransferTx.hash}`);
+  //   try {
+  //     const amountInWei = ethers.utils.parseEther(amount.toString());
+  //     const ethTransferTx = await contract.transferOnlyEther(amountInWei, toAddr, {
+  //       value: amountInWei // 여기에서 value가 보내는 이더 값
+  //     });
+  //     // this.logger.log(`ETH Transfer sent: ${ethTransferTx.hash}`);
 
-      const receipt = await ethTransferTx.wait();
+  //     const receipt = await ethTransferTx.wait();
 
-      for (const log of receipt.logs) {
-        try {
-          const parsedLog = contract.interface.parseLog(log);
+  //     for (const log of receipt.logs) {
+  //       try {
+  //         const parsedLog = contract.interface.parseLog(log);
           
-          if (parsedLog.name === "NewTransferEther") {
-            const from = parsedLog.args[0];  
-            const to = parsedLog.args[1];  
-            const amount = parsedLog.args[2];  
-            this.logger.log("=== Transfered Only Ether : "+ from + " --->  "+ to  + ",  " +amount +' Ether');
-            // console.log(`userNo: ${userNo}`);
-            // const wallet = await this.nftWalletRepository.findOneBy({ userNo });
-            // console.log("before update wallet: "+JSON.stringify(wallet)); 
-            // const wallet1 = await this.nftWalletRepository.update({userNo}, {chargedYn: 'Y'});
-            // console.log("wallet1: "+wallet1); 
-            // const wallet2 = await this.nftWalletRepository.findOneBy({ userNo });
-            // console.log("after update wallet2: "+JSON.stringify(wallet2)); 
-            // break;
-            return true;
-          }
-        } catch (err) {
-          this.logger.log("Error parsing log:", err);
-          return false;
-        }
-      }
+  //         if (parsedLog.name === "NewTransferEther") {
+  //           const from = parsedLog.args[0];  
+  //           const to = parsedLog.args[1];  
+  //           const amount = parsedLog.args[2];  
+  //           this.logger.log("=== Transfered Only Ether : "+ from + " --->  "+ to  + ",  " +amount +' Ether');
+  //           // console.log(`userNo: ${userNo}`);
+  //           // const wallet = await this.nftWalletRepository.findOneBy({ userNo });
+  //           // console.log("before update wallet: "+JSON.stringify(wallet)); 
+  //           // const wallet1 = await this.nftWalletRepository.update({userNo}, {chargedYn: 'Y'});
+  //           // console.log("wallet1: "+wallet1); 
+  //           // const wallet2 = await this.nftWalletRepository.findOneBy({ userNo });
+  //           // console.log("after update wallet2: "+JSON.stringify(wallet2)); 
+  //           // break;
+  //           return true;
+  //         }
+  //       } catch (err) {
+  //         this.logger.log("Error parsing log:", err);
+  //         return false;
+  //       }
+  //     }
 
-    } catch (error) {
-      this.logger.error(`Error in transferEth: ${error.message}`);
-      return false;
-      // this.logger.error(`Error in transferEth`);
-      }
-  }
+  //   } catch (error) {
+  //     this.logger.error(`Error in transferEth: ${error.message}`);
+  //     return false;
+  //     // this.logger.error(`Error in transferEth`);
+  //     }
+  // }
 
   // Queue로 전송
   // async transferEth(nftInfo: {userNo: number, faucetPKey:string, faucetAmount:number, toAddr:string}): Promise<void> {  
@@ -195,49 +197,49 @@ export class NftService {
    * @param createMintDto 
    * @returns 
    */
- async createMint(user: User, createMintDto: CreateMintDto): Promise<void> {  
+//  async createMint(user: User, createMintDto: CreateMintDto): Promise<void> {  
 
-  const queryRunner = this.dataSource.createQueryRunner();
-  await queryRunner.connect();
-  await queryRunner.startTransaction();
+//   const queryRunner = this.dataSource.createQueryRunner();
+//   await queryRunner.connect();
+//   await queryRunner.startTransaction();
 
-  try {
+//   try {
      
-        const assetNo = createMintDto.assetNo;
-        const productNo = createMintDto.productNo;
-        const ownerAddress = user.nftWalletAccount;
-        const mint = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
-        let nftMintNo = 0;
-        if (!mint) {
-          const mintInfo = {productNo, assetNo, issuedTo: ownerAddress, tokenId: null, state: 'B1'};
-          // console.log("===== mintInfo : "+JSON.stringify(mintInfo));
-          const newMint = queryRunner.manager.create(NftMint, mintInfo);
-          const result = await queryRunner.manager.save<NftMint>(newMint);
-          nftMintNo = result.nftMintNo;
-        }else{
-          nftMintNo = mint.nftMintNo;
-        }
+//         const assetNo = createMintDto.assetNo;
+//         const productNo = createMintDto.productNo;
+//         const ownerAddress = user.nftWalletAccount;
+//         const mint = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
+//         let nftMintNo = 0;
+//         if (!mint) {
+//           const mintInfo = {productNo, assetNo, issuedTo: ownerAddress, tokenId: null, state: 'B1'};
+//           // console.log("===== mintInfo : "+JSON.stringify(mintInfo));
+//           const newMint = queryRunner.manager.create(NftMint, mintInfo);
+//           const result = await queryRunner.manager.save<NftMint>(newMint);
+//           nftMintNo = result.nftMintNo;
+//         }else{
+//           nftMintNo = mint.nftMintNo;
+//         }
 
-        await queryRunner.commitTransaction();   
+//         await queryRunner.commitTransaction();   
   
-        // MQ로 Mint 트랜잭션 처리 요청
-        const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
-        let ownerPKey: string;
-        if (wallet) {
-          ownerPKey = wallet.pkey;
-        } 
+//         // MQ로 Mint 트랜잭션 처리 요청
+//         const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
+//         let ownerPKey: string;
+//         if (wallet) {
+//           ownerPKey = wallet.pkey;
+//         } 
 
-        const data = { nftMintNo, assetNo, productNo, ownerAddress, ownerPKey };
-        console.log('Sending data:', data);
-        this.client.emit('mint', data);        
+//         const data = { nftMintNo, assetNo, productNo, ownerAddress, ownerPKey };
+//         console.log('Sending data:', data);
+//         this.client.emit('mint', data);        
 
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    } finally {    
-      await queryRunner.release();
-    }
-}
+//     } catch (e) {
+//       this.logger.error(e);
+//       throw e;
+//     } finally {    
+//       await queryRunner.release();
+//     }
+// }
 
   /**
    * NFT Transfer
@@ -245,66 +247,66 @@ export class NftService {
    * @param createTransferDto 
    * @returns 
    */
-  async createTransfer(user: User, createTransferDto: CreateTransferDto): Promise<void> {
+  // async createTransfer(user: User, createTransferDto: CreateTransferDto): Promise<void> {
     
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
 
-    try {
+  //   try {
 
-        const contractNo = createTransferDto.contractNo;        
-        const fromAddr = createTransferDto.fromAddr.toLowerCase();
-        const toAddr = createTransferDto.toAddr.toLowerCase();
-        const assetNo = createTransferDto.assetNo;
-        const productNo = createTransferDto.productNo;
-        const tokenId = createTransferDto.tokenId;
-        let nftTransferNo = 0;
-        const transfer = await this.nftTransferRepository.findOne({ where:{assetNo, productNo, tokenId, toAddr: user.nftWalletAccount} });
-        if (!transfer) {
-          const transferInfo = {productNo, assetNo, contractNo, purchaseNo: null, 
-            fromAddr, toAddr, tokenId, state: 'B5'};
-          // console.log("===== transferInfo : "+JSON.stringify(transferInfo));
-          const newTransfer = queryRunner.manager.create(NftTransfer, transferInfo);
-          const result = await queryRunner.manager.save<NftTransfer>(newTransfer);
-          nftTransferNo = result.nftTransferNo;
-        }   
+  //       const contractNo = createTransferDto.contractNo;        
+  //       const fromAddr = createTransferDto.fromAddr.toLowerCase();
+  //       const toAddr = createTransferDto.toAddr.toLowerCase();
+  //       const assetNo = createTransferDto.assetNo;
+  //       const productNo = createTransferDto.productNo;
+  //       const tokenId = createTransferDto.tokenId;
+  //       let nftTransferNo = 0;
+  //       const transfer = await this.nftTransferRepository.findOne({ where:{assetNo, productNo, tokenId, toAddr: user.nftWalletAccount} });
+  //       if (!transfer) {
+  //         const transferInfo = {productNo, assetNo, contractNo, purchaseNo: null, 
+  //           fromAddr, toAddr, tokenId, state: 'B5'};
+  //         // console.log("===== transferInfo : "+JSON.stringify(transferInfo));
+  //         const newTransfer = queryRunner.manager.create(NftTransfer, transferInfo);
+  //         const result = await queryRunner.manager.save<NftTransfer>(newTransfer);
+  //         nftTransferNo = result.nftTransferNo;
+  //       }   
 
-        await queryRunner.commitTransaction();  
+  //       await queryRunner.commitTransaction();  
 
-        // MQ로 Transfer 트랜잭션 처리 요청
-        const ownerAddress = toAddr;     // 살 사람
-        const sellerAddress = fromAddr;  // 팔 사람
-        const wallet1 = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
-        let ownerPKey: string;
-        if (wallet1) {
-          ownerPKey = wallet1.pkey;
-        }
-        const wallet2 = await this.nftWalletRepository.findOne({ where:{account: sellerAddress} });
-        let sellerPKey: string;
-        if (wallet2) {
-          sellerPKey = wallet2.pkey;          
-        }
-        const asset = await this.assetRepository.findOne({ where:{assetNo} });
-        let price: number;
-        if (asset) {
-          price = asset.price;
-        }
+  //       // MQ로 Transfer 트랜잭션 처리 요청
+  //       const ownerAddress = toAddr;     // 살 사람
+  //       const sellerAddress = fromAddr;  // 팔 사람
+  //       const wallet1 = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
+  //       let ownerPKey: string;
+  //       if (wallet1) {
+  //         ownerPKey = wallet1.pkey;
+  //       }
+  //       const wallet2 = await this.nftWalletRepository.findOne({ where:{account: sellerAddress} });
+  //       let sellerPKey: string;
+  //       if (wallet2) {
+  //         sellerPKey = wallet2.pkey;          
+  //       }
+  //       // const asset = await this.assetRepository.findOne({ where:{assetNo} });
+  //       // let price: number;
+  //       // if (asset) {
+  //       //   price = asset.price;
+  //       // }
 
-        // MQ로 Transfer 전송 트랜잭션 처리 요청
-        // await this.queueTransferTransaction(nftTransferNo, parseInt(tokenId), price, ownerAddress, ownerPKey, sellerAddress, sellerPKey);
-        const data = { nftTransferNo, tokenId: parseInt(tokenId), price, ownerAddress, ownerPKey,
-           sellerAddress, sellerPKey, contractNo };
-        console.log('Sending data:', data);
-        this.client.emit('transfer', data);    
+  //       // MQ로 Transfer 전송 트랜잭션 처리 요청
+  //       // await this.queueTransferTransaction(nftTransferNo, parseInt(tokenId), price, ownerAddress, ownerPKey, sellerAddress, sellerPKey);
+  //       const data = { nftTransferNo, tokenId: parseInt(tokenId), price: 0, ownerAddress, ownerPKey,
+  //          sellerAddress, sellerPKey, contractNo };
+  //       console.log('Sending data:', data);
+  //       this.client.emit('transfer', data);    
 
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    } finally {    
-      await queryRunner.release();
-    }
-  }  
+  //   } catch (e) {
+  //     this.logger.error(e);
+  //     throw e;
+  //   } finally {    
+  //     await queryRunner.release();
+  //   }
+  // }  
 
  /**
    * Market NFT Mint 생성
@@ -312,28 +314,28 @@ export class NftService {
    * @param createMintDto 
    * @returns 
    */
- async createMarketMint(user: User, createMintDto: CreateMintDto): Promise<void> {  
+//  async createMarketMint(user: User, createMintDto: CreateMintDto): Promise<void> {  
 
-  try {
+//   try {
 
-        const ownerAddress = user.nftWalletAccount;
+//         const ownerAddress = user.nftWalletAccount;
   
-        // MQ로 Mint 트랜잭션 처리 요청
-        const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
-        let ownerPKey: string;
-        if (wallet) {
-          ownerPKey = wallet.pkey;
-        } 
+//         // MQ로 Mint 트랜잭션 처리 요청
+//         const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
+//         let ownerPKey: string;
+//         if (wallet) {
+//           ownerPKey = wallet.pkey;
+//         } 
 
-        const data = { createMintDto, ownerAddress, ownerPKey };
-        console.log('Sending data:', data);
-        this.client.emit('mints', data);        
+//         const data = { createMintDto, ownerAddress, ownerPKey };
+//         console.log('Sending data:', data);
+//         this.client.emit('mints', data);        
 
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }
-}
+//     } catch (e) {
+//       this.logger.error(e);
+//       throw e;
+//     }
+// }
 
  /**
    * 사용자 에셋 판매 등록용 Market NFT Mint 생성
@@ -348,13 +350,11 @@ export class NftService {
         const ownerAddress = user.nftWalletAccount;
   
         // MQ로 Mint 트랜잭션 처리 요청
-        const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
-        let ownerPKey: string;
-        if (wallet) {
-          ownerPKey = wallet.pkey;
-        } 
+        // console.log('createMarketMintSale userNo:', user.userNo);
+        const issuerDidInfo = await this.didWalletRepository.findOne({ where:{userNo: user.userNo} });
+        const owwerAddress = await this.nftWalletRepository.findOne({ where:{userNo: user.userNo} });
 
-        const data = { createMintDto, ownerAddress, ownerPKey };
+        const data = { createMintDto, issuerDid: issuerDidInfo.walletDid, ownerAddress };
         console.log('Sending data:', data);
         this.client.emit('mintsSale', data);        
 
@@ -400,18 +400,8 @@ export class NftService {
         // await queryRunner.commitTransaction();  
 
         // MQ로 Transfer 트랜잭션 처리 요청
-        const ownerAddress = toAddr;     // 살 사람
         const sellerAddress = fromAddr;  // 팔 사람
-        const wallet1 = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
-        let ownerPKey: string;
-        if (wallet1) {
-          ownerPKey = wallet1.pkey;
-        }
-        const wallet2 = await this.nftWalletRepository.findOne({ where:{account: sellerAddress} });
-        let sellerPKey: string;
-        if (wallet2) {
-          sellerPKey = wallet2.pkey;          
-        }
+        const buyerAddress = toAddr;     // 살 사람
         const market = await this.marketRepository.findOne({ where:{marketNo} });
         let price: number;
         if (market) {
@@ -419,7 +409,13 @@ export class NftService {
         }
 
         // MQ로 Transfer 전송 트랜잭션 처리 요청
-        const data = { createTransferDto, price, ownerAddress, ownerPKey, sellerAddress, sellerPKey };
+        const sellerNftInfo = await this.nftWalletRepository.findOne({ where:{account: fromAddr} });
+        const sellerDidInfo = await this.didWalletRepository.findOne({ where:{userNo: sellerNftInfo.userNo} });
+        const buyerNftInfo = await this.nftWalletRepository.findOne({ where:{account: toAddr} });
+        const buyerDidInfo = await this.didWalletRepository.findOne({ where:{userNo: buyerNftInfo.userNo} });
+ 
+        const data = { createTransferDto, price, sellerDid: sellerDidInfo.walletDid, 
+          sellerAddress, buyerDid: buyerDidInfo.walletDid, buyerAddress };
         console.log('Sending data:', data);
         this.client.emit('transfers', data);    
 
@@ -429,6 +425,133 @@ export class NftService {
     } 
 
   }  
+
+
+  /**
+   * 오스레저에 mint 
+   * 
+   * @param createAlMintDto
+   * @returns 
+   */
+  async alMint(createAlMintDto: CreateAlMintDto): Promise<any> {
+
+    try {
+
+      const apiToken = this.configService.get<string>('AL_API_TOKEN');
+      const dataspace = this.configService.get<string>('DID_DATASPACE');
+      const url = this.configService.get<string>('NFT_MINT_URL');
+      const data = {
+        "payload": {
+          issuerDid: createAlMintDto.issuerDid,
+          assetNo: 0,
+          productNo: 0,
+          issueCnt: createAlMintDto.issueCnt
+        }
+      };
+
+      console.log("url: "+url);
+      console.log("data: "+JSON.stringify(data));
+      // console.log("apiToken: "+apiToken);
+
+      try {
+        const response = await axios.post(url, data, {
+          headers: { 
+            Authorization: `Bearer ${apiToken}` 
+          },
+        });
+ 
+        console.log("response.data: "+JSON.stringify(response.data));
+        // console.log("response.data.data: "+JSON.stringify(response.data.data));
+        if(response.data){
+          const retData = response.data.data;
+          if(response.data.resultMessage == 'SUCCESS'){                       
+            return {
+              result: retData.result,
+              tokenIds: retData.tokenIds, 
+              contractAddress: retData.contractAddress,
+              txId: retData.txId
+            };
+          }
+        }else {
+          console.error("POST(alMint) ERROR: "+response.data.resultMessage);
+          return null;
+        }
+      } catch (error) {
+        console.log("POST(alMint) ERROR "+JSON.stringify(error.response.data));
+        throw new InternalServerErrorException({
+          statusCode: error.response.status,
+          message: "Internal Error",
+          // error: error.response.data.error,
+        });
+      }
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    }
+  }
+
+    /**
+   * 오스레저에 transfer
+   * 
+   * @param createAlTransferDto
+   * @returns 
+   */
+  async alTransfer(createAlTransferDto: CreateAlTransferDto): Promise<any> {
+
+    try {
+
+      const apiToken = this.configService.get<string>('AL_API_TOKEN');
+      const dataspace = this.configService.get<string>('DID_DATASPACE');
+      const url = this.configService.get<string>('NFT_TRANSFER_URL');
+      const data = { 
+        "payload": {
+          tokenIds: createAlTransferDto.tokenIds,
+          amountInWei: createAlTransferDto.amountInWei,
+          sellerDid: createAlTransferDto.sellerDid,
+          buyerDid: createAlTransferDto.buyerDid
+        }
+      };
+
+      console.log("url: "+url);
+      console.log("data: "+JSON.stringify(data));
+      // console.log("apiToken: "+apiToken);
+
+      try {
+        const response = await axios.post(url, data, {
+          headers: { 
+            Authorization: `Bearer ${apiToken}` 
+          },
+        });
+ 
+        console.log("response.data: "+JSON.stringify(response.data));
+        if(response.data){
+          const retData = response.data.data;
+          if(response.data.resultMessage == 'SUCCESS'){                       
+            return {
+              result: retData.result, 
+              contractAddress: retData.contractAddress,
+              txId: retData.txId
+            };
+          }
+        }else {
+          console.error("POST(alTransfer) ERROR: "+response.data.resultMessage);
+          return null;
+        }
+      } catch (error) {
+        console.log("POST(alTransfer) ERROR "+JSON.stringify(error.response.data));
+        throw new InternalServerErrorException({
+          statusCode: error.response.status,
+          message: "Internal Error",
+          // error: error.response.data.error,
+        });
+      }
+
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
+    }
+  }
 
   /**
    * NFT Transfer와 Mint
@@ -504,59 +627,59 @@ export class NftService {
    * @param createBurnDto 
    * @returns 
    */
-  async createBurn(user: User, createBurnDto: CreateBurnDto): Promise<void> {
+  // async createBurn(user: User, createBurnDto: CreateBurnDto): Promise<void> {
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
 
-    try {
+  //   try {
 
-        //  비즈니스 로직 처리 
+  //       //  비즈니스 로직 처리 
 
-        // 원래는 asset에서 처리하는 부분인데, 여기서는 NFT Controller 때문에 사용.
-        if (!createBurnDto.tokenId) {
-          throw new BadRequestException('토큰 ID(tokenId)가 누락되었습니다.');
-        }  
-        const assetNo = createBurnDto.assetNo;
-        const productNo = createBurnDto.productNo;
-        const tokenId = createBurnDto.tokenId;      
-        const ownerAddress = user.nftWalletAccount;
-        let nftBurnNo = 0;
-        let nftMintNo = 0;
-        const burn = await this.nftBurnRepository.findOne({ where:{assetNo, productNo} });
-        if (!burn) {
-          const burnInfo = {productNo, assetNo, issuedTo: user.nftWalletAccount, tokenId, state: 'B13'};
-          // console.log("===== burnInfo : "+JSON.stringify(burnInfo));
-          const newBurn = queryRunner.manager.create(NftBurn, burnInfo);
-          const result = await queryRunner.manager.save<NftBurn>(newBurn);
-          nftBurnNo = result.nftBurnNo;
-        }  
-        const mint = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
-        if (mint) {
-          nftMintNo = mint.nftMintNo;
-        }   
+  //       // 원래는 asset에서 처리하는 부분인데, 여기서는 NFT Controller 때문에 사용.
+  //       if (!createBurnDto.tokenId) {
+  //         throw new BadRequestException('토큰 ID(tokenId)가 누락되었습니다.');
+  //       }  
+  //       const assetNo = createBurnDto.assetNo;
+  //       const productNo = createBurnDto.productNo;
+  //       const tokenId = createBurnDto.tokenId;      
+  //       const ownerAddress = user.nftWalletAccount;
+  //       let nftBurnNo = 0;
+  //       let nftMintNo = 0;
+  //       const burn = await this.nftBurnRepository.findOne({ where:{assetNo, productNo} });
+  //       if (!burn) {
+  //         const burnInfo = {productNo, assetNo, issuedTo: user.nftWalletAccount, tokenId, state: 'B13'};
+  //         // console.log("===== burnInfo : "+JSON.stringify(burnInfo));
+  //         const newBurn = queryRunner.manager.create(NftBurn, burnInfo);
+  //         const result = await queryRunner.manager.save<NftBurn>(newBurn);
+  //         nftBurnNo = result.nftBurnNo;
+  //       }  
+  //       const mint = await this.nftMintRepository.findOne({ where:{assetNo, productNo} });
+  //       if (mint) {
+  //         nftMintNo = mint.nftMintNo;
+  //       }   
 
-        await queryRunner.commitTransaction();  
+  //       await queryRunner.commitTransaction();  
               
-        // MQ로 Burn 트랜잭션 처리 요청
-        const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
-        let ownerPKey: string;
-        if (wallet) {
-          ownerPKey = wallet.pkey;
-        }
+  //       // MQ로 Burn 트랜잭션 처리 요청
+  //       const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
+  //       let ownerPKey: string;
+  //       if (wallet) {
+  //         ownerPKey = wallet.pkey;
+  //       }
 
-        const data = { nftBurnNo, nftMintNo, assetNo, productNo, tokenId: parseInt(tokenId), ownerAddress, ownerPKey };
-        console.log('Sending data:', data);
-        this.client.emit('burn', data); 
+  //       const data = { nftBurnNo, nftMintNo, assetNo, productNo, tokenId: parseInt(tokenId), ownerAddress, ownerPKey };
+  //       console.log('Sending data:', data);
+  //       this.client.emit('burn', data); 
 
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    } finally {    
-      await queryRunner.release();
-    }
-  } 
+  //   } catch (e) {
+  //     this.logger.error(e);
+  //     throw e;
+  //   } finally {    
+  //     await queryRunner.release();
+  //   }
+  // } 
 
   /**
    * NFT 소각(Nft Mint 정보 삭제 수정 및 NftBurn 저장)
@@ -564,94 +687,94 @@ export class NftService {
    * @param createBurnDto 
    * @returns 
    */
-  async createBurns(user: User, createBurnDto: CreateBurnDto): Promise<void> {
+  // async createBurns(user: User, createBurnDto: CreateBurnDto): Promise<void> {
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
 
-    try {
+  //   try {
 
-        if (!createBurnDto.tokenIds || createBurnDto.tokenIds.length === 0) {
-          throw new BadRequestException('토큰 ID 목록(tokenIds)이 비어 있거나 누락되었습니다.');
-        }
-        const assetNo = createBurnDto.assetNo;
-        const productNo = createBurnDto.productNo;
-        const tokenIds = createBurnDto.tokenIds;
-        const ownerAddress = user.nftWalletAccount;
-        const nftBurnNos: number[] = [];
-        const nftMintNos: number[] = [];
+  //       if (!createBurnDto.tokenIds || createBurnDto.tokenIds.length === 0) {
+  //         throw new BadRequestException('토큰 ID 목록(tokenIds)이 비어 있거나 누락되었습니다.');
+  //       }
+  //       const assetNo = createBurnDto.assetNo;
+  //       const productNo = createBurnDto.productNo;
+  //       const tokenIds = createBurnDto.tokenIds;
+  //       const ownerAddress = user.nftWalletAccount;
+  //       const nftBurnNos: number[] = [];
+  //       const nftMintNos: number[] = [];
 
-        // 🔹 각 tokenId마다 Burn + Mint 매핑
-        for (const tokenId of tokenIds) {
-          let nftBurnNo = 0;
-          let nftMintNo = 0;
+  //       // 🔹 각 tokenId마다 Burn + Mint 매핑
+  //       for (const tokenId of tokenIds) {
+  //         let nftBurnNo = 0;
+  //         let nftMintNo = 0;
 
-          // 🔸 Burn 정보 확인 (assetNo + productNo + tokenId 기준)
-          const burn = await this.nftBurnRepository.findOne({
-            where: { assetNo, productNo, tokenId },
-          });
+  //         // 🔸 Burn 정보 확인 (assetNo + productNo + tokenId 기준)
+  //         const burn = await this.nftBurnRepository.findOne({
+  //           where: { assetNo, productNo, tokenId },
+  //         });
 
-          if (!burn) {
-            const burnInfo = {
-              productNo,
-              assetNo,
-              issuedTo: ownerAddress,
-              tokenId,
-              state: 'B13',
-            };
-            const newBurn = queryRunner.manager.create(NftBurn, burnInfo);
-            const result = await queryRunner.manager.save<NftBurn>(newBurn);
-            nftBurnNo = result.nftBurnNo;
-          } else {
-            nftBurnNo = burn.nftBurnNo;
-          }
+  //         if (!burn) {
+  //           const burnInfo = {
+  //             productNo,
+  //             assetNo,
+  //             issuedTo: ownerAddress,
+  //             tokenId,
+  //             state: 'B13',
+  //           };
+  //           const newBurn = queryRunner.manager.create(NftBurn, burnInfo);
+  //           const result = await queryRunner.manager.save<NftBurn>(newBurn);
+  //           nftBurnNo = result.nftBurnNo;
+  //         } else {
+  //           nftBurnNo = burn.nftBurnNo;
+  //         }
 
-          // 🔸 Mint 정보 확인
-          const mint = await this.nftMintRepository.findOne({
-            where: { assetNo, productNo, tokenId },
-          });
+  //         // 🔸 Mint 정보 확인
+  //         const mint = await this.nftMintRepository.findOne({
+  //           where: { assetNo, productNo, tokenId },
+  //         });
 
-          if (mint) {
-            nftMintNo = mint.nftMintNo;
-          }
+  //         if (mint) {
+  //           nftMintNo = mint.nftMintNo;
+  //         }
 
-          nftBurnNos.push(nftBurnNo);
-          nftMintNos.push(nftMintNo);
-        }
+  //         nftBurnNos.push(nftBurnNo);
+  //         nftMintNos.push(nftMintNo);
+  //       }
 
-        await queryRunner.commitTransaction();
+  //       await queryRunner.commitTransaction();
 
-        // 🔹 MQ로 Burn 트랜잭션 처리 요청
-        const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
-        let ownerPKey: string;
-        if (wallet) {
-          ownerPKey = wallet.pkey;
-        }
+  //       // 🔹 MQ로 Burn 트랜잭션 처리 요청
+  //       const wallet = await this.nftWalletRepository.findOne({ where:{account: ownerAddress} });
+  //       let ownerPKey: string;
+  //       if (wallet) {
+  //         ownerPKey = wallet.pkey;
+  //       }
 
-        const data = {
-          nftBurnNos,
-          nftMintNos,
-          assetNo,
-          productNo,
-          tokenIds, // 그대로 배열로 전송
-          ownerAddress,
-          ownerPKey,
-        };
+  //       const data = {
+  //         nftBurnNos,
+  //         nftMintNos,
+  //         assetNo,
+  //         productNo,
+  //         tokenIds, // 그대로 배열로 전송
+  //         ownerAddress,
+  //         ownerPKey,
+  //       };
 
-        console.log("===========   ownerAddress:", user.nftWalletAccount);
-        console.log('Sending burns data to MQ:', data);
-        this.client.emit('burns', data);
+  //       console.log("===========   ownerAddress:", user.nftWalletAccount);
+  //       console.log('Sending burns data to MQ:', data);
+  //       this.client.emit('burns', data);
 
-    } catch (e) {
-      this.logger.error(e);
-      await queryRunner.rollbackTransaction();
-      throw e;
-    } finally {    
-      await queryRunner.release();
-    }
+  //   } catch (e) {
+  //     this.logger.error(e);
+  //     await queryRunner.rollbackTransaction();
+  //     throw e;
+  //   } finally {    
+  //     await queryRunner.release();
+  //   }
 
-  } 
+  // } 
 
 /*  
     // Mint 트랜잭션을 메시지 큐에 추가
@@ -701,49 +824,49 @@ export class NftService {
    * 
    * @returns 
    */
-  async createToken(): Promise<string> {    
-    const accessKey = this.configService.get<string>('nft.accessKey');
-    const secretKey = this.configService.get<string>('nft.secretKey');
-    const expiresIn = this.configService.get<number>('nft.expiresIn');
+  // async createToken(): Promise<string> {    
+  //   const accessKey = this.configService.get<string>('nft.accessKey');
+  //   const secretKey = this.configService.get<string>('nft.secretKey');
+  //   const expiresIn = this.configService.get<number>('nft.expiresIn');
 
-    let token = '';
+  //   let token = '';
 
-     // Register 비즈니스 로직 처리
-/*
-    const nftTokenInfo = await this.nftTokenRepository.findOne({where:{nftTokenNo:1}});
+  //    // Register 비즈니스 로직 처리
 
-    const path: string = '/svc/v2/auth-tokens';  
-    const response: any = await this.nftHttpService.sendHttpRequest(path, createAuthTokenDto, "");
-    console.log('auth-tokens response == ', response);
+  //   const nftTokenInfo = await this.nftTokenRepository.findOne({where:{nftTokenNo:1}});
+
+  //   const path: string = '/svc/v2/auth-tokens';  
+  //   const response: any = await this.nftHttpService.sendHttpRequest(path, createAuthTokenDto, "");
+  //   console.log('auth-tokens response == ', response);
       
-    if(response.result){
-      const tokenInfo = {
-        authTokenId: response.data.authToken.authTokenId,
-        accountId: response.data.authToken.accountId,
-        iamUserId: response.data.authToken.iamUserId,
-        token: response.data.authToken.token,
-        expiryAt: response.data.authToken.expiryAt
-      }
+  //   if(response.result){
+  //     const tokenInfo = {
+  //       authTokenId: response.data.authToken.authTokenId,
+  //       accountId: response.data.authToken.accountId,
+  //       iamUserId: response.data.authToken.iamUserId,
+  //       token: response.data.authToken.token,
+  //       expiryAt: response.data.authToken.expiryAt
+  //     }
 
-      if(!nftTokenInfo){
-        const newToken = await this.nftTokenRepository.create(tokenInfo);
-        await this.nftTokenRepository.save(newToken);
+  //     if(!nftTokenInfo){
+  //       const newToken = await this.nftTokenRepository.create(tokenInfo);
+  //       await this.nftTokenRepository.save(newToken);
 
-        token = response.data.authToken.token; // token값
-      } else {
-        const nftTokenNo = nftTokenInfo.nftTokenNo;
-        const newToken = JSON.parse(JSON.stringify(tokenInfo));
-        await this.nftTokenRepository.update(nftTokenNo, newToken); 
+  //       token = response.data.authToken.token; // token값
+  //     } else {
+  //       const nftTokenNo = nftTokenInfo.nftTokenNo;
+  //       const newToken = JSON.parse(JSON.stringify(tokenInfo));
+  //       await this.nftTokenRepository.update(nftTokenNo, newToken); 
 
-        token = response.data.authToken.token; // token값
-      }    
-    }
-*/
-     // MQ 호출
+  //       token = response.data.authToken.token; // token값
+  //     }    
+  //   }
+
+  //    // MQ 호출
 
 
-    return token;
-  }
+  //   return token;
+  // }
 
   // 그 전에 사용자 지갑주소 등록시 배수에 사용자별 NFT 지갑 생성으로 Private Key를 만들어 놔야함.
   /**
@@ -752,31 +875,31 @@ export class NftService {
    * @param userNo 
    * @param createDeoaDto 
    */
-  async createWallet(user:User): Promise<void> {    
-    // async createWallet(userNo:number, createDeoaDto: CreateDeoaDto): Promise<void> {
-    /* 
-    createDeoaDto.environmentId = this.configService.get<string>('nft.environmentId');
+  // async createWallet(user:User): Promise<void> {    
+  //   // async createWallet(userNo:number, createDeoaDto: CreateDeoaDto): Promise<void> {
+
+  //   createDeoaDto.environmentId = this.configService.get<string>('nft.environmentId');
   
-    const nftWalletInfo = await this.nftWalletRepository.findOne({where:{userNo}});
-    if(!nftWalletInfo){
-      const token = await this.createToken();
-      const path: string = '/tx/v2.0/wallets';
-      const response: any = await this.nftHttpService.sendHttpRequest(path, createDeoaDto, token);
-      console.log('createWallet response => ', response);
+  //   const nftWalletInfo = await this.nftWalletRepository.findOne({where:{userNo}});
+  //   if(!nftWalletInfo){
+  //     const token = await this.createToken();
+  //     const path: string = '/tx/v2.0/wallets';
+  //     const response: any = await this.nftHttpService.sendHttpRequest(path, createDeoaDto, token);
+  //     console.log('createWallet response => ', response);
 
-      if(response.result){
-        const walletInfo = {
-          userNo: userNo,
-          walletId: response.data.walletId,
-          address: response.data.address
-        }
+  //     if(response.result){
+  //       const walletInfo = {
+  //         userNo: userNo,
+  //         walletId: response.data.walletId,
+  //         address: response.data.address
+  //       }
 
-        const wallet = await this.nftWalletRepository.create(walletInfo);
-        await this.nftWalletRepository.save(wallet);
-      }
-    }
-  */
-  }
+  //       const wallet = await this.nftWalletRepository.create(walletInfo);
+  //       await this.nftWalletRepository.save(wallet);
+  //     }
+  //   }
+
+  // }
 
  /**
  * NFT Mint 목록 조회

@@ -12,12 +12,16 @@ export class NftMint extends BaseEntity {
   metadataId: string;
 
   @Index()
-  @Column({ name:"product_no", type:"int4", comment:"상품 번호" })
+  @Column({ name:"product_no", type:"int4", comment:"상품 번호", nullable:true })
   productNo: number;
   
   @Index()
-  @Column({ name:"asset_no", type:"int4", comment:"에셋 번호" })
+  @Column({ name:"asset_no", type:"int4", comment:"에셋 번호", nullable:true })
   assetNo: number;
+
+  @Index()
+  @Column({ name:"market_no", type:"int4", comment:"마켓 판매번호" })
+  marketNo: number;
 
   @Index()
   @Column({ name:"contract_no", type:"int4", comment:"광고주 구매 번호", nullable:true  })

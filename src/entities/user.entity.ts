@@ -40,6 +40,9 @@ export class User extends BaseEntity {
   @Column({name:"purchase_no", comment:"사용자 구매 번호", nullable: true })
   purchaseNo: number;
 
+  @Column({ name: "org_id", type: "varchar", length: 64, comment: "오스레저 Org ID", nullable: true })
+  orgId: string;
+
   nftWalletAccount: string;
 
   nftWalletAccountPKey: string;
@@ -52,4 +55,5 @@ export class User extends BaseEntity {
 
   @UpdateDateColumn({ type: 'timestamptz', name: "upd_dttm", comment: "수정일시" })
   updDttm: Date;
+  
 }

@@ -2,14 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AssetModule } from './asset/asset.module';
-import { AssetTypeModule } from './asset_type/asset_type.module';
 import { AuthModule } from './auth/auth.module';
-import { MetaverseModule } from './metaverse/metaverse.module';
 import { NftModule } from './nft/nft.module';
-import { ProductModule } from './product/product.module';
 import { PurchaseModule } from './purchase/purchase.module';
-import { ContractModule } from './contract/contract.module';
 import { StateModule } from './state/state.module';
 import { UserModule } from './user/user.module';
 import { MarketModule } from './market/market.module';
@@ -21,20 +16,9 @@ import { memoryStorage } from 'multer';
 
 @Module({
   imports: [
-    // BullModule.forRoot({
-    //   redis: {
-    //     host: 'localhost',
-    //     port: 6379,
-    //   },
-    // }),
-    AssetModule,
-    AssetTypeModule,
     AuthModule,
-    MetaverseModule,
     NftModule,
-    ProductModule,
     PurchaseModule,
-    ContractModule,
     StateModule,
     UserModule,
     MarketModule,

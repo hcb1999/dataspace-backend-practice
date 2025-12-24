@@ -2,37 +2,63 @@ import { Entity, Index, BaseEntity, PrimaryGeneratedColumn, Column, UpdateDateCo
 
 @Entity({name: "ar_market"})
 export class Market extends BaseEntity {
-  @PrimaryGeneratedColumn({name:"market_no", comment:"마켓 에셋 번호"})
+  @PrimaryGeneratedColumn({name:"market_no", comment:"마켓 데이터 번호"})
   marketNo: number;
 
   @Index()
-  @Column({name:"contract_no", comment:"엔터사 계약 번호"})
-  contractNo: number;
+  @Column({ name: "user_no", type: "int4", comment: "크리에이터 사용자번호" })
+  userNo: number;
+
+  @Column({ name:"reg_name", type: "varchar", length: 40, comment: "등록자 이름" })
+  regName: string;
+
+  @Column({ name:"reg_addr", type:"varchar", length:80, comment:"등록자 지갑주소" })
+  regAddr: string;
+  
+  @Index()
+  @Column({ name: "file_no", type: "int4", comment: "데이터 이미지 파일번호", default: 0 })
+  fileNo: number;
 
   @Index()
   @Column({name:"purchase_no", comment:"사용자 구매 번호", nullable: true })
   purchaseNo: number;
 
-  @Column({ name: "market_asset_name", type: "varchar", length: 256, comment: "마켓의 상품명"})
-  marketAssetName: string;
+  @Column({ name: "market_vc_type", type: "varchar", length:  10, comment: "마켓의 vc 타입", nullable: true })
+  marketVcType: string;
 
-  @Column({ name: "market_asset_desc", type: "text", comment: "마켓의 상품 설명", nullable: true })
-  marketAssetDesc: string;
+  @Column({ name: "market_data_name", type: "varchar", length: 256, comment: "마켓의 데이터명", nullable: true })
+  marketDataName: string;
+
+  @Column({ name: "market_data_desc", type: "text", comment: "마켓의 데이터설명", nullable: true })
+  marketDataDesc: string;
+
+  @Column({ name: "market_product_type", type: "varchar", length: 256, comment: "마켓의 상품유형", nullable: true })
+  marketProductType: string;
+
+  @Column({ name: "market_language", type: "varchar", length: 256, comment: "마켓의 데이터언어", nullable: true })
+  marketLanguage: string;
+
+  @Column({ name: "market_keyword", type: "varchar", length: 256, comment: "마켓의 데이터 키워드", nullable: true })
+  marketKeyword: string;
+
+  @Column({ name: "market_doi", type: "varchar", length: 256, comment: "마켓의 doi 번호", nullable: true })
+  marketDoi: string;
+
+  @Column({ name: "market_subject", type: "varchar", length: 256, comment: "마켓의 데이터 주제", nullable: true })
+  marketSubject: string;
+
+  @Column({ name: "market_issuer", type: "varchar", length: 256, comment: "마켓의 데이터 발행기관", nullable: true })
+  marketIssuer: string;
+
+  @Column({ name: "market_doi_url", type: "varchar", length: 256, comment: "마켓의 데이터 doi url", nullable: true })
+  marketDoiUrl: string;
 
   @Index()
-  @Column({name:"sale_addr", type:"varchar", length:80, comment:"판매 지갑주소", nullable: true })
+  @Column({name:"sale_addr", type:"varchar", length:80, comment:"판매자 지갑주소", nullable: true })
   saleAddr: string;
 
-  @Column({ name:"sale_user_name", type:"varchar", length:40, comment:"판매 광고주명" , nullable: true })
+  @Column({ name:"sale_user_name", type:"varchar", length:40, comment:"판매자명" , nullable: true })
   saleUserName: string;
-
-  @Index()
-  @Column({ name:"product_no", type:"int4", comment:"구매한 상품 번호" })
-  productNo: number;
-
-  @Index()
-  @Column({ name:"asset_no", type:"int4", comment:"구매한 상품의 에셋 번호" })
-  assetNo: number;
 
   @Column({ name: "state", type: "varchar", length: 10, comment: "판매 상태", default: 'S1' })
   state: string;
@@ -61,47 +87,27 @@ export class Market extends BaseEntity {
   @Column({ name: "stop_desc", type: "varchar", length: 256, comment: "판매중지 사유", nullable: true })
   stopDesc: string;
 
-  // @Column({ name: "start_dttm", type: "timestamp", comment: "광고게시 시작일시"  })
-  // startDttm: Date;
-
-  // @Column({ name: "end_dttm", type: "timestamp", comment: "광고게시 종료일시"  })
-  // endDttm: Date;
-
-  // @Column({ name: "minted_yn", type: "varchar", length: 1, comment: "민트 여부", default: "N" })
-  // mintedYn: string;
-
-  // @Column({ name: "minter_yn", type: "varchar", length: 1, comment: "최초 민터 여부", default: "Y" })
-  // minterYn: string;
-
-  @Column({ name: "use_yn", type: "varchar", length: 1, comment: "마켓 에셋 사용 여부", default: "Y" })
+  @Column({ name: "use_yn", type: "varchar", length: 1, comment: "마켓 데이터 사용 여부", default: "Y" })
   useYn: string;
 
-  // @Column({ name: "sold_yn", type: "varchar", length: 1, comment: "굿즈 팔린 여부", default: "N" })
-  // soldYn: string;
+  @Index()
+  @Column({ name: "vc_id", type: "varchar", length: 256 , comment: "VC ID", nullable: true })
+  vcId: string;
 
-  // @Column({ name: "creator_token_id", type: "varchar", length: 40, comment: "크리에이터 토큰 ID", nullable: true})
-  // creatorTokenId: string;
+  @Column({ name: "vc_issuer_name", type: "varchar", length: 256 , comment: "VC 발급자 국문 이름", nullable: true })
+  vcIssuerName: string;
+
+  @Column({ name: "vc_issuer_logo", type: "varchar", length: 256 , comment: "VC 발급자 로고 이미지 URL", nullable: true })
+  vcIssuerLogo: string;
+
+  @Column({ name: "vc_type_name", type: "varchar", length: 256 , comment: "VC 타입 국문 이름", nullable: true })
+  vcTypeName: string;
 
   @Column({ name: "from_token_id", type: "varchar", length: 40, comment: "From 토큰 ID", nullable: true})
   fromTokenId: string;
 
   @Column({ name: "to_token_id", type: "varchar", length: 40, comment: "To 토큰 ID", nullable: true})
   toTokenId: string;
-  
-  // @Column({ name:"tx_id", type:"varchar", length:40, comment:"NFT 이전 TX ID", nullable: true})
-  // txId: string;
-
-  // @Column({ name:"dl_state", type:"varchar", length:1, comment:"학습상태", nullable: true })
-  // dlState: string;
-
-  // @Column({ name:"avatar_cnt", type:"int4", comment:"광고아바타 건수", nullable: true })
-  // avatarCnt: number;
-
-  // @Column({ name: "adv_tot_amt", type: "int4", comment: "광고집행총액", default: 0 })
-  // advTotAmt: number;
-
-  // @Column({ name: "adv_balance", type: "int4", comment: "광고집행잔액", default: 0, unsigned: false  })
-  // advBalance: number;
   
   @CreateDateColumn({ type: 'timestamptz', name:"reg_dttm", comment:"등록일시" })
   regDttm: Date;

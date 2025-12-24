@@ -6,11 +6,16 @@ export class CreateDidUserDto {
   @IsString()
   @Length(1, 80)
   @ApiProperty({ description: '이메일주소'})
-  readonly id: string;
+  readonly email: string;
 
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  @ApiProperty({ description: '사용자 번호', required: false})
-  userNo?: number;
+  @IsString()
+  @Length(1, 40)
+  @ApiProperty({ description: '닉네임' })
+  readonly nickName: string;
+
+  // @IsOptional()
+  // @IsNumber()
+  // @Type(() => Number)
+  // @ApiProperty({ description: '사용자 번호', required: false})
+  // userNo?: number;
 }

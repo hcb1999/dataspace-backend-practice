@@ -27,7 +27,7 @@ export class CreateMintDto {
 
   @IsOptional()
   @IsString()
-  @Length(1, 80)
+  @Length(1, 256)
   @ApiProperty({ description: 'issuedTo(NFT 지갑 주소)', required: false})
   readonly issuedTo: string;
 

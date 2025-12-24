@@ -101,51 +101,36 @@ export class PurchaseController {
         "pageSize": 10,
         "totalCount": 2,
         "totalPage": 1,
-        "list": [
-          {
-            "price": 0.1,
-            "purchaseNo": 50,
-            "saleUserName": "엔터사 1",
-            "marketAssetName": "테스트 굿즈1용 에셋1",
-            "assetName": "테스트 굿즈1용 에셋1",
-            "assetDesc": "테스트 굿즈1용 에셋1",
-            "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
-            "metaverseName": "K-POP 월드",
-            "typeDef": "K-셔츠",
-            "stateDesc": "결재완료",
-            "payDttm": "2024-10-29 16:59:48",
-            "fileNameFirst": "test1.glb",
-            "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
-            "thumbnailFirst": "https://kapi-dev.avataroad.com/",
-            "fileNameSecond": "test1.png",
-            "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
-            "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
-            "fileNameThird": "test1.png",
-            "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
-            "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
-          },
-          {
-            "price": 0.1,
-            "purchaseNo": 49,
-            "saleUserName": "엔터사 1",
-            "marketAssetName": "테스트 굿즈1용 에셋1",
-            "assetName": "테스트 굿즈1용 에셋1",
-            "assetDesc": "테스트 굿즈1용 에셋1",
-            "metaverseName": "K-POP 월드",
-            "typeDef": "K-셔츠",
-            "stateDesc": "결재완료",
-            "payDttm": "2024-10-29 15:10:07",
-            "fileNameFirst": "test1.glb",
-            "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
-            "thumbnailFirst": "https://kapi-dev.avataroad.com/",
-            "fileNameSecond": "test1.png",
-            "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
-            "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
-            "fileNameThird": "test1.png",
-            "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
-            "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png"
-          }
-        ]
+          "list": [
+            {
+              "state": "P3",
+              "price": 0.333,
+              "purchaseNo": 1,
+              "saleUserName": "data1",
+              "marketDataName": "스미트불편신고 상위 지역 3",
+              "marketDataDesc": "용도지역(주거지역, 상업지역)별 스마트불편신고(불법주정차, 불법광고물, 쓰레기, 장애인주차구역위반) 상위 20% 밀도 분석. 국토교통부 공간빅데이터 분석플랫폼 수요분석과제 3",
+              "marketProductType": "데이터서비스 3",
+              "marketLanguage": "한국어",
+              "marketKeyword": "공간,불편신고,빅데이터,상업지역,용도지역,주거지역,표준분석 3",
+              "marketLandingPage": "http://geobigdata.go.kr/portal/case/demandView.do?proj_seq=83",
+              "marketSubject": "건설에너지 3",
+              "marketIssuer": "공간빅데이터분석 3",
+              "stateDesc": "결제완료",
+              "payDttm": "2025-12-08 22:20:27",
+              "purchaseCnt": 3,
+              "saleCnt": 0,
+              "inventoryCnt": 3,
+              "fileNameFirst": "white_shoes.png",
+              "fileUrlFirst": "https://dataspace.authrium.com/api/file/20251208/1765194739790.png",
+              "thumbnailFirst": "https://dataspace.authrium.com/api/thumbnail/20251208/1765194739790.png",
+              "fileNameSecond": "",
+              "fileUrlSecond": "https://dataspace.authrium.com/api/",
+              "thumbnailSecond": "https://dataspace.authrium.com/api/",
+              "fileNameThird": "",
+              "fileUrlThird": "https://dataspace.authrium.com/api/",
+              "thumbnailThird": "https://dataspace.authrium.com/api/"
+            }
+          ]
       }
     }}})
   async getPurchaseList(@GetUser() user: User, @Query() getPurchaseDto: GetPurchaseDto ): Promise<void> {
@@ -182,70 +167,61 @@ export class PurchaseController {
         example: {
           resultCode: 200,
           resultMessage: 'SUCCESS',
-          data: {
-            "resultCode": 200,
-            "resultMessage": "SUCCESS",
-            "data": {
-              "price": 0.1,
-              "purchaseNo": 50,
-              "contractNo": 132,
-              "saleAccount": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
-              "saleAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x90f79bf6eb2c4f870365e785982e1f101e93b906",
-              "saleUserName": "크리에이터 2",
-              "purchaseAccount": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
-              "purchaseAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
-              "purchaseUserName": "사용자 2",
-              "marketAsetName": "테스트 굿즈1용 에셋1",
-              "assetName": "테스트 굿즈1용 에셋1",
-              "assetDesc": "테스트 굿즈1용 에셋1",
-              "assetUrl": "https://models.readyplayer.me/67297568c3dc4167f549fb73.glb",
-              "metaverseName": "K-POP 월드",
-              "typeDef": "K-셔츠",
-              "stateDesc": "결재완료",
-              "payDttm": "2024-10-29 16:59:48",
-              "fromTokenId": "7",
-              "toTokenId": "11",
-              "fileNameFirst": "test1.glb",
-              "fileUrlFirst": "https://kapi-dev.avataroad.com/file/20241029/1730181477342.glb",
-              "thumbnailFirst": "https://kapi-dev.avataroad.com/",
-              "fileNameSecond": "test1.png",
-              "fileUrlSecond": "https://kapi-dev.avataroad.com/file/20241029/1730181477345.png",
-              "thumbnailSecond": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181477345.png",
-              "fileNameThird": "test1.png",
-              "fileUrlThird": "https://kapi-dev.avataroad.com/file/20241029/1730181159415.png",
-              "thumbnailThird": "https://kapi-dev.avataroad.com/thumbnail/20241029/1730181159415.png",
-              "nftContractAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-              "nftContractAddressUrl": "http://besu-dev-explorer.avataroad.com:8081/contracts/0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-              "nftTxId": "0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
-              "nftTxIdUrl": "http://besu-dev-explorer.avataroad.com:8081/transactions/0x4819c16029da30f44e31151dc0462c41bb8eda2a6d1e333107fd400aee56c9c7",
-              "tokenInfo": [
-                {
-                  "tokenId": "7",
-                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-                },
-                {
-                  "tokenId": "8",
-                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-                },
-                {
-                  "tokenId": "9",
-                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-                },
-                {
-                  "tokenId": "10",
-                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-                },
-                {
-                  "tokenId": "11",
-                  "ownerAccount": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                  "ownerAccountUrl": "http://besu-dev-explorer.avataroad.com:8081/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-                }
-              ] 
-            }
+          "data": {
+            "price": 0.333,
+            "purchaseNo": 1,
+            "marketNo": 3,
+            "saleAccount": "0xa0f11f677eb697d93488b0614e3261820beeb051",
+            "saleAccountUrl": "http://www-dev.avataroad.com:6100/accounts/0xa0f11f677eb697d93488b0614e3261820beeb051",
+            "saleUserName": "data1",
+            "purchaseAccount": "dataBuyer_walletaddress",
+            "purchaseAccountUrl": "http://www-dev.avataroad.com:6100/accounts/dataBuyer_walletaddress",
+            "purchaseUserName": "dataBuyer",
+            "marketDataName": "스미트불편신고 상위 지역 3",
+            "marketDataDesc": "용도지역(주거지역, 상업지역)별 스마트불편신고(불법주정차, 불법광고물, 쓰레기, 장애인주차구역위반) 상위 20% 밀도 분석. 국토교통부 공간빅데이터 분석플랫폼 수요분석과제 3",
+            "marketProductType": "데이터서비스 3",
+            "marketLanguage": "한국어",
+            "marketKeyword": "공간,불편신고,빅데이터,상업지역,용도지역,주거지역,표준분석 3",
+            "marketLandingPage": "http://geobigdata.go.kr/portal/case/demandView.do?proj_seq=83",
+            "marketSubject": "건설에너지 3",
+            "marketIssuer": "공간빅데이터분석 3",
+            "stateDesc": "결제완료",
+            "payDttm": "2025-12-08 22:20:27",
+            "purchaseCnt": 3,
+            "saleCnt": 0,
+            "inventoryCnt": 3,
+            "fromTokenId": "1",
+            "toTokenId": "3",
+            "fileNameFirst": "white_shoes.png",
+            "fileUrlFirst": "https://dataspace.authrium.com/api/file/20251208/1765194739790.png",
+            "thumbnailFirst": "https://dataspace.authrium.com/api/thumbnail/20251208/1765194739790.png",
+            "fileNameSecond": "",
+            "fileUrlSecond": "https://dataspace.authrium.com/api/",
+            "thumbnailSecond": "https://dataspace.authrium.com/api/",
+            "fileNameThird": "",
+            "fileUrlThird": "https://dataspace.authrium.com/api/",
+            "thumbnailThird": "https://dataspace.authrium.com/api/",
+            "nftContractAddress": "0x761Ed130443265a1C0124180C0411fd1745272b1",
+            "nftContractAddressUrl": "http://www-dev.avataroad.com:6100/address/0x761Ed130443265a1C0124180C0411fd1745272b1",
+            "nftTxId": "0xc1234567890_txid_1",
+            "nftTxIdUrl": "http://www-dev.avataroad.com:6100/tx/0xc1234567890_txid_1",
+            "tokenInfo": [
+              {
+                "tokenId": "1",
+                "ownerAccount": "dataBuyer_walletaddress",
+                "ownerAccountUrl": "http://www-dev.avataroad.com:6100/accounts/dataBuyer_walletaddress"
+              },
+              {
+                "tokenId": "2",
+                "ownerAccount": "dataBuyer_walletaddress",
+                "ownerAccountUrl": "http://www-dev.avataroad.com:6100/accounts/dataBuyer_walletaddress"
+              },
+              {
+                "tokenId": "3",
+                "ownerAccount": "dataBuyer_walletaddress",
+                "ownerAccountUrl": "http://www-dev.avataroad.com:6100/accounts/dataBuyer_walletaddress"
+              }
+            ]
           }
         }
       }

@@ -3,7 +3,6 @@ import { Purchase } from "../entities/purchase.entity";
 import { Market } from "../entities/market.entity";
 import { NftMint } from "../entities/nft_mint.entity";
 import { NftTransfer } from "../entities/nft_transfer.entity";
-import { Asset } from "../entities/asset.entity";
 
 export const PurchaseProviders = [
     {
@@ -22,10 +21,6 @@ export const PurchaseProviders = [
         
         provide: 'NFT_TRANSFER_REPOSITORY',
         useFactory: (dataSource: DataSource) => dataSource.getRepository(NftTransfer),
-        inject: ['DATA_SOURCE'],
-    },{
-        provide: 'ASSET_REPOSITORY',
-        useFactory: (dataSource: DataSource) => dataSource.getRepository(Asset),
         inject: ['DATA_SOURCE'],
     }
 ]

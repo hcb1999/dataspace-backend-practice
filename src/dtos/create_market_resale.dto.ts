@@ -2,17 +2,11 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsString, Length, IsOptional, IsNumber, IsDate, IsArray, IsInt } from "class-validator";
 import { Type, Transform } from 'class-transformer';
 
-export class CreateMarketDto {  
-  // @IsOptional()
-  // @IsNumber()
-  // @Type(() => Number)
-  // @ApiProperty({ required: false, description: '사용자 구매 번호 : 1' })
-  // readonly purchaseNo: number;
-
-  @IsString()
-  @Length(1, 10)
-  @ApiProperty({ description: 'VC 타입'})
-  readonly marketVcType: string;
+export class CreateMarketResaleDto {  
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({ required: false, description: '사용자 구매 번호 : 1' })
+  readonly purchaseNo: number;
 
   @IsString()
   @Length(1, 256)
@@ -41,8 +35,8 @@ export class CreateMarketDto {
 
   @IsString()
   @Length(1, 256)
-  @ApiProperty({ description: '마켓의 doi 번호' })
-  readonly marketDoi: string;
+  @ApiProperty({ description: '마켓의 데이터 랜딩페이지' })
+  readonly marketLandingPage: string;
 
   @IsString()
   @Length(1, 256)
@@ -80,9 +74,9 @@ export class CreateMarketDto {
   @ApiProperty({ description: '판매기간-종료일자(YYYY-MM-DD 형식)', default: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString() })
   readonly endDttm: Date;
 
-  @IsOptional()
-  @ApiProperty({ type: 'array', items: { type: 'string', format: 'binary' }, maxItems: 3, required: false, description: '데이터 이미지 파일들' })
-  files: Express.Multer.File[];
+  // @IsOptional()
+  // @ApiProperty({ type: 'array', items: { type: 'string', format: 'binary' }, maxItems: 3, required: false, description: '데이터 이미지 파일들' })
+  // files: Express.Multer.File[];
 
   // constructor() {
   //   this.startDttm = new Date();

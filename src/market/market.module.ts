@@ -3,10 +3,7 @@ import { DatabaseModule } from '../database/database.module';
 import { MarketController } from './market.controller';
 import { MarketProviders } from './market.provider';
 import { MarketService } from './market.service';
-import { ProductModule } from '../product/product.module';
 import { UserModule } from '../user/user.module';
-import { AssetModule } from '../asset/asset.module';
-import { ContractModule } from '../contract/contract.module';
 import { NftModule } from '../nft/nft.module';
 import { DidModule } from '../did/did.module';
 import { ResponseMessage } from '../common/response';
@@ -14,10 +11,7 @@ import { ResponseMessage } from '../common/response';
 @Module({
   imports: [
     DatabaseModule,
-    ProductModule,
     UserModule,
-    AssetModule,
-    ContractModule,
     NftModule,
     DidModule,
   //   JwtModule,
