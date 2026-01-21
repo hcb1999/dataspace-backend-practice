@@ -50,7 +50,7 @@ export class DidService {
         "targetHolderDid": "", 
         "payload": {
           "issueType": "1",
-          "vcType": "4",
+          "scType": "1",
           "credential": {
             email,
             nickname
@@ -118,7 +118,7 @@ export class DidService {
         "payload": {
           "proofs": [
             {
-              "vcType": "4",
+              "vcType": "1",
                "proofItem": ["nickname", "email"]
             }
           ]
@@ -171,19 +171,19 @@ export class DidService {
     try {
 
       const walletDid = createDidVcDto.walletDid;
-      const vcType = createDidVcDto.vcType;
+      const scType = createDidVcDto.scType;
       const apiToken = this.configService.get<string>('AL_API_TOKEN');
       const dataspace = this.configService.get<string>('DID_DATASPACE');
       const url = this.configService.get<string>('DID_ISSUE_URL');
       delete createDidVcDto.walletDid;
-      delete createDidVcDto.vcType;
+      delete createDidVcDto.scType;
       const data = {
         "issuerDid": dataspace,
         "sourceHolderDid": walletDid, 
         "targetHolderDid": "", 
         "payload": {
         "issueType": "1",
-        "vcType": vcType,
+        "scType": scType,
         "credential": {
           ...createDidVcDto 
           }
@@ -203,8 +203,14 @@ export class DidService {
  
         console.log("response.data: "+JSON.stringify(response.data));
         if(response.data){
-          if(response.data.resultMessage == 'SUCCESS'){                       
-            return {did: response.data.data.did, walletAddress: response.data.data.smcWalletAddress};
+          if(response.data.resultMessage == 'SUCCESS'){
+            // 오스레저 응답에서 vcType 추출 (응답 구조에 따라 조정 필요)
+            const vcType = response.data.data?.vcType || response.data.data?.vc_type || response.data.vcType || null;
+            return {
+              did: response.data.data.did, 
+              walletAddress: response.data.data.smcWalletAddress,
+              vcType: vcType
+            };
           }
         }else {
           console.error("POST(createVC) ERROR: "+response.data.resultMessage);

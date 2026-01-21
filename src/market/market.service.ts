@@ -81,10 +81,10 @@ export class MarketService {
     await queryRunner.startTransaction();
 
     try {
-      const marketVcType = await this.marketRepository.findOne({ where:{userNo: user.userNo, marketVcType: createMarketDto.marketVcType} });
-      if (marketVcType) {
-        throw new NotFoundException(`Data already founded. : 마켓 테이터 판매 정보 vcType ${createMarketDto.marketVcType}`);
-      }
+    //  const marketVcType = await this.marketRepository.findOne({ where:{userNo: user.userNo, marketVcType: createMarketDto.marketVcType} });
+     // if (marketVcType) {
+      //  throw new NotFoundException(`Data already founded. : 마켓 테이터 판매 정보 vcType ${createMarketDto.marketVcType}`);
+     // }
       // const userNo = user.userNo;
       // const regName = user.nickName;
       // const regAddr = user.nftWalletAccount;
@@ -470,7 +470,8 @@ export class MarketService {
       createMarketResaleDto['regAddr'] = user.nftWalletAccount;
       createMarketResaleDto['regName'] = user.nickName;
       createMarketResaleDto['fileNo'] = marketInfo.fileNo;
-      createMarketResaleDto['marketVcType'] = marketInfo.marketVcType;
+      // 재판매 시 원본의 스키마 타입(scType)을 복사 (사용자 선택값)
+      (createMarketResaleDto as any)['marketScType'] = marketInfo.marketScType;
       createMarketResaleDto['vcId'] = marketInfo.vcId;
 
       const todayKST = new Date();
@@ -539,6 +540,7 @@ export class MarketService {
                       .leftJoin(NftTransfer, 'transfer', 'market.from_token_id = transfer.token_id')
                       .leftJoin(State, 'state', 'market.state = state.state')
                       .select('market.market_no', 'marketNo')
+                      .addSelect('market.market_sc_type', 'marketScType')
                       .addSelect('market.market_vc_type', 'marketVcType')
                       .addSelect("market.market_doi", 'marketDoi')
                       .addSelect("market.market_data_name", 'marketDataName')
@@ -709,6 +711,7 @@ export class MarketService {
                       .leftJoin(File, 'file', 'file.file_no = market.file_no')
                       .leftJoin(State, 'state', 'state.state = market.state')
                       .select('market.market_no', 'marketNo')
+                      .addSelect('market.market_sc_type', 'marketScType')
                       .addSelect('market.market_vc_type', 'marketVcType')
                       .addSelect("market.market_doi", 'marketDoi')
                       .addSelect("market.market_data_name", 'marketDataName')
@@ -1118,6 +1121,7 @@ export class MarketService {
                       .leftJoin(DidWallet, 'didWallet', 'didWallet.user_no = user.user_no')                    
                       .select('market.market_no', 'marketNo')
                       .addSelect('didWallet.wallet_did', 'walletDid')
+                      .addSelect('market.market_sc_type', 'marketScType')
                       .addSelect('market.market_data_name', 'marketDatatName')
                       .addSelect('market.market_data_desc', 'marketDatatDesc')
                       .addSelect("market.market_product_type", 'marketProductType')
@@ -1146,14 +1150,14 @@ export class MarketService {
       const createDidVcDto: CreateDidVcDto = {
         "walletDid": didInfo.walletDid,
         "issuerDid": dataspace,
-        "vcType": didInfo.marketVcType,
+        "scType": didInfo.marketScType,
         "dataId": "AL_DS_NFT-"+marketNo,
         "dataName": didInfo.marketDataName,
         "dataDesc": didInfo.marketDataDesc,
         "productType": didInfo.marketProductType,
         "language": didInfo.marketLanguage,
         "keyWord": didInfo.marketKeyword,
-        "doi": didInfo.doi,
+        "doi": didInfo.marketDoi,
         "subject": didInfo.marketSubject,
         "issuer": didInfo.marketIssuer,
         "doiUrl": didInfo.marketDoiUrl,
@@ -1174,15 +1178,22 @@ export class MarketService {
 
       console.log("issueVcInfo: "+JSON.stringify(issueVcInfo))
       // const parsed = parseVC(issueVcInfo);    
-      const modifyMarket = {
+      const modifyMarket: any = {
         state: 'S2', 
         vcId: createDidVcDto.dataId,
         // vcIssuerName: issueVcInfo.did,
         // vcIssuerLogo: issueVcInfo.vcIssuerLogo, 
         // vcTypeName: issueVcInfo.vcTypeName,         
       }
+      
+      // 오스레저 응답에서 받은 vcType을 market_vc_type에 저장
+      if (issueVcInfo && issueVcInfo.vcType) {
+        modifyMarket.marketVcType = issueVcInfo.vcType;
+      }
+      
       console.log("===== modifyMarket : "+JSON.stringify(modifyMarket));
-      await queryRunner.manager.update(Market, marketNo, modifyMarket);
+      const updateResult = await queryRunner.manager.update(Market, { marketNo }, modifyMarket);
+      console.log(`===== modifyMarket update affected: ${updateResult.affected}`);
       
       await queryRunner.commitTransaction();
 

@@ -41,8 +41,14 @@ export class CreateDidVcDto {
 
   @IsString()
   @Length(1, 10)
-  @ApiProperty({ description: 'VC 타입'})
-  vcType: string;
+  @ApiProperty({ description: '스키마 타입 (사용자 선택값)'})
+  scType: string;
+
+  @IsString()
+  @Length(1, 10)
+  @ApiProperty({ description: 'VC 타입 (오스레저 발급 응답값, 발급 전에는 null)', required: false })
+  @IsOptional()
+  vcType?: string;
 
   @IsString()
   @Length(1, 256)
