@@ -10,6 +10,11 @@ import { HttpModule } from '@nestjs/axios';
 import { UserModule } from '../user/user.module';
 import { NftModule } from '../nft/nft.module';
 import { DidModule } from '../did/did.module';
+import { QrLoginController } from './qr-login.controller';
+import { QrLoginService } from './qr-login.service';
+import { NcMailService } from './nc-mail.service';
+import { NcMailController } from './nc-mail.controller';
+import { EmailVerificationService } from './email-verification.service';
 
 @Module({
   imports: [
@@ -23,8 +28,8 @@ import { DidModule } from '../did/did.module';
         signOptions: { expiresIn: jwtConstants.EXPIRATION_TIME },
     }),
   ],
-  providers: [AuthService, JwtStrategy, ResponseMessage],
-  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy, ResponseMessage, QrLoginService, NcMailService, EmailVerificationService],
+  controllers: [AuthController, QrLoginController, NcMailController],
   exports: [JwtStrategy, PassportModule]
 })
 export class AuthModule { }

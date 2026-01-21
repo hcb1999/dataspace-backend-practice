@@ -642,7 +642,7 @@ export class MarketController {
    * @param marketNo 
    * @returns 
    */
-  @Get('/vc/:marketNo')
+  @Get('/vc/:marketNo') 
   // @UseGuards(JwtAuthGuard)
   // @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '마켓 데이터 VC 정보 조회', description: '마켓 데이터 VC 정보를 조회한다.' })
