@@ -23,7 +23,10 @@ export class Market extends BaseEntity {
   @Column({name:"purchase_no", comment:"사용자 구매 번호", nullable: true })
   purchaseNo: number;
 
-  @Column({ name: "market_vc_type", type: "varchar", length:  10, comment: "마켓의 vc 타입", nullable: true })
+  @Column({ name: "market_sc_type", type: "varchar", length:  10, comment: "마켓의 스키마 타입 (사용자 선택값)", nullable: true })
+  marketScType: string;
+
+  @Column({ name: "market_vc_type", type: "varchar", length:  10, comment: "마켓의 vc 타입 (오스레저 발급 응답값)", nullable: true })
   marketVcType: string;
 
   @Column({ name: "market_data_name", type: "varchar", length: 256, comment: "마켓의 데이터명", nullable: true })

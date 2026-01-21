@@ -9,6 +9,11 @@ export class CreateMarketResaleDto {
   readonly purchaseNo: number;
 
   @IsString()
+  @Length(1, 10)
+  @ApiProperty({ description: '스키마 타입 (사용자 선택값)'})
+  readonly marketScType: string;
+
+  @IsString()
   @Length(1, 256)
   @ApiProperty({ description: '마켓의 데이터명' })
   readonly marketDataName: string;

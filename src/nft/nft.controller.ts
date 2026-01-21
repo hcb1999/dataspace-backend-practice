@@ -222,7 +222,8 @@ export class NftController {
                       .leftJoin(DidWallet, 'didWallet', 'market.user_no = didWallet.user_no')
                       .leftJoin(User, 'user', 'market.user_no = user.user_no')                     
                       .select('market.market_no', 'marketNo')
-                      .select('market.market_vc_type', 'marketVcType')
+                      .addSelect('market.market_sc_type', 'marketScType')
+                      .addSelect('market.market_vc_type', 'marketVcType')
                       .addSelect('user.email', 'email')
                       .addSelect('market.reg_addr', 'regAddr')
                       .addSelect('market.market_data_name', 'marketDataName')
@@ -258,7 +259,7 @@ export class NftController {
       const createDidVcDto: CreateDidVcDto = {
         "walletDid": issuerDid,
         "issuerDid": dataspace,
-        "vcType": didInfo.marketVcType,
+        "scType": didInfo.marketScType,
         "dataId": "AL_DS_NFT-"+marketNo,
         "dataName": didInfo.marketDataName,
         "dataDesc": didInfo.marketDataDesc,
@@ -287,15 +288,21 @@ export class NftController {
 
       console.log("issueVcInfo: "+JSON.stringify(issueVcInfo))
       // const parsed = parseVC(issueVcInfo);    
-      const modifyMarket = {
+      const modifyMarket: any = {
         state: 'S2', 
         vcId: createDidVcDto.dataId,
         // vcIssuerName: issueVcInfo.did,
         // vcIssuerLogo: issueVcInfo.vcIssuerLogo, 
         // vcTypeName: issueVcInfo.vcTypeName,         
       }
+      
+      // 오스레저 응답에서 받은 vcType을 market_vc_type에 저장
+      if (issueVcInfo && issueVcInfo.vcType) {
+        modifyMarket.marketVcType = issueVcInfo.vcType;
+      }
       console.log("===== modifyMarket : "+JSON.stringify(modifyMarket));
-      await queryRunner2.manager.update(Market, marketNo, modifyMarket);
+      const updateResult = await queryRunner2.manager.update(Market, { marketNo }, modifyMarket);
+      console.log(`===== modifyMarket update affected: ${updateResult.affected}`);
 
       await queryRunner2.commitTransaction();
 

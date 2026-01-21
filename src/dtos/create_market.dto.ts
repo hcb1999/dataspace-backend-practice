@@ -11,8 +11,8 @@ export class CreateMarketDto {
 
   @IsString()
   @Length(1, 10)
-  @ApiProperty({ description: 'VC 타입'})
-  readonly marketVcType: string;
+  @ApiProperty({ description: '스키마 타입 (사용자 선택값)'})
+  readonly marketScType: string;
 
   @IsString()
   @Length(1, 256)
