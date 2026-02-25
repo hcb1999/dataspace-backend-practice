@@ -31,6 +31,7 @@ export function setupSwagger(app: INestApplication): void {
     document.tags = [
       { name: '인증 API', description: '인증에 관련된 API' },
       { name: 'DID API', description: 'DID에 관련된 API' },
+      { name: '웹훅 API', description: 'WEBHOOK에 관련된 API' },
       { name: '사용자 API', description: '사용자 정보에 관련된 API' },
       { name: '마켓 판매 API', description: '마켓 판매 정보에 관련된 API' },
       { name: '사용자 구매 API', description: '사용자 구매 정보에 관련된 API' },

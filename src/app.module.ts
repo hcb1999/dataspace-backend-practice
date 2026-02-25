@@ -9,6 +9,7 @@ import { StateModule } from './state/state.module';
 import { UserModule } from './user/user.module';
 import { MarketModule } from './market/market.module';
 import { DidModule } from './did/did.module';
+import { WebhookModule } from './webhook/webhook.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 // import { BullModule } from '@nestjs/bull';
@@ -23,6 +24,7 @@ import { memoryStorage } from 'multer';
     UserModule,
     MarketModule,
     DidModule,
+    WebhookModule,
     MulterModule.register({
       storage: memoryStorage()
     }),

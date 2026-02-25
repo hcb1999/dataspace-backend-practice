@@ -11,6 +11,9 @@ export class DidWallet extends BaseEntity {
   @Column({ name:"wallet_did", type:"varchar", length:256, comment:"지갑 DID", nullable: true })
   walletDid: string;
 
+  @Column({ name:"vc_type", type:"varchar", length:10, comment:"VC 타입 (오스레저 발급 응답값)", nullable: true })
+  vcType: string;
+
   @CreateDateColumn({ type: 'timestamptz', name:"reg_dttm", comment:"등록일시" })
   regDttm: Date;
 }
